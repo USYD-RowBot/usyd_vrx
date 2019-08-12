@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <include file="$(find vrx_gazebo)/launch/sandisland.launch">
+    </include>
+    <node name="runforward" pkg="vrx_usydrx" type="runforward.py">
+    </node>
+
+</launch>
