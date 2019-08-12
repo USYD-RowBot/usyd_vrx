@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find rowbot_control)/launch/low_level_control.launch">
+    <!-- <arg name="lin_ki" value="4.0"/> -->
+  </include>
+  <node  name="circle_following" pkg="rowbot_control" type="circle_following.py" output="screen">
+    <param name="~radius" value="10.0"/> <!-- Target forwards speed -->
+    <param name="~nlgl_radius" value="4.0"/>
+  </node>
+</launch>

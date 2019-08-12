@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find rowbot_control)/launch/course_control.launch"/>
+  <node  name="wamv_waypoint_follow" pkg="rowbot_control" type="navigate_vessel" output="screen">
+    <param name="~speed" value="1.0"/> <!-- Target forwards speed -->
+    <param name="~use_nlgl" value="True"/> <!-- Whether to use Non-Linear Guidance Law (reccomended) -->
+    <param name="~nlgl_radius" value="5.0"/> <!-- The radius for NLGL. Smaller values turn the vessel more sharpely to the path -->
+    <param name="~tolerance" value="2.0"/> <!-- The tolerance at which to accept a waypoint is hit -->
+  </node>
+</launch>

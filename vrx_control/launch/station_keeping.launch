@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find rowbot_control)/launch/low_level_control.launch">
+    <!-- <arg name="lin_ki" value="4.0"/> -->
+  </include>
+  <node  name="station_keeping" pkg="rowbot_control" type="station_keeping.py" output="screen">
+    <param name="~inner_radius" value="1.0"/> <!-- Target forwards speed -->
+    <param name="~outer_radius" value="10.0"/>
+  </node>
+</launch>

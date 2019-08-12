@@ -1,0 +1,24 @@
+teleop:
+  move:
+    type: topic
+    message_type: std_msgs/Float32
+    topic_name: left_thrust_cmd
+    axis_mappings:
+      -
+        axis: 1
+        target: data
+        scale: 500
+  move2:
+    type: topic
+    message_type: std_msgs/Float32
+    topic_name: right_thrust_cmd
+    axis_mappings:
+      -
+        axis: 4
+        target: data
+        scale: 500
+
+  joy_priority:
+    type: action
+    action_name: joy_priority_action
+    buttons: [9]
