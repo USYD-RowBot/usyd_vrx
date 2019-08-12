@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <include file="$(find vrx_gazebo)/launch/sandisland.launch">
+        <arg name="world" default="$(find vrx_gazebo)/worlds/sandisland.world" />
+    </include>
+</launch>
