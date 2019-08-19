@@ -81,7 +81,7 @@ public:
 
             // std::cout << "Yaw: " << phi_ << "Diff: " << phid<< std::endl;
             // Fill out the twist message
-            twist.linear.x = set_speed_;
+            twist.linear.x = CourseToVel::limitSpeed(set_speed_, phid);
             twist.linear.y = 0.;
             twist.linear.z = 0.;
             twist.angular.x = 0.;
@@ -98,6 +98,17 @@ public:
         if (x < 0)
             x += 2*M_PI;
         return x - M_PI;
+    }
+
+    float limitSpeed(float speed, float phid){
+      if (fabs(phid) > M_PI/4){
+        return 0;
+      }
+      else{
+        return speed*(1-fabs(phid/M_PI));
+      }
+
+
     }
     // Receive the course message and store it
     void courseCallback(const vrx_msgs::Course::ConstPtr& msg)

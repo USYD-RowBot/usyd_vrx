@@ -104,7 +104,7 @@ public:
             // velU = sqrt(pow(twist.linear.x,2) + pow(twist.linear.y,2));
             double velM, velV, vel_angle, vel_yaw_diff;
 
-            if (twist.linear.x < 0.0)
+            if ((phi_ > 0 && twist.linear.y < 0.0) or (phi_ < 0 && twist.linear.y > 0.0))
             {
                 velU = -sqrt(pow(twist.linear.x,2) + pow(twist.linear.y,2));
             }
@@ -159,7 +159,7 @@ public:
             // A basic PID controller
             ang_effort = ang_kp_*ang_error + ang_ki_*ang_iterm + ang_kd_*(ang_error - prev_ang_error_)/time_diff;
             lin_effort = lin_kp_*lin_error + lin_ki_*lin_iterm + lin_kd_*(lin_error - prev_lin_error_)/time_diff;
-            //ROS_INFO("LIN eff: %f",lin_effort);
+            ROS_INFO("LIN eff: %f",lin_effort);
             // Store the errors into previous error, for use in the D-term.
             prev_ang_error_ = ang_error;
             prev_lin_error_ = lin_error;

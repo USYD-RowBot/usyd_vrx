@@ -60,6 +60,13 @@ roslaunch vrx_bringup mapping_bringup.launch
 
 ### Basic Control
 
+Prequisites:
+```
+sudo apt-get install ros-melodic-global-planner
+```
+
+
+
 Launch in seperate tabs:
 ```roslaunch vrx_bringup sensored_boat.launch```
 
@@ -79,6 +86,3 @@ This Controller listens for a nav_msgs/Path message on the topic /waypoints, whe
 To test with an example path:
 
 ```roslaunch simple_waypoints simple_waypoints.launch```
-
-
-
