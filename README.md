@@ -35,26 +35,26 @@ And you should be ready to go!
 ### Barebones
 To launch the base system without sensors or course elements:
 ```
-roslaunch roslaunch vrx_bringup barebones.launch
+roslaunch vrx_bringup barebones.launch
 ```
 To launch with sensors and obstacles:
 ```
-roslaunch roslaunch vrx_bringup sensored_boat.launch
+roslaunch vrx_bringup sensored_boat.launch
 ```
 
 ### Using mapping
 To launch with mapping there are two ways.
 1. Launch 2 nodes (reccomended)
 ```
-roslaunch roslaunch vrx_bringup sensored_boat.launch
+roslaunch vrx_bringup sensored_boat.launch
 ```
 And in a seperate tab:
 ```
-roslaunch roslaunch vrx_navigation lidar_node.launch
+roslaunch vrx_navigation lidar_node.launch
 ```
 
 2. Launch all in one file.
 ```
-roslaunch roslaunch vrx_bringup mapping_bringup.launch
+roslaunch vrx_bringup mapping_bringup.launch
 ```
 
