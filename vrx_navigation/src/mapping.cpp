@@ -207,7 +207,7 @@ int main(int argc, char **argv){
   tf2_ros::Buffer tf_buffer;
   tf2_ros::TransformListener tf_listener(tf_buffer);
   ros::Subscriber scan_sub = n.subscribe("scan",10,&MappingServer::scanCallback, &mapping_server);
-  ros::Publisher map_publisher = n.advertise<nav_msgs::OccupancyGrid>("map_topic",10);
+  ros::Publisher map_publisher = n.advertise<nav_msgs::OccupancyGrid>("map",10);
 
   //TODO Recieve rate from rosparam. GET VELODYNE LOCATION FROM ROS
   int rate_hz = 10;
