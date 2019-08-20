@@ -86,3 +86,18 @@ This Controller listens for a nav_msgs/Path message on the topic /waypoints, whe
 To test with an example path:
 
 ```roslaunch simple_waypoints simple_waypoints.launch```
+
+#### Path Planner
+To use a demonstrate a path planner with the waypoint_following node, run these in seperate tabs along with the previous nodes (without simple waypoints).
+
+Launching Rviz
+```
+roslaunch vrx_bringup rviz.launch
+```
+Launch the Lidar Node
+
+```
+roslaunch vrx_navigation lidar_node.launch
+```
+
+Now you should be able to set a 2d goal pose through rviz and the wam_v will attempt to follow that path.
