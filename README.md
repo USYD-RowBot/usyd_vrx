@@ -87,6 +87,17 @@ To test with an example path:
 
 ```roslaunch simple_waypoints simple_waypoints.launch```
 
+### Headless mode
+Wherever you see 
+
+```roslaunch vrx_bringup sensored_boat.launch```
+
+, you can replace it with 
+
+```roslaunch vrx_bringup sensored_boat_nogui.launch```
+
+ and it will run the simulation with RVIZ as a gui instead of Gazebo. That should reduce the CPU load of running the simulation.
+
 #### Path Planner
 To use a demonstrate a path planner with the waypoint_following node, run these in seperate tabs along with the previous nodes (without simple waypoints).
 

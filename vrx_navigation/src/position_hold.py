@@ -1,17 +1,17 @@
-#!python
+#!/usr/bin/env python
 # I use venv on my computer so usr/bin/env python doesnt work for me
 import rospy
+import tf
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 rospy.init_node("position_hold")
 
 params = {
     "inTopic": "pointToHold",
-    "outTopic": "waypoints"
+    "outTopic": "/waypoints"
 }
-rospy.get_param()
-for p in rospy.get_params():
-    params[p] = rospy.get_param(p, params[p])
+for i in params:
+    params[i] = rospy.get_param('~'+i, params[i])
 
 waypointPub = rospy.Publisher(params["outTopic"], Path, queue_size=10)
 
@@ -23,15 +23,39 @@ waypointPub = rospy.Publisher(params["outTopic"], Path, queue_size=10)
 #rospy.Subscriber(params["inTopic"],Twist,cb, queue_size=10)
 rate = rospy.Rate(10)
 tf_frame_id = "world"
+
+
+# subscribe to odometry to get initial position for point holding when this is run
+listener = tf.TransformListener()
+'odom'
+
+tf0 = None
+
 while not rospy.is_shutdown():
-    position = PoseStamped()
-    path = Path()
+    global tf0
+    if (tf0 is None):
+        try:
+            tf0 = listener.lookupTransform(
+                '/base_link', '/map', rospy.Time(0))
+            print("lookup ok")
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+    if not (tf0 is None):
+        print("publish hold")
+        position = PoseStamped()
+        path = Path()
+        position.pose.position.x=tf0[0][0]
+        position.pose.position.y=tf0[0][1]
+        position.pose.position.z=tf0[0][2]
+        position.pose.orientation.x=tf0[1][0]
+        position.pose.orientation.y=tf0[1][1]
+        position.pose.orientation.z=tf0[1][2]
+        position.pose.orientation.w=tf0[1][3]
+        position.header.stamp = rospy.Time.now()
+        position.header.frame_id = tf_frame_id
 
-    position.header.stamp = rospy.Time.now()
-    position.header.frame_id = tf_frame_id
-
-    path.header.stamp = rospy.Time.now()
-    path.header.frame_id = tf_frame_id
-    path.poses = [position]
-    waypointPub.publish(path)
+        path.header.stamp = rospy.Time.now()
+        path.header.frame_id = tf_frame_id
+        path.poses = [position]
+        waypointPub.publish(path)
     rate.sleep()
