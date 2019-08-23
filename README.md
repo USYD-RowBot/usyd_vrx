@@ -67,12 +67,12 @@ sudo apt-get install ros-melodic-global-planner
 
 
 
-Launch in seperate tabs:
+Launch in separate tabs:
 ```roslaunch vrx_bringup sensored_boat.launch```
 
-```roslaunch vrx_control low_level_control.launch```
+```roslaunch vrx_control_2 course_controller.launch```
 
-With thest two nodes you can publish a message to /cmd_course  of message type vrx_msgs/Course, and it will try follow direction. e.g :
+With these two nodes you can publish a message to /cmd_course  of message type vrx_msgs/Course, and it will try to follow direction. e.g :
 ```rostopic pub -r 10 /cmd_course vrx_msgs/Course  '{speed: 1.0, yaw: 0.0}'```
 
 ### Waypoint Following
