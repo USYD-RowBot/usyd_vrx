@@ -90,9 +90,7 @@ public:
             phi_ = yaw;
 
             // Get the received twist message
-            geometry_msgs::Twist twist;
-            twist = odom->twist.twist;
-
+        
             double alpha, velU, delta;
             double ang_error, ang_effort;
             double lin_error, lin_effort;
