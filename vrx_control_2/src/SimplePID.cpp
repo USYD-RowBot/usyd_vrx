@@ -32,6 +32,8 @@ void SimplePID::resetPID()
   error_integral_ = 0;
   setpoint_       = 0;
   observation_    = 0;
+
+  time_prev_ = std::chrono::high_resolution_clock::now();
 }
 
 void SimplePID::setSetpoint(double setpoint)
@@ -63,6 +65,7 @@ double SimplePID::getControlSignal()
 
   // Time (s) elapsed since previous control signal calculation
   double dt = (double)time_elapsed.count(); 
+  time_prev_ = time_now;
 
   // Calculate P,I and D terms
   double error = (this->*error_function_)(); // Call error function through pointer

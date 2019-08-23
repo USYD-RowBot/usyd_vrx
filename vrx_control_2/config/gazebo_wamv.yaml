@@ -10,7 +10,7 @@ lin_Kd: 0.0
 
 # Angular PID controller gains
 ang_Kp: 1.5
-ang_Ki: 0.02
+ang_Ki: 0.0
 ang_Kd: 0.0
 
 # General PID configuration
