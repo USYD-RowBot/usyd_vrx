@@ -53,6 +53,8 @@ add_message_files(
   Course.msg
   VesselWaypoint.msg
   VesselPath.msg
+  Object.msg
+  ObjectArray.msg
 )
 
 ## Generate services in the 'srv' folder
