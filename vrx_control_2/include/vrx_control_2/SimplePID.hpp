@@ -23,6 +23,8 @@ class SimplePID
     *   accumulate to.
     * @param error takes enum value to specify type of error, either
     *   standard or circular (wrapping error from -PI to PI).
+    * @param time takes enum value to specify type of time, either
+    *   real time or simulator time.
     */
     SimplePID(float Kp, float Ki, float Kd, float max_integral, 
       ERROR_TYPE error=ERROR_STANDARD,
@@ -96,21 +98,21 @@ class SimplePID
 
     /*!
     * Gets elapsed real time.
-    * @param time_source allows passing custom time source to function.
+    * @param time_now allows passing custom time source to function.
     * @return time elapsed since previous control signal calculation.
     */
     double getTimeReal(double time_now=0);
 
     /*!
     * Gets elapsed simulator time.
-    * @param time_source current time in seconds from simulator source.
+    * @param time_now current time in seconds from simulator source.
     * @return time elapsed since previous control signal calculation.
     */
     double getTimeSim(double time_now);
 
     /*!
     * Gets time elapsed since previous control signal calculation.
-    * @param time_source allows passing custom time source to function.
+    * @param time_now allows passing custom time source to function.
     * @return time elapsed since previous control signal calculation.
     */
     double getTimeElapsed(double time_now);

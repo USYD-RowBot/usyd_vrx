@@ -20,23 +20,37 @@ class ThrustController
 
     /*!
     * Configure linear thruster PID controller.
+    * @param Kp proportional gain.
+    * @param Ki integral gain.
+    * @param Kd derivative gain.
+    * @param max_integral maximum integral accumulation.
+    * @param use_sim_time use simulator time (true) or real time (false)
     */
     void initLinearPID(float Kp, float Ki, float Kd, float max_integral, 
       bool use_sim_time);
 
     /*!
     * Configure angular thruster PID controller.
+    * @param Kp proportional gain.
+    * @param Ki integral gain.
+    * @param Kd derivative gain.
+    * @param max_integral maximum integral accumulation.
+    * @param use_sim_time use simulator time (true) or real time (false)
     */
     void initAngularPID(float Kp, float Ki, float Kd, float max_integral, 
       bool use_sim_time);
 
     /*!
     * Update controller with target velocity data.
+    * @param linear_velocity desired linear x velocity.
+    * @param angle desired yaw.
     */
     void setTarget(double linear_velocity, double angle);
 
     /*!
     * Update controller with current odometry data from vehicle.
+    * @param linear_velocity current linear x velocity.
+    * @param angle current yaw.
     */
     void setOdometry(double linear_velocity, double angle);
 
