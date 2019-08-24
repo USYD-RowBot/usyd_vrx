@@ -16,17 +16,29 @@ ThrustController::ThrustController(float priority_yaw_range,
 {}
 
 void ThrustController::initLinearPID
-  (float Kp, float Ki, float Kd, float max_integral)
+  (float Kp, float Ki, float Kd, float max_integral, bool use_sim_time)
 {  
+  SimplePID::TIME_MODE time_mode;
+  if (use_sim_time)
+    time_mode = SimplePID::TIME_SIM;
+  else
+    time_mode = SimplePID::TIME_REAL;
+  
   linearPID_ = new usyd_vrx::SimplePID(Kp, Ki, Kd, max_integral, 
-    SimplePID::ERROR_STANDARD, SimplePID::TIME_SIM);
+    SimplePID::ERROR_STANDARD, time_mode);
 }
 
 void ThrustController::initAngularPID
-  (float Kp, float Ki, float Kd, float max_integral)
+  (float Kp, float Ki, float Kd, float max_integral, bool use_sim_time)
 {  
+  SimplePID::TIME_MODE time_mode;
+  if (use_sim_time)
+    time_mode = SimplePID::TIME_SIM;
+  else
+    time_mode = SimplePID::TIME_REAL;
+
   angularPID_ = new usyd_vrx::SimplePID(Kp, Ki, Kd, max_integral, 
-    SimplePID::ERROR_CIRCULAR, SimplePID::TIME_SIM);
+    SimplePID::ERROR_CIRCULAR, time_mode);
 }
 
 void ThrustController::setTarget

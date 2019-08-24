@@ -21,12 +21,14 @@ class ThrustController
     /*!
     * Configure linear thruster PID controller.
     */
-    void initLinearPID(float Kp, float Ki, float Kd, float max_integral);
+    void initLinearPID(float Kp, float Ki, float Kd, float max_integral, 
+      bool use_sim_time);
 
     /*!
     * Configure angular thruster PID controller.
     */
-    void initAngularPID(float Kp, float Ki, float Kd, float max_integral);
+    void initAngularPID(float Kp, float Ki, float Kd, float max_integral, 
+      bool use_sim_time);
 
     /*!
     * Update controller with target velocity data.

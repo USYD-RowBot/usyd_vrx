@@ -20,6 +20,7 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 void CourseController::setupThrustController()
 {
   float max_integral;
+  bool use_sim_time;
   float priority_yaw_range, motor_cmd_limit, neg_scale_factor;
   float lin_Kp, lin_Ki, lin_Kd;
   float ang_Kp, ang_Ki, ang_Kd;
@@ -35,14 +36,23 @@ void CourseController::setupThrustController()
   ros::param::get("~ang_Ki", ang_Ki);
   ros::param::get("~ang_Kd", ang_Kd);
   ros::param::get("~max_integral", max_integral);
+  ros::param::get("~use_sim_time", use_sim_time);
+
+  if (use_sim_time)
+    ROS_INFO("Using simulator time for thruster PID control.");
+  else
+    ROS_INFO("Using real time for thruster PID control.");
+  
 
   // Instantiate and configure thrust controller
   thrust_controller_ = new usyd_vrx::ThrustController(
     priority_yaw_range, motor_cmd_limit, neg_scale_factor);
 
   // Set up thruster PID controllers
-  thrust_controller_->initLinearPID(lin_Kp, lin_Ki, lin_Kd, max_integral);
-  thrust_controller_->initAngularPID(ang_Kp, ang_Ki, ang_Kd, max_integral);
+  thrust_controller_->initLinearPID(lin_Kp, lin_Ki, lin_Kd, 
+    max_integral, use_sim_time);
+  thrust_controller_->initAngularPID(ang_Kp, ang_Ki, ang_Kd, 
+    max_integral, use_sim_time);
 }
 
 void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
