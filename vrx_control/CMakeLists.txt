@@ -2,29 +2,24 @@ cmake_minimum_required(VERSION 2.8.3)
 project(vrx_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin package
+## is used, also find other catkin packages
 
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
   roscpp
-  rospy
   std_msgs
   vrx_msgs
+  tf
 )
-
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
-find_package(GEOS REQUIRED)
-
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -78,7 +73,7 @@ find_package(GEOS REQUIRED)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   geometry_msgs#   nav_msgs#   std_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -113,7 +108,7 @@ find_package(GEOS REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES vrx_control
-#  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp rospy std_msgs
+#  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
 
@@ -124,7 +119,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -143,6 +138,17 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/vrx_control_node.cpp)
 
+
+add_executable(wamv_course_controller
+  src/wamv_course_controller_node.cpp
+  src/CourseController.cpp
+  src/SimplePID.cpp
+  src/ThrustController.cpp
+)
+target_link_libraries(wamv_course_controller ${catkin_LIBRARIES})
+add_dependencies(wamv_course_controller ${catkin_EXPORTED_TARGETS})
+
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -158,33 +164,6 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(course_to_twist src/course_to_twist.cpp)
-target_link_libraries(course_to_twist ${catkin_LIBRARIES})
-add_dependencies(course_to_twist ${catkin_EXPORTED_TARGETS})
-
-add_executable(twist_to_drive src/twist_to_drive.cpp)
-target_link_libraries(twist_to_drive ${catkin_LIBRARIES})
-add_dependencies(twist_to_drive ${catkin_EXPORTED_TARGETS})
-
-add_executable(course_to_drive src/course_to_drive.cpp)
-target_link_libraries(course_to_drive ${catkin_LIBRARIES})
-add_dependencies(course_to_drive ${catkin_EXPORTED_TARGETS})
-
-add_executable(path_to_waypoints src/path_to_waypoints.cpp)
-target_link_libraries(path_to_waypoints ${catkin_LIBRARIES})
-add_dependencies(path_to_waypoints ${catkin_EXPORTED_TARGETS})
-
-add_executable(navigate_asv src/navigate_asv.cpp)
-target_link_libraries(navigate_asv ${catkin_LIBRARIES} ${GEOS_LIBRARIES})
-add_dependencies(navigate_asv ${catkin_EXPORTED_TARGETS})
-
-add_executable(navigate_vessel src/navigate_vessel.cpp)
-target_link_libraries(navigate_vessel ${catkin_LIBRARIES} ${GEOS_LIBRARIES})
-add_dependencies(navigate_vessel ${catkin_EXPORTED_TARGETS})
-
-
-
-
 #############
 ## Install ##
 #############
@@ -199,11 +178,18 @@ add_dependencies(navigate_vessel ${catkin_EXPORTED_TARGETS})
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+## Mark executables for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
+# install(TARGETS ${PROJECT_NAME}_node
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark libraries for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
+# install(TARGETS ${PROJECT_NAME}
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 # )
 
 ## Mark cpp header files for installation
