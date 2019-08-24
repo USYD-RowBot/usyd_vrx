@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <!--include file="$(find vrx_control)/launch/low_level_control.launch"/-->
-  <include file="$(find vrx_control_2)/launch/course_controller.launch"/>
+  <include file="$(find vrx_control)/launch/course_controller.launch"/>
 
   <node  name="wamv_waypoint_follow" pkg="vrx_control" type="navigate_wamv.py" output="screen">
     <param name="~speed" value="3.0"/> <!-- Target forwards speed, was 0.5 -->

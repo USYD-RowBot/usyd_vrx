@@ -8,7 +8,7 @@ This package contains nodes for controlling the course of a marine vehicle and f
 
 Run the course controller node with:
 
-	roslaunch vrx_control_2 course_controller.launch
+	roslaunch vrx_control course_controller.launch
 
 ## Config files
 
@@ -22,7 +22,7 @@ Configuration files are located in the config directory.
 
      Optional Arguments:
 
-     - **`overlying_config_file`** Provide a path to a different configuration file, e.g. `value="$(find vrx_control_2)/config/<your_config_file.yaml>"`. Default: `gazebo_wamv.yaml`.
+     - **`overlying_config_file`** Provide a path to a different configuration file, e.g. `value="$(find vrx_control)/config/<your_config_file.yaml>"`. Default: `gazebo_wamv.yaml`.
 
 ## Nodes
 
