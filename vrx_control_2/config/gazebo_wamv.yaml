@@ -4,12 +4,12 @@ neg_scale_factor:   0.666666
 priority_yaw_range: 1.570796 # pi/2
 
 # Linear PID controller gains
-lin_Kp: 1.5
+lin_Kp: 1.0
 lin_Ki: 0.0
 lin_Kd: 0.0
 
 # Angular PID controller gains
-ang_Kp: 1.5
+ang_Kp: 1.0
 ang_Ki: 0.0
 ang_Kd: 0.0
 

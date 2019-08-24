@@ -8,7 +8,9 @@ static int signf(float value)
 
 namespace usyd_vrx {
 
-SimplePID::SimplePID(float Kp, float Ki, float Kd, float max_integral, ERROR_TYPE error):
+SimplePID::SimplePID(float Kp, float Ki, float Kd, float max_integral, 
+  ERROR_TYPE error, TIME_MODE time):
+
   Kp_(Kp), Ki_(Ki), Kd_(Kd), max_integral_(fabs(max_integral)) 
 {
   switch (error) // Set error function type
@@ -19,9 +21,17 @@ SimplePID::SimplePID(float Kp, float Ki, float Kd, float max_integral, ERROR_TYP
     case ERROR_CIRCULAR:
       error_function_ = &SimplePID::errorCircular;
       break;
-    default:
-      error_function_ = &SimplePID::errorStandard; 
   }    
+
+  switch (time) // Set time function type
+  {
+    case TIME_REAL:
+      time_function_ = &SimplePID::getTimeReal;  
+      break;
+    case TIME_SIM:
+      time_function_ = &SimplePID::getTimeSim;
+      break;
+  }
 
   SimplePID::resetPID();
 }
@@ -33,7 +43,8 @@ void SimplePID::resetPID()
   setpoint_       = 0;
   observation_    = 0;
 
-  time_prev_ = std::chrono::high_resolution_clock::now();
+  time_prev_real_ = std::chrono::high_resolution_clock::now();
+  time_prev_sim_  = 0;
 }
 
 void SimplePID::setSetpoint(double setpoint)
@@ -57,18 +68,50 @@ void SimplePID::accumulate(double error, double dt)
   error_integral_ = new_error_integral_;
 }
 
-double SimplePID::getControlSignal()
+double SimplePID::getTimeReal(double time_now)
 {
-  auto time_now = std::chrono::high_resolution_clock::now();
-  auto time_elapsed = std::chrono::duration_cast
-    <std::chrono::duration<double>>(time_now - time_prev_);
+  auto time_now_real = std::chrono::high_resolution_clock::now();
+  auto time_elapsed  = std::chrono::duration_cast
+    <std::chrono::duration<double>>(time_now_real - time_prev_real_);
 
   // Time (s) elapsed since previous control signal calculation
   double dt = (double)time_elapsed.count(); 
-  time_prev_ = time_now;
+  time_prev_real_ = time_now_real;
+
+  return dt;
+}
+
+double SimplePID::getTimeSim(double time_now)
+{
+  double dt; // Time (s) elapsed since previous control signal calculation
+
+  if (time_prev_sim_ > 0) // If we have a sim time recorded
+  {
+    dt = time_now - time_prev_sim_;
+    time_prev_sim_ = time_now;
+  }
+  else // If no sim time has been recorded yet
+  {
+    dt = 0.00001; // Ignore very first elapsed time
+    time_prev_sim_ = time_now;
+  }  
+
+  return dt;
+}
+
+double SimplePID::getTimeElapsed(double time_now)
+{
+  // Call time function through pointer
+  return (this->*time_function_)(time_now); 
+}
+
+double SimplePID::getControlSignal(double time_now)
+{
+  // Time (s) elapsed since previous control signal calculation
+  double dt = SimplePID::getTimeElapsed(time_now);
 
   // Calculate P,I and D terms
-  double error = (this->*error_function_)(); // Call error function through pointer
+  double error = SimplePID::getError();
   SimplePID::accumulate(error, dt);
   double error_derivative = (error - prev_error_)/dt;
 

@@ -18,14 +18,15 @@ ThrustController::ThrustController(float priority_yaw_range,
 void ThrustController::initLinearPID
   (float Kp, float Ki, float Kd, float max_integral)
 {  
-  linearPID_ = new usyd_vrx::SimplePID(Kp, Ki, Kd, max_integral);
+  linearPID_ = new usyd_vrx::SimplePID(Kp, Ki, Kd, max_integral, 
+    SimplePID::ERROR_STANDARD, SimplePID::TIME_SIM);
 }
 
 void ThrustController::initAngularPID
   (float Kp, float Ki, float Kd, float max_integral)
 {  
   angularPID_ = new usyd_vrx::SimplePID(Kp, Ki, Kd, max_integral, 
-    SimplePID::ERROR_CIRCULAR);
+    SimplePID::ERROR_CIRCULAR, SimplePID::TIME_SIM);
 }
 
 void ThrustController::setTarget
@@ -69,10 +70,11 @@ double ThrustController::constrainThrust(double thrust)
   return thrust;
 }
 
-void ThrustController::computeControlSignals(float &thrust_right, float &thrust_left)
+void ThrustController::computeControlSignals(float &thrust_right, float &thrust_left,
+  double sim_time)
 {
-  double lin_ctrl_signal = linearPID_ ->getControlSignal();
-  double ang_ctrl_signal = angularPID_->getControlSignal();
+  double lin_ctrl_signal = linearPID_ ->getControlSignal(sim_time);
+  double ang_ctrl_signal = angularPID_->getControlSignal(sim_time);
 
   // Generate thrust commands from PID control signals and constrain
   thrust_right = (float)

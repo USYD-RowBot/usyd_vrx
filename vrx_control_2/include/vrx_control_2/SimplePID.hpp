@@ -11,6 +11,9 @@ class SimplePID
     //! Enumerator for defining error calculation type.
     enum ERROR_TYPE {ERROR_STANDARD, ERROR_CIRCULAR};
 
+    //! Enumerator for defining timing source for PID control.
+    enum TIME_MODE {TIME_REAL, TIME_SIM};
+
     /*!
     * Constructor.
     * @param Kp the proportional term gain.
@@ -22,7 +25,8 @@ class SimplePID
     *   standard or circular (wrapping error from -PI to PI).
     */
     SimplePID(float Kp, float Ki, float Kd, float max_integral, 
-      ERROR_TYPE error=ERROR_STANDARD);
+      ERROR_TYPE error=ERROR_STANDARD,
+      TIME_MODE time=TIME_REAL);
 
     /*!
     * Updates PID controller with a new setpoint.
@@ -40,7 +44,7 @@ class SimplePID
     * Calculates control signal based on setpoint, observation and PID gains.
     * @return new control signal; the PID controller output.
     */
-    double getControlSignal();
+    double getControlSignal(double time_now);
 
     /*!
     * Resets PID controller private variables.
@@ -69,8 +73,11 @@ class SimplePID
     //! Integral of the error term.
     double error_integral_;
 
-    //! Time at which previous control signal was calculated.
-    std::chrono::time_point<std::chrono::high_resolution_clock> time_prev_;
+    //! Real time at which previous control signal was calculated.
+    std::chrono::time_point<std::chrono::high_resolution_clock> time_prev_real_;
+
+    //! Simulator time at which previous control signal was calculated.
+    double time_prev_sim_;
 
     //! Maximum allowed value of integral of error term.
     float max_integral_;
@@ -83,6 +90,30 @@ class SimplePID
 
     //! Function pointer to error calculation function.
     double (SimplePID::* error_function_) ();
+
+    //! Function pointer to time calculation function.
+    double (SimplePID::* time_function_) (double);
+
+    /*!
+    * Gets elapsed real time.
+    * @param time_source allows passing custom time source to function.
+    * @return time elapsed since previous control signal calculation.
+    */
+    double getTimeReal(double time_now=0);
+
+    /*!
+    * Gets elapsed simulator time.
+    * @param time_source current time in seconds from simulator source.
+    * @return time elapsed since previous control signal calculation.
+    */
+    double getTimeSim(double time_now);
+
+    /*!
+    * Gets time elapsed since previous control signal calculation.
+    * @param time_source allows passing custom time source to function.
+    * @return time elapsed since previous control signal calculation.
+    */
+    double getTimeElapsed(double time_now);
 
     /*!
     * Updates integral term by accumulating error.

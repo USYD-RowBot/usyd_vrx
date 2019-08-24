@@ -40,8 +40,12 @@ class ThrustController
 
     /*!
     * Calculate next PID outputs for thruster controls.
+    * @param thrust_right float to store right thrust command in.
+    * @param thrust_left float to store left thrust command in.
+    * @param sim_time current ROS time.
     */
-    void computeControlSignals(float &thrust_right, float &thrust_left);
+    void computeControlSignals(float &thrust_right, float &thrust_left,
+      double sim_time=0);
 
   private:
     /*! 

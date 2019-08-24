@@ -88,8 +88,10 @@ void CourseController::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
 
 void CourseController::updateController()
 {
+  double sim_time = ros::Time::now().toSec();
+
   float thrust_right, thrust_left;   // Get new thrust commands
-  thrust_controller_->computeControlSignals(thrust_right, thrust_left);
+  thrust_controller_->computeControlSignals(thrust_right, thrust_left, sim_time);
 
   std_msgs::Float32 msg_thrust_right; // Populate thrust command messages
   std_msgs::Float32 msg_thrust_left;
