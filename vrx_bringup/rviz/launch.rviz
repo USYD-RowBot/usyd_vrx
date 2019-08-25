@@ -228,6 +228,14 @@ Visualization Manager:
       Topic: waypoints
       Unreliable: false
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization_marker
+      Name: Marker
+      Namespaces:
+        basic text: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -256,25 +264,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 88.42286682128906
+      Distance: 81.05293273925781
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.4360008239746094
-        Y: 10.788827896118164
-        Z: 9.5367431640625e-7
+        X: 2.5153732299804688
+        Y: -1.1568729877471924
+        Z: 3.147125244140625e-5
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7003987431526184
+      Pitch: 0.4053990840911865
       Target Frame: base_link
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.555382490158081
+      Yaw: 3.670391082763672
     Saved: ~
 Window Geometry:
   Displays:
@@ -292,5 +300,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 60
-  Y: 4
+  X: 465
+  Y: 122

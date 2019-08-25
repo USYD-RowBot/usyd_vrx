@@ -10,6 +10,11 @@ from vrx_msgs.msg import ObjectArray, Object
 from geometry_msgs.msg import Pose, Vector3, Quaternion
 
 
+THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
+DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
+EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
+
+
 class Obstacle():
     """Obstacle Class containing information and functions for different detected Obstacles"""
     def __init__(self,tf_broadcaster,tf_listener,object_server,frame_id):
@@ -33,6 +38,7 @@ class Obstacle():
 
 
     def classify(self):
+        """Here is where you request the cameras to classify the buoy"""
         if self.radius < 1.6:
             self.object.types = ["buoy"]
             self.object.best_guess = "buoy"
@@ -41,7 +47,6 @@ class Obstacle():
             self.object.types = ["dock"]
             self.object.best_guess = "dock"
             self.object.confidences = [1]
-
         else:
             self.object.types = ["land"]
             self.object.best_guess = "land"
@@ -91,7 +96,7 @@ class ObjectServer():
         #print(my_map)
         #Put map into a list of points.
         for i in my_map.data:
-            if i > 40: #If the value of the cell is > 40 append
+            if i > THRESHOLD: #If the value of the cell is > THRESHOLD append
                 points_x.append(r*info.resolution)
                 points_y.append(c*info.resolution)
                 my_data.append((r*info.resolution,c*info.resolution))
@@ -103,10 +108,9 @@ class ObjectServer():
             print("Empty Map")
             return
         #Apply a distance threshold Cluster on the objects.
-        thresh = 3
         #print(my_data,thresh)
         try:
-            clust = hcluster.fclusterdata(my_data, thresh, criterion="distance")
+            clust = hcluster.fclusterdata(my_data, DIST_THRESH, criterion="distance")
         except Exception:
             print(my_data,thresh)
         clusters = {}
@@ -191,6 +195,17 @@ class ObjectServer():
             #print(i.object)
         self.pub.publish(objectlist)
 
+    def cleanup(self):
+        """Method to clean up any objects that are old"""
+        expire_time = EXPIRY_TIME
+        #print("Cleaning")
+        for i in self.objects:
+            time_diff = rospy.Time.now().secs - i.time.secs
+            #print(i.object.frame_id, time_diff)
+            if time_diff > expire_time:
+                rospy.logdebug("Removing expired Object")
+                self.objects.remove(i)
+
 
 
 if __name__ == "__main__":
@@ -201,7 +216,7 @@ if __name__ == "__main__":
     rospy.sleep(1)
     while not rospy.is_shutdown():
         object_server.process_map();
-        #object_server.cleanup()
+        object_server.cleanup()
         object_server.classify_objects()
         object_server.broadcast_objects()
         rate.sleep()
