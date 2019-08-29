@@ -16,9 +16,13 @@ class ThrustController
     *   yaw in which to prioritise angular velocity over linear velocity.
     * @param motor_cmd_limit maximum motor command value.
     * @param neg_scale_factor factor by which to scale negative thrust commands.
+    * @param strafe_thrust value of thrust to use when strafing.
+    * @param station_tolerance_ang angle error threshold under which station angle
+    *   is considered aligned.
     */
     ThrustController(char thrust_config, float priority_yaw_range, float motor_cmd_limit, 
-      float lateral_scale_factor, float neg_scale_factor);
+      float lateral_scale_factor, float neg_scale_factor, float strafe_thrust, 
+      float station_tolerance_ang);
 
     /*!
     * Destructor.
@@ -48,11 +52,22 @@ class ThrustController
       bool use_sim_time);
 
     /*!
+    * Resets PID variables.
+    */
+    void resetPIDs();
+
+    /*!
     * Update controller with target velocity data.
     * @param linear_velocity desired linear x velocity.
-    * @param angle desired yaw.
+    * @param angle desired yaw (rad).
     */
     void setTarget(double linear_velocity, double angle);
+
+    /*!
+    * Set ratio of thruster strength in order to strafe in direction given.
+    * @param angle desired direction (rad) to strafe towards.
+    */
+    void setStrafeProportions(double angle);
 
     /*!
     * Update controller with current odometry data from vehicle.
@@ -62,14 +77,38 @@ class ThrustController
     void setOdometry(double linear_velocity, double angle);
 
     /*!
-    * Calculate next PID outputs for thruster controls.
+    * Checks whether the desired station angle has been reached.
+    * @return true if angle hit, false otherwise.
+    */
+    bool stationAngleHit();
+
+    /*!
+    * Use PIDs to set thruster values in traversal mode.
+    * @param thrust_right float to store right thrust command in.
+    * @param thrust_left float to store left thrust command in.
+    * @param sim_time current ROS time.
+    */
+    void getControlSignalTraverse(
+      float &thrust_right, float &thrust_left, double sim_time=0);
+
+    /*!
+    * Use angular PID to set thruster values in station keeping rotation.
     * @param thrust_right float to store right thrust command in.
     * @param thrust_left float to store left thrust command in.
     * @param thrust_lat float to store lateral thrust command in.
     * @param sim_time current ROS time.
     */
-    void computeControlSignals(float &thrust_right, float &thrust_left,
-      float &thrust_lat, double sim_time=0);
+    void getControlSignalRotate(float &thrust_right, float &thrust_lat, 
+      double sim_time=0);
+
+      /*!
+    * Set thruster values in station keeping strafing.
+    * @param thrust_right float to store right thrust command in.
+    * @param thrust_left float to store left thrust command in.
+    * @param thrust_lat float to store lateral thrust command in.
+    */
+    void getStrafingThrust(float &thrust_right, float &thrust_left,
+      float &thrust_lat);
 
   private:
     //! Letter indicating thrust configuration. "H" differential, "T" lateral.
@@ -95,6 +134,24 @@ class ThrustController
 
     //! PID controller for angular velocity.
     usyd_vrx::SimplePID* angularPID_;
+
+    //! Current vessel yaw.
+    float vessel_yaw_;
+
+    //! Target station yaw.
+    float station_yaw_;
+
+    //! Angular error beneath which station is deemed rotationally aligned.
+    float station_tolerance_ang_;
+
+    //! Proportion of strafe speed to strafe at in relative x direction.
+    float strafe_x_;
+
+    //! Proportion of strafe speed to strafe at in relative y direction.
+    float strafe_y_;
+
+    //! Constant thrust value to use for strafing.
+    float strafe_thrust_;
 
     /*!
     * Constrain thrust to motor command limit and negative scaling.

@@ -100,9 +100,13 @@ void WaypointFollower::setNextWaypoint()
     tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);  
     yaw_next_ = (float) yaw;
 
-    ROS_INFO_STREAM("WpFollower: Waypoint reached at x=" << wp_prev_.x
-      << ", y=" << wp_prev_.y << ". Now heading to waypoint " 
-          << WaypointFollower::getWaypointString() << ".");
+    if (wp_index_ == 0)
+      ROS_INFO_STREAM("WpFollower: Now heading to waypoint " 
+        << WaypointFollower::getWaypointString() << ".");
+    else
+      ROS_INFO_STREAM("WpFollower: Waypoint reached at x=" << wp_prev_.x
+        << ", y=" << wp_prev_.y << ". Now heading to waypoint " 
+        << WaypointFollower::getWaypointString() << ".");
   }
   else
   {

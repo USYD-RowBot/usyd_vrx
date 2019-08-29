@@ -10,6 +10,7 @@
 #include "geometry_msgs/Vector3Stamped.h"
 #include "geometry_msgs/Twist.h"
 #include "ThrustController.hpp"
+#include "ThrustSM.hpp"
 
 namespace usyd_vrx {
 
@@ -52,6 +53,9 @@ class CourseController
     //! ROS publisher for right thruster.
     ros::Publisher  pub_thrust_right_;
 
+    //! ROS publisher for right thruster angle.
+    ros::Publisher  pub_thrust_right_angle_;
+
     //! ROS publisher for left thruster.
     ros::Publisher  pub_thrust_left_;
 
@@ -64,6 +68,9 @@ class CourseController
     //! Pointer to thrust controller to provide commands to thrusters.
     usyd_vrx::ThrustController* thrust_controller_;
 
+    //! State machine for thrust operations.
+    usyd_vrx::ThrustSM* thrust_sm_;
+
     //! Letter indicating thrust configuration. "H" differential, "T" lateral.
     char thrust_config_;
 
@@ -71,6 +78,13 @@ class CourseController
     * Instantiate and configure thrust controller.
     */
     void setupThrustController();
+
+    /*!
+    * Publish message to thrusters to change angle.
+    * @state current state of state machine, either THRUST_RECONFIG_STRAIGHT or
+    *   THRUST_RECONFIG_LATERAL are viable.
+    */
+    void reconfigureThrusters(ThrustSM::THRUST_STATE state);
 
     /*!
     * Callback method for odometry data.

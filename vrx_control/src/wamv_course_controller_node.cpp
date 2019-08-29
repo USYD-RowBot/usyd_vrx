@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   ros::param::get("~PID_rate", PID_rate);
 
   // Set up heartbeat timer
-  hbeat_received_ = false;
+  hbeat_received_ = true;
   ros::Subscriber sub_hbeat = nh.subscribe("/cmd_course", 1, hbeatCb);
   double hbeat_target_time = ros::Time::now().toSec() + heartbeat_duration;  
 
@@ -34,8 +34,7 @@ int main(int argc, char **argv)
       else
       {
         ROS_INFO("CourseController: Lost heartbeat on course commands. Stopping vessel.");
-        vrx_msgs::Course course_msg; // Fields initialise to zero speed + yaw
-        vrx_msgs::CourseConstPtr course_ptr(&course_msg);        
+        vrx_msgs::CourseConstPtr course_ptr(new vrx_msgs::Course());        
         course_controller.courseCb(course_ptr); // Tell course controller to stop
       }
 

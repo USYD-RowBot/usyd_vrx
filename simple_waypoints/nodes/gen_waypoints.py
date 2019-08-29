@@ -174,7 +174,7 @@ class PublishWaypoints():
 
         """
         route_msg = WaypointRoute()
-        route_msg.speed_factor = 1.0
+        route_msg.speed = 4.0
 
         #header = Header()
         #header.stamp = rospy.Time.now()

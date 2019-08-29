@@ -2,12 +2,17 @@
 heartbeat_duration:   1.0  # secs
 PID_rate:             10.0 # Hz
 
-# Thrust controller configuration
+# Thrust controller general config
 motor_cmd_limit:      2.0
-thrust_config:        'H'
-lateral_scale_factor: 0.7
 neg_scale_factor:     0.666666
-priority_yaw_range:   1.570796 
+priority_yaw_range:   1.57
+
+# Station keeping config
+lateral_scale_factor:   2.0 # TODO tweak until accurately strafing
+strafe_thrust:          0.5
+strafe_duration:        3.0   # secs
+reconfig_duration:      1.0   # secs
+station_tolerance_ang:  0.175 # rad (0.175 rad ~= 10 deg)
 
 # Linear PID controller gains
 lin_Kp: 1.0
@@ -15,10 +20,10 @@ lin_Ki: 0.0
 lin_Kd: 0.0
 
 # Angular PID controller gains
-ang_Kp: 1.0
+ang_Kp: 0.9
 ang_Ki: 0.0
 ang_Kd: 0.0
 
 # General PID configuration
-use_sim_time: true
+use_sim_time: true  # Use simulator time (true) or real time (false)
 max_integral: 5.0
