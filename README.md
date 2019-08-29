@@ -88,11 +88,11 @@ To test with an example path:
 ```roslaunch simple_waypoints simple_waypoints.launch```
 
 ### Headless mode
-Wherever you see 
+Wherever you see
 
 ```roslaunch vrx_bringup sensored_boat.launch```
 
-, you can replace it with 
+, you can replace it with
 
 ```roslaunch vrx_bringup sensored_boat_nogui.launch```
 

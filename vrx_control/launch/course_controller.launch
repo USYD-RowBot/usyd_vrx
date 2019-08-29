@@ -1,13 +1,13 @@
 <launch>
 
   <!-- Default configuration is for wamv in Gazebo simulation. -->
-  <arg name="default_config_file" value="$(find vrx_control_2)/config/gazebo_wamv_course_controller.yaml" />
+  <arg name="default_config_file" value="$(find vrx_control)/config/gazebo_wamv_course_controller.yaml" />
 
   <!-- Provide a user-specified config file name to overwrite the default configuration. -->
   <arg name="overlying_config_file" default="$(arg default_config_file)" />
 
   <!-- Launch wamv course controller-->
-  <node pkg="vrx_control_2" type="wamv_course_controller" name="wamv_course_controller" output="screen">
+  <node pkg="vrx_control" type="wamv_course_controller" name="wamv_course_controller" output="screen">
     <rosparam command="load" file="$(arg default_config_file)" />
     <rosparam command="load" file="$(arg overlying_config_file)" />
   </node>
