@@ -28,6 +28,12 @@ class CourseController
     ~CourseController();
 
     /*!
+    * Callback method for course commands.
+    * @param msg the received message.
+    */
+    void courseCb(const vrx_msgs::Course::ConstPtr& msg);
+
+    /*!
     * Calculates next thruster PID controller outputs. To be run 
     * at a consistent rate.
     */
@@ -65,12 +71,6 @@ class CourseController
     * Instantiate and configure thrust controller.
     */
     void setupThrustController();
-
-    /*!
-    * Callback method for course commands.
-    * @param msg the received message.
-    */
-    void courseCb(const vrx_msgs::Course::ConstPtr& msg);
 
     /*!
     * Callback method for odometry data.
