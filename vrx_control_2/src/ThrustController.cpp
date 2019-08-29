@@ -1,4 +1,4 @@
-#include "vrx_control_2/ThrustController.hpp"
+#include "ThrustController.hpp"
 
 static int signf(float value)
 {
@@ -7,13 +7,22 @@ static int signf(float value)
 
 namespace usyd_vrx {
 
-ThrustController::ThrustController(float priority_yaw_range, 
-  float motor_cmd_limit, float neg_scale_factor):
+ThrustController::ThrustController(char thrust_config,
+  float priority_yaw_range, float motor_cmd_limit, 
+  float lateral_scale_factor, float neg_scale_factor):
 
+  thrust_config_(thrust_config),
   priority_yaw_range_(fabs(priority_yaw_range)), 
   motor_cmd_limit_(fabs(motor_cmd_limit)),
+  lateral_scale_factor_(fabs(lateral_scale_factor)),
   neg_scale_factor_(fabs(neg_scale_factor))
 {}
+
+ThrustController::~ThrustController()
+{
+  delete linearPID_;  // Delete objects created with "new" keyword
+  delete angularPID_; 
+}
 
 void ThrustController::initLinearPID
   (float Kp, float Ki, float Kd, float max_integral, bool use_sim_time)
@@ -82,8 +91,8 @@ double ThrustController::constrainThrust(double thrust)
   return thrust;
 }
 
-void ThrustController::computeControlSignals(float &thrust_right, float &thrust_left,
-  double sim_time)
+void ThrustController::computeControlSignals(float &thrust_right, 
+  float &thrust_left, float &thrust_lat, double sim_time)
 {
   double lin_ctrl_signal = linearPID_ ->getControlSignal(sim_time);
   double ang_ctrl_signal = angularPID_->getControlSignal(sim_time);
@@ -93,6 +102,12 @@ void ThrustController::computeControlSignals(float &thrust_right, float &thrust_
     ThrustController::constrainThrust(lin_ctrl_signal + ang_ctrl_signal);        
   thrust_left  = (float)
     ThrustController::constrainThrust(lin_ctrl_signal - ang_ctrl_signal);  
+
+  if (thrust_config_ == 'T') // Lateral thrust configuration
+  {
+    thrust_lat = (float) ThrustController::constrainThrust(
+      -lateral_scale_factor_*ang_ctrl_signal); 
+  }  
 }
 
 }

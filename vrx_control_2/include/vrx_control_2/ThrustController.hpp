@@ -1,7 +1,7 @@
 #pragma once
 
 #include <math.h>
-#include "vrx_control_2/SimplePID.hpp"
+#include "SimplePID.hpp"
 
 namespace usyd_vrx {
 
@@ -10,13 +10,20 @@ class ThrustController
   public:
     /*!
     * Constructor.
+    * @param thrust_config indicatines thrust configuration. "H" is differential, 
+    *   "T" is lateral.
     * @param priority_yaw_range range of yaw values about the desired course
     *   yaw in which to prioritise angular velocity over linear velocity.
     * @param motor_cmd_limit maximum motor command value.
     * @param neg_scale_factor factor by which to scale negative thrust commands.
     */
-    ThrustController(float priority_yaw_range, float motor_cmd_limit,
-      float neg_scale_factor);
+    ThrustController(char thrust_config, float priority_yaw_range, float motor_cmd_limit, 
+      float lateral_scale_factor, float neg_scale_factor);
+
+    /*!
+    * Destructor.
+    */
+    ~ThrustController();
 
     /*!
     * Configure linear thruster PID controller.
@@ -58,12 +65,16 @@ class ThrustController
     * Calculate next PID outputs for thruster controls.
     * @param thrust_right float to store right thrust command in.
     * @param thrust_left float to store left thrust command in.
+    * @param thrust_lat float to store lateral thrust command in.
     * @param sim_time current ROS time.
     */
     void computeControlSignals(float &thrust_right, float &thrust_left,
-      double sim_time=0);
+      float &thrust_lat, double sim_time=0);
 
   private:
+    //! Letter indicating thrust configuration. "H" differential, "T" lateral.
+    char thrust_config_;
+
     /*! 
     * Range of yaw values about the desired course yaw in which to 
     *   prioritise angular velocity over linear velocity.
@@ -72,6 +83,9 @@ class ThrustController
 
     //! Maximum motor command value.
     float motor_cmd_limit_;
+
+    //! Factor by which to scale lateral thrust commands.
+    float lateral_scale_factor_;
 
     //! Factor by which to scale negative thrust commands.
     float neg_scale_factor_;

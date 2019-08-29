@@ -4,12 +4,12 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include "vrx_control_2/ThrustController.hpp"
 #include "std_msgs/Float32.h"
 #include "nav_msgs/Odometry.h"
 #include "vrx_msgs/Course.h"
 #include "geometry_msgs/Vector3Stamped.h"
 #include "geometry_msgs/Twist.h"
+#include "ThrustController.hpp"
 
 namespace usyd_vrx {
 
@@ -21,6 +21,11 @@ class CourseController
     * @param nh the ROS node handle.
     */
     CourseController(ros::NodeHandle& nh);
+
+    /*!
+    * Destructor.
+    */
+    ~CourseController();
 
     /*!
     * Calculates next thruster PID controller outputs. To be run 
@@ -44,11 +49,17 @@ class CourseController
     //! ROS publisher for left thruster.
     ros::Publisher  pub_thrust_left_;
 
+    //! ROS publisher for lateral thruster.
+    ros::Publisher  pub_thrust_lat_;
+
     //! ROS transform listener.
     tf::TransformListener* tf_listener_;
 
     //! Pointer to thrust controller to provide commands to thrusters.
     usyd_vrx::ThrustController* thrust_controller_;
+
+    //! Letter indicating thrust configuration. "H" differential, "T" lateral.
+    char thrust_config_;
 
     /*!
     * Instantiate and configure thrust controller.

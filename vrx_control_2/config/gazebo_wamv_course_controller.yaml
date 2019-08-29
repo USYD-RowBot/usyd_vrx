@@ -1,7 +1,9 @@
 # Thrust controller configuration
-motor_cmd_limit:    2.0
-neg_scale_factor:   0.666666
-priority_yaw_range: 1.570796 # pi/2
+motor_cmd_limit:      2.0
+thrust_config:        'H'
+lateral_scale_factor: 0.7
+neg_scale_factor:     0.666666
+priority_yaw_range:   1.570796 
 
 # Linear PID controller gains
 lin_Kp: 1.0

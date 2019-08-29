@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "vrx_control_2/CourseController.hpp"
+#include "CourseController.hpp"
 
 int main(int argc, char **argv)
 {

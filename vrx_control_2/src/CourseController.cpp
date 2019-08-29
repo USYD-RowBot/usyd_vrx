@@ -1,4 +1,4 @@
-#include "vrx_control_2/CourseController.hpp"
+#include "CourseController.hpp"
 
 namespace usyd_vrx {
 
@@ -10,6 +10,9 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
   pub_thrust_right_ = nh_.advertise<std_msgs::Float32>("/right_thrust_cmd", 1);
   pub_thrust_left_  = nh_.advertise<std_msgs::Float32>("/left_thrust_cmd", 1);
 
+  if (thrust_config_ == 'T') // Lateral thruster configuration
+    pub_thrust_lat_ = nh_.advertise<std_msgs::Float32>("/lateral_thrust_cmd", 1);
+
   // Set up course command and odometry subscribers
   sub_course_ = nh_.subscribe("/cmd_course", 1, &CourseController::courseCb, this);
   sub_odom_   = nh_.subscribe("/p3d_wamv", 1, &CourseController::odomCb, this);
@@ -17,17 +20,27 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
   tf_listener_ = new tf::TransformListener();
 }
 
+CourseController::~CourseController()
+{
+  delete tf_listener_; // Delete objects created with "new" keyword
+  delete thrust_controller_;
+}
+
 void CourseController::setupThrustController()
 {
   float max_integral;
   bool use_sim_time;
-  float priority_yaw_range, motor_cmd_limit, neg_scale_factor;
+  std::string thrust_config;
+  float priority_yaw_range, motor_cmd_limit;
+  float lateral_scale_factor, neg_scale_factor;
   float lin_Kp, lin_Ki, lin_Kd;
   float ang_Kp, ang_Ki, ang_Kd;
 
   // Get ROS parameters from config file.
+  ros::param::get("~thrust_config", thrust_config);
   ros::param::get("~priority_yaw_range", priority_yaw_range);
   ros::param::get("~motor_cmd_limit", motor_cmd_limit);
+  ros::param::get("~lateral_scale_factor", lateral_scale_factor);
   ros::param::get("~neg_scale_factor", neg_scale_factor);
   ros::param::get("~lin_Kp", lin_Kp);
   ros::param::get("~lin_Ki", lin_Ki);
@@ -38,15 +51,18 @@ void CourseController::setupThrustController()
   ros::param::get("~max_integral", max_integral);
   ros::param::get("~use_sim_time", use_sim_time);
 
-  if (use_sim_time)
-    ROS_INFO("Using simulator time for thruster PID control.");
-  else
-    ROS_INFO("Using real time for thruster PID control.");
-  
+  thrust_config_ = thrust_config[0]; // Convert to char
+  ROS_INFO_STREAM("CourseController: Vessel is using " << thrust_config_ 
+    << " thruster configuration.");
 
+  if (use_sim_time)
+    ROS_INFO("CourseController: Using simulator time for thruster PID control.");
+  else
+    ROS_INFO("CourseController: Using real time for thruster PID control.");
+  
   // Instantiate and configure thrust controller
-  thrust_controller_ = new usyd_vrx::ThrustController(
-    priority_yaw_range, motor_cmd_limit, neg_scale_factor);
+  thrust_controller_ = new usyd_vrx::ThrustController(thrust_config_,
+    priority_yaw_range, motor_cmd_limit, lateral_scale_factor, neg_scale_factor);
 
   // Set up thruster PID controllers
   thrust_controller_->initLinearPID(lin_Kp, lin_Ki, lin_Kd, 
@@ -63,7 +79,7 @@ void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
 
 void CourseController::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-  // Convert from quaternion to RPY to get course
+  // Convert from quaternion to RPY to get yaw
   tf::Quaternion quat;
   quat.setValue(msg->pose.pose.orientation.x, 
                 msg->pose.pose.orientation.y, 
@@ -100,8 +116,9 @@ void CourseController::updateController()
 {
   double sim_time = ros::Time::now().toSec();
 
-  float thrust_right, thrust_left;   // Get new thrust commands
-  thrust_controller_->computeControlSignals(thrust_right, thrust_left, sim_time);
+  float thrust_right, thrust_left, thrust_lat; // Get new thrust commands
+  thrust_controller_->computeControlSignals(
+    thrust_right, thrust_left, thrust_lat, sim_time);
 
   std_msgs::Float32 msg_thrust_right; // Populate thrust command messages
   std_msgs::Float32 msg_thrust_left;
@@ -110,6 +127,13 @@ void CourseController::updateController()
   
   pub_thrust_right_.publish(msg_thrust_right); // Publish to the thrusters
   pub_thrust_left_.publish(msg_thrust_left);
+
+  if (thrust_config_ == 'T') // Lateral thruster configuration
+  {
+    std_msgs::Float32 msg_thrust_lat; // Populate lateral thrust command msg
+    msg_thrust_lat.data = float(thrust_lat);
+    pub_thrust_lat_.publish(msg_thrust_lat); // Publish to the thruster
+  }
 }
 
 }

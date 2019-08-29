@@ -12,7 +12,8 @@ import numpy as np
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseArray, Pose, PoseStamped
 from nav_msgs.msg import Path
-from std_msgs.msg import Bool
+from std_msgs.msg import Empty
+from vrx_msgs.msg import Waypoint, WaypointRoute
 import pymap3d
 import json
 
@@ -31,13 +32,13 @@ class PublishWaypoints():
         geo = rospy.get_param("~geo")
         recycle = rospy.get_param("~recycle", False)
         if namespace is None or namespace == "":
-            waypoint_topic = '/waypoints'
+            waypoint_topic = '/cmd_waypoints'
             request_topic = '/request_waypoints'
         else:
-            waypoint_topic = '/' + namespace + '/waypoints'
+            waypoint_topic = '/' + namespace + '/cmd_waypoints'
             request_topic = '/' + namespace + '/request_waypoints'
-        self.wpPub_ = rospy.Publisher(waypoint_topic, Path, queue_size=1, latch=True)
-        rospy.Subscriber(request_topic, Bool, self.reqCallback)
+        self.wpPub_ = rospy.Publisher(waypoint_topic, WaypointRoute, queue_size=1, latch=True)
+        rospy.Subscriber(request_topic, Empty, self.reqCallback)
 
         self.geo = geo
         self.recycle = recycle
@@ -123,6 +124,45 @@ class PublishWaypoints():
 
         return waypointsENU
 
+    def get_from_geojson(self, filename):
+        """ Loads the waypoints from a geojson
+
+        Args:
+            filename (str): The geojson file
+
+        Returns:
+            None
+
+        """
+        with open(filename, "r") as f:
+            geo_dict = json.load(f)
+        for feature in geo_dict['features']:
+            wp_list = feature['geometry']['coordinates']
+        waypoint_array = np.asarray(wp_list)
+        # GEOJSON always in geodetic coordinates
+        self.publish_waypoints(self.geo_to_ENU(waypoint_array))
+
+    def geo_to_ENU(self, wpointsGEO):
+        """Converts geodetic waypoints to ENU
+
+        Args:
+            wpointsGEO (Nx3 numpy array): a numpy array of geodetic coordinates
+
+        Returns:
+            Nx2 numpy array: ENU coordinates
+
+        """
+        lat0 = rospy.get_param('datum_latitude')
+        long0 = rospy.get_param('datum_longitude')
+        alt0 = rospy.get_param('datum_altitude')
+
+        [E, N, U] = pymap3d.geodetic2enu(wpointsGEO[n, 0], wpointsGEO[n, 1], alt0, lat0, long0, alt0)
+        # IF SIM
+        waypointsENU[n, 0] = E
+        waypointsENU[n, 1] = N
+
+        return waypointsENU
+
     def publish_waypoints(self, waypoint_array):
         """Publishes the waypoints so the
 
@@ -133,20 +173,28 @@ class PublishWaypoints():
             None
 
         """
-        path_msg = Path()
-        header = Header()
-        header.stamp = rospy.Time.now()
-        header.frame_id = "map"
-        path_msg.header = header
-        pose_list = []
+        route_msg = WaypointRoute()
+        route_msg.speed_factor = 1.0
+
+        #header = Header()
+        #header.stamp = rospy.Time.now()
+        #header.frame_id = "map"
+        #path_msg.header = header
+
+        waypoint_list = []
         for n in range(waypoint_array.shape[0]):
-            ps = PoseStamped()
-            ps.header = header
-            ps.pose.position.x = waypoint_array[n, 0]
-            ps.pose.position.y = waypoint_array[n, 1]
-            pose_list.append(ps)
-        path_msg.poses = pose_list
-        self.wpPub_.publish(path_msg)
+            ps = Pose()
+            ps.position.x = waypoint_array[n, 0]
+            ps.position.y = waypoint_array[n, 1]
+
+            wp = Waypoint()
+            wp.nav_type = wp.NAV_WAYPOINT
+            wp.pose = ps
+
+            waypoint_list.append(wp)
+
+        route_msg.waypoints = waypoint_list
+        self.wpPub_.publish(route_msg)
 
 
 if __name__ == '__main__':
