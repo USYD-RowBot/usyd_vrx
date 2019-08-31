@@ -21,7 +21,7 @@ To test station keeping, launch the course controller with a 'T' thruster config
 
 	  roslaunch vrx_control course_controller.launch thrust_config:=T
 
-      `rostopic pub /waypoints_cmd vrx_msgs/WaypointRoute "waypoints:
+      rostopic pub /waypoints_cmd vrx_msgs/WaypointRoute "waypoints:
       - nav_type: 1
         pose:
           position:
@@ -33,7 +33,7 @@ To test station keeping, launch the course controller with a 'T' thruster config
             z: 1.57
             w: 1.0
         station_duration: -1.0
-      speed: 2.0"`
+      speed: 2.0"
 
 The 'station_duration' field indicates how long the vessel should remain at a station after aligning the correct pose, with a negative duration meaning the vessel should remain there indefinitely until receiving a new waypoint route. The 'nav_type' field uses a constant defined in the msg file (essentially an enumerator) to specify if the coordinate is a waypoint (for simply passing through) or a station to be kept with a required pose and duration. 
 
