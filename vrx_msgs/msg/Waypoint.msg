@@ -1,4 +1,8 @@
-uint8 NAV_WAYPOINT=0     # Constants describing different waypoint behaviours
+# Constants describing different waypoint behaviours.
+#   NAV_WAYPOINT: A waypoint for the vesesl to pass through on a route, position required only.
+#   NAV_STATION:  A station for the vessel to reach and align a position and yaw, for a duration.
+
+uint8 NAV_WAYPOINT=0     
 uint8  NAV_STATION=1
 
 # MANDATORY:

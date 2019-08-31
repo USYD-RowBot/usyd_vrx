@@ -29,16 +29,15 @@ class CourseController
     ~CourseController();
 
     /*!
-    * Callback method for course commands.
-    * @param msg the received message.
-    */
-    void courseCb(const vrx_msgs::Course::ConstPtr& msg);
-
-    /*!
     * Calculates next thruster PID controller outputs. To be run 
     * at a consistent rate.
     */
     void updateController();
+
+    /*!
+    * Enables or disables thrust command publishers. Resets thrust state machine.
+    */
+    void enableThrusters(bool enabled);
 
   private:
     //! ROS node handle.
@@ -71,6 +70,9 @@ class CourseController
     //! State machine for thrust operations.
     usyd_vrx::ThrustSM* thrust_sm_;
 
+    //! Controls whether thruster msgs are published or not.
+    bool thrusters_enabled_;
+
     //! Letter indicating thrust configuration. "H" differential, "T" lateral.
     char thrust_config_;
 
@@ -91,6 +93,12 @@ class CourseController
     * @param msg the received message.
     */
     void odomCb(const nav_msgs::Odometry::ConstPtr& msg);
+
+    /*!
+    * Callback method for course commands.
+    * @param msg the received message.
+    */
+    void courseCb(const vrx_msgs::Course::ConstPtr& msg);
 };
 
 }

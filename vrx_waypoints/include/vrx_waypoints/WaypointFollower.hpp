@@ -49,6 +49,9 @@ class WaypointFollower
     //! Tolerance for detecting a waypoint hit.
     float wp_tolerance_;
 
+    //! Distance from station position to start reducing speed.
+    float station_brake_distance_;
+
     //! Tolerance for detecting station position alignment.
     float station_tolerance_pos_;
 

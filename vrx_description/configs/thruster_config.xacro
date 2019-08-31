@@ -4,6 +4,7 @@
     <!-- === engine === -->
       <xacro:engine position="-2.373776 1.027135 0.318237" prefix="left" orientation="0.0 0.0 0.0" />
       <xacro:engine position="-2.373776 -1.027135 0.318237" prefix="right" orientation="0.0 0.0 0.0" />
+      <xacro:engine position="1.186888 0.300000 0.318237" prefix="lateral" orientation="0.0 0.0 1.570796327" />
 
   <gazebo>
     <plugin name="wamv_gazebo_thrust" filename="libusv_gazebo_thrust_plugin.so">
@@ -11,6 +12,7 @@
       <xacro:include filename="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_gazebo_thruster_config.xacro" />
         <xacro:wamv_gazebo_thruster_config name="left" />
         <xacro:wamv_gazebo_thruster_config name="right" />
+        <xacro:wamv_gazebo_thruster_config name="lateral" />
     </plugin>
   </gazebo>
 </robot>

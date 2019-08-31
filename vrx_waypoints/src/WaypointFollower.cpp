@@ -7,14 +7,14 @@ WaypointFollower::WaypointFollower(ros::NodeHandle& nh):
   nh_(nh) 
 {
   // Set up publishers.
-  pub_course_      = nh_.advertise<vrx_msgs::Course>("/cmd_course", 1);
+  pub_course_      = nh_.advertise<vrx_msgs::Course>("/course_cmd", 1);
   pub_request_wps_ = nh_.advertise<std_msgs::Empty>("/request_waypoints", 1);
 
   WaypointFollower::setupWaypointFollower();
 
   // Set up waypoint command and odometry subscribers
   sub_odom_      = nh_.subscribe("/p3d_wamv", 1, &WaypointFollower::odomCb, this);
-  sub_waypoints_ = nh_.subscribe("/cmd_waypoints", 1, &WaypointFollower::waypointCb, this);
+  sub_waypoints_ = nh_.subscribe("/waypoints_cmd", 1, &WaypointFollower::waypointCb, this);
 }
 
 void WaypointFollower::setupWaypointFollower()
@@ -24,6 +24,7 @@ void WaypointFollower::setupWaypointFollower()
   ros::param::get("~default_speed", speed_);
   ros::param::get("~station_tolerance_pos", station_tolerance_pos_);
   ros::param::get("~station_tolerance_ang", station_tolerance_ang_);
+  ros::param::get("~station_brake_distance", station_brake_distance_);  
 
   num_wps_      = 0;
   wp_index_     = -1;
@@ -145,8 +146,8 @@ void WaypointFollower::evaluateWaypoint()
 
 bool WaypointFollower::waypointHit(float tolerance_pos)
 {
-  float distance = // Distance to next waypoint
-    sqrt(pow(wp_next_.x - vessel_pos_.x, 2) + pow(wp_next_.y - vessel_pos_.y, 2));
+  // Distance to next waypoint
+  float distance = GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_);
 
   return (distance < tolerance_pos); // True if hit, false otherwise
 }
@@ -169,11 +170,23 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
 {
   msg.keep_station = station;
   msg.station_yaw  = yaw_next_;
-  msg.speed        = speed_;
 
   Vec2D virtual_wp = GuidanceAlgorithms::NonlinearGuidanceLaw(
     wp_prev_, wp_next_, vessel_pos_, nlgl_radius_);
   msg.yaw = GuidanceAlgorithms::PurePursuit(virtual_wp, vessel_pos_); 
+
+  if (station) // Slow down when reaching station position
+  {
+    float distance_to_wp = GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_);
+
+    // If less than threshold, reduce speed on approach
+    if (distance_to_wp < station_brake_distance_) 
+      msg.speed = (distance_to_wp/station_brake_distance_)*speed_;
+    else
+      msg.speed = speed_;
+  }
+  else
+    msg.speed = speed_;  
 }
 
 void WaypointFollower::followRoute()
@@ -212,13 +225,6 @@ void WaypointFollower::followRoute()
         WaypointFollower::assignCourse(course_cmd, false); // Head towards wp
         break;
     }
-  }
-  else // No route has been given, keep station in current pose
-  {
-    course_cmd.speed        = 0;
-    course_cmd.yaw          = vessel_yaw_;
-    course_cmd.keep_station = true;
-    course_cmd.station_yaw  = vessel_yaw_;
   }
   
   pub_course_.publish(course_cmd); // Publish to course controller

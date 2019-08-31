@@ -7,7 +7,7 @@
     <include file="$(find vrx_gazebo)/launch/sandisland.launch">
         <arg name="thrust_config" value="$(arg thrust_config)"/>
         <arg name="ground_truth_enabled" value="$(arg ground_truth_enabled)"/>
-        <!--arg name="urdf" value="$(find vrx_description)/configs/default_config.urdf"/-->
+        <arg name="urdf" value="$(find vrx_description)/configs/my_wamv.urdf"/>
     </include>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
         <param name="publish_frequency" value="30"/>

@@ -9,13 +9,15 @@ namespace usyd_vrx {
 
 ThrustController::ThrustController(char thrust_config,
   float priority_yaw_range, float motor_cmd_limit, 
-  float lateral_scale_factor, float neg_scale_factor,
-  float strafe_thrust, float station_tolerance_ang):
+  float lateral_scale_x, float lateral_scale_y,
+  float neg_scale_factor, float strafe_thrust, 
+  float station_tolerance_ang):
 
   thrust_config_(thrust_config),
   priority_yaw_range_(fabs(priority_yaw_range)), 
   motor_cmd_limit_(fabs(motor_cmd_limit)),
-  lateral_scale_factor_(fabs(lateral_scale_factor)),
+  lateral_scale_x_(fabs(lateral_scale_x)),
+  lateral_scale_y_(fabs(lateral_scale_y)),
   neg_scale_factor_(fabs(neg_scale_factor)),
   strafe_thrust_(fabs(strafe_thrust)),
   station_tolerance_ang_(fabs(station_tolerance_ang))
@@ -91,7 +93,7 @@ void ThrustController::setTarget
 
 void ThrustController::setStrafeProportions(double angle)
 {
-  float rel_angle = (float)angle - vessel_yaw_; // Angle relative to vessel
+  float rel_angle = M_PI_2 + (float)angle - vessel_yaw_; // Angle relative to vessel
 
   strafe_x_ = cos(rel_angle); // Set strafe proportions
   strafe_y_ = sin(rel_angle);
@@ -111,7 +113,7 @@ double ThrustController::constrainThrust(double thrust)
   if (fabs(thrust) > motor_cmd_limit_)
     thrust = signf(thrust)*motor_cmd_limit_;
 
-  // Scale negative thrust based on negative scale factor
+  // Scale negative thrust based on negative scale factor. Balances speeds.
   if (thrust < 0)
     thrust = thrust*neg_scale_factor_;
   
@@ -121,6 +123,8 @@ double ThrustController::constrainThrust(double thrust)
 bool ThrustController::stationAngleHit()
 {
   float error = fabs(station_yaw_ - vessel_yaw_);
+
+  std::cout << "error is " << error << ".\n";
 
   // Change error to shortest route around the unit circle from -PI to PI
   if (error > M_PI)
@@ -148,10 +152,10 @@ void ThrustController::getControlSignalRotate(float &thrust_right,
   double ang_ctrl_signal = angularPID_->getControlSignal(sim_time);
 
   // Generate thrust commands from PID control signals and constrain. Lateral
-  //  thruster is increased by "lateral_scale_factor_" to balance the moments
+  //  thruster is increased by "lateral_scale_x_" to balance the moments
   //  about the boat, since the thrusters are positioned differently.
   thrust_lat   = (float)
-    ThrustController::constrainThrust(ang_ctrl_signal*lateral_scale_factor_); 
+    ThrustController::constrainThrust(ang_ctrl_signal*lateral_scale_x_); 
   thrust_right = (float)
     ThrustController::constrainThrust(-ang_ctrl_signal);  
 }
@@ -163,11 +167,13 @@ void ThrustController::getStrafingThrust(
   thrust_left  = (float)
     ThrustController::constrainThrust(strafe_y_*strafe_thrust_); 
 
-  // Relative x direction strafing, with right thruster at 90deg angle. Lateral
-  //  thruster is increased by "lateral_scale_factor_" to balance the moments
+  // Lateral thruster is tuned to balance the moments from the diff thrusters
   //  about the boat, since the thrusters are positioned differently.
-  thrust_lat  = (float)
-    ThrustController::constrainThrust(-strafe_x_*strafe_thrust_*lateral_scale_factor_);  
+  thrust_lat  = (float) ThrustController::constrainThrust(
+      strafe_y_*strafe_thrust_*lateral_scale_y_
+    - strafe_x_*strafe_thrust_*lateral_scale_x_);  
+
+  // Relative x direction strafing, with right thruster at 90deg angle. 
   thrust_right = (float)
     ThrustController::constrainThrust(-strafe_x_*strafe_thrust_);    
 }

@@ -34,14 +34,15 @@ SimplePID::SimplePID(float Kp, float Ki, float Kd, float max_integral,
   }
 
   SimplePID::resetPID();
+
+  setpoint_       = 0;
+  observation_    = 0;
 }
 
 void SimplePID::resetPID()
 {
   prev_error_     = 0;
   error_integral_ = 0;
-  setpoint_       = 0;
-  observation_    = 0;
 
   time_prev_real_ = std::chrono::high_resolution_clock::now();
   time_prev_sim_  = 0;

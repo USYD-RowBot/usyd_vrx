@@ -4,25 +4,27 @@ PID_rate:             10.0 # Hz
 
 # Thrust controller general config
 motor_cmd_limit:      2.0
-neg_scale_factor:     0.666666
+neg_scale_factor:     1.7
 priority_yaw_range:   1.57
 
 # Station keeping config
-lateral_scale_factor:   2.0 # TODO tweak until accurately strafing
-strafe_thrust:          0.5
-strafe_duration:        3.0   # secs
-reconfig_duration:      1.0   # secs
-station_tolerance_ang:  0.175 # rad (0.175 rad ~= 10 deg)
+lateral_scale_x:        1.23 # experimentally found
+lateral_scale_y:        0.85 # TODO experimentally find
+strafe_thrust:          0.3
+strafe_duration:        1.0  # secs
+reconfig_duration:      1.0  # secs
+rotation_cooldown:      3.0  # secs
+station_tolerance_ang:  0.1  # rad (0.175 rad ~= 10 deg)
 
 # Linear PID controller gains
 lin_Kp: 1.0
 lin_Ki: 0.0
-lin_Kd: 0.0
+lin_Kd: 1.28
 
 # Angular PID controller gains
-ang_Kp: 0.9
+ang_Kp: 1.0
 ang_Ki: 0.0
-ang_Kd: 0.0
+ang_Kd: 1.28
 
 # General PID configuration
 use_sim_time: true  # Use simulator time (true) or real time (false)

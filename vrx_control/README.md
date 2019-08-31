@@ -2,7 +2,8 @@
 
 ## Overview
 
-This package contains nodes for controlling the course of a marine vehicle and for managing vehicle behaviours such as waypoint following and station keeping. The intended application is for the Virtual RobotX challenge.
+This package contains a node for controlling the course of a marine vehicle and for managing vehicle behaviours such as station keeping. The node responds to Course msgs (vrx_msgs/Course)
+and sends appropriate commands to the boat's thrusters to create the appropriate behaviour.
 
 ## Usage
 
@@ -22,7 +23,9 @@ Configuration files are located in the config directory.
 
      Optional Arguments:
 
-     - **`overlying_config_file`** Provide a path to a different configuration file, e.g. `value="$(find vrx_control)/config/<your_config_file.yaml>"`. Default: `gazebo_wamv.yaml`.
+		 - **`thrust_config`** Specifies the thruster configuration for the vessel. Possibilities are 'H' for standard differential hull thrusters, and 'T' for an additional front lateral thruster. Note that station keeping is disabled for the 'H' configuration. Default: `'H'`.
+
+     - **`overlying_config_file`** Provide a path to a different configuration file, e.g. `value="$(find vrx_control)/config/<your_config_file.yaml>"`. Default: `gazebo_wamv_course_controller.yaml`.
 
 ## Nodes
 
@@ -32,9 +35,9 @@ Receives course commands for the wamv and sends appropriate commands to thruster
 
 #### Subscribed Topics
 
-* **`/cmd_course`** ([vrx_msgs/Course])
+* **`/course_cmd`** ([vrx_msgs/Course])
 
-	The desired course for the vehicle (i.e. speed and yaw).
+	The desired course for the vehicle (i.e. speed and yaw), including optional station keeping information.
 
 * **`/p3d_wamv`** ([nav_msgs/Odometry])
 
@@ -49,6 +52,14 @@ Receives course commands for the wamv and sends appropriate commands to thruster
 * **`/left_thrust_cmd`** ([std_msgs/Float32])
 
 	Thrust command for the left wamv thruster.
+
+* **`/lateral_thrust_cmd`** ([std_msgs/Float32])
+
+	Thrust command for the lateral wamv thruster.
+
+* **`/right_thrust_angle`** ([std_msgs/Float32])
+
+	Changes the angle of the right wamv thruster.
 
 #### Parameters
 

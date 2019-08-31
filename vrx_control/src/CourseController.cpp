@@ -6,6 +6,8 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 {
   CourseController::setupThrustController(); 
 
+  thrusters_enabled_ = false;
+
   // Set up thruster publishers.
   pub_thrust_right_       = nh_.advertise<std_msgs::Float32>("/right_thrust_cmd", 1);
   pub_thrust_right_angle_ = nh_.advertise<std_msgs::Float32>("/right_thrust_angle", 1);
@@ -13,10 +15,13 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
   pub_thrust_lat_ = nh_.advertise<std_msgs::Float32>("/lateral_thrust_cmd", 1);
 
   // Set up course command and odometry subscribers
-  sub_course_ = nh_.subscribe("/cmd_course", 1, &CourseController::courseCb, this);
+  sub_course_ = nh_.subscribe("/course_cmd", 1, &CourseController::courseCb, this);
   sub_odom_   = nh_.subscribe("/p3d_wamv", 1, &CourseController::odomCb, this);
 
   tf_listener_ = new tf::TransformListener();
+
+  // Make sure thrusters are reset to original angles on startup
+  CourseController::reconfigureThrusters(ThrustSM::THRUST_RECONFIG_STRAIGHT);
 }
 
 CourseController::~CourseController()
@@ -32,7 +37,7 @@ void CourseController::setupThrustController()
   std::string thrust_config;
   float reconfig_duration, strafe_duration, strafe_thrust, station_tolerance_ang;
   float priority_yaw_range, motor_cmd_limit;
-  float lateral_scale_factor, neg_scale_factor;
+  float lateral_scale_x, lateral_scale_y, neg_scale_factor;
   float lin_Kp, lin_Ki, lin_Kd, max_integral;
   float ang_Kp, ang_Ki, ang_Kd;
 
@@ -40,7 +45,8 @@ void CourseController::setupThrustController()
   ros::param::get("~thrust_config", thrust_config);
   ros::param::get("~priority_yaw_range", priority_yaw_range);
   ros::param::get("~motor_cmd_limit", motor_cmd_limit);
-  ros::param::get("~lateral_scale_factor", lateral_scale_factor);
+  ros::param::get("~lateral_scale_x", lateral_scale_x);
+  ros::param::get("~lateral_scale_y", lateral_scale_y);
   ros::param::get("~neg_scale_factor", neg_scale_factor);
   ros::param::get("~lin_Kp", lin_Kp);
   ros::param::get("~lin_Ki", lin_Ki);
@@ -66,7 +72,7 @@ void CourseController::setupThrustController()
   
   // Instantiate and configure thrust controller
   thrust_controller_ = new usyd_vrx::ThrustController(thrust_config_,
-    priority_yaw_range, motor_cmd_limit, lateral_scale_factor, 
+    priority_yaw_range, motor_cmd_limit, lateral_scale_x, lateral_scale_y,
     neg_scale_factor, strafe_thrust, station_tolerance_ang);
 
   // Set up thruster PID controllers
@@ -84,10 +90,10 @@ void CourseController::reconfigureThrusters(ThrustSM::THRUST_STATE state)
   std_msgs::Float32 msg;
 
   if (state == ThrustSM::THRUST_RECONFIG_STRAIGHT)
-    msg.data = 0;      // TODO work out if 0 rad is straight
+    msg.data = 0;
 
   else if (state == ThrustSM::THRUST_RECONFIG_LATERAL)
-    msg.data = M_PI_2; // TODO work out if pi/2 rad is lateral
+    msg.data = M_PI_2;
 
   else
     return; // Don't publish if not in correct state
@@ -104,7 +110,7 @@ void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
       << "operation in T thruster configuration.");
     thrust_controller_->setTarget(0.0, 0.0); // Stop boat
     return;
-  }   
+  }
 
   thrust_sm_->updateState(msg->keep_station); // Update state machine
 
@@ -171,6 +177,18 @@ void CourseController::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
   thrust_controller_->setOdometry(vel_base_link.vector.x, yaw);
 }
 
+void CourseController::enableThrusters(bool enabled)
+{
+  // Reset PIDs if reactivating vessel thrusters
+  if (thrusters_enabled_ == false && enabled == true)
+    thrust_controller_->resetPIDs();
+
+  thrusters_enabled_ = enabled; // Set thrusters enabled or disabled
+
+  if (enabled == false) // If disabling thrusters, return SM to traverse
+    thrust_sm_->updateState(false);
+}
+
 void CourseController::updateController()
 {
   float thrust_right, thrust_left, thrust_lateral; // Thrust values
@@ -193,6 +211,7 @@ void CourseController::updateController()
       if (thrust_controller_->stationAngleHit()) // Check if station angle aligned
       {
         thrust_sm_->reportRotationComplete(); // Tell state machine 
+        thrust_controller_->resetPIDs();
         return;
       }
       else
@@ -206,16 +225,19 @@ void CourseController::updateController()
       break;
   }
 
-  std_msgs::Float32 msg_thrust_right; // Populate messages
-  std_msgs::Float32 msg_thrust_left;
-  std_msgs::Float32 msg_thrust_lateral;
-  msg_thrust_right.data   = float(thrust_right);
-  msg_thrust_left.data    = float(thrust_left);
-  msg_thrust_lateral.data = float(thrust_lateral);
+  if (thrusters_enabled_ == true)
+  {
+    std_msgs::Float32 msg_thrust_right; // Populate messages
+    std_msgs::Float32 msg_thrust_left;
+    std_msgs::Float32 msg_thrust_lateral;
+    msg_thrust_right.data   = float(thrust_right);
+    msg_thrust_left.data    = float(thrust_left);
+    msg_thrust_lateral.data = float(thrust_lateral);
 
-  pub_thrust_right_.publish(msg_thrust_right); // Publish to thrusters
-  pub_thrust_left_.publish(msg_thrust_left);
-  pub_thrust_lat_.publish(msg_thrust_lateral);  
+    pub_thrust_right_.publish(msg_thrust_right); // Publish to thrusters
+    pub_thrust_left_.publish(msg_thrust_left);
+    pub_thrust_lat_.publish(msg_thrust_lateral);  
+  }
 }
 
 }

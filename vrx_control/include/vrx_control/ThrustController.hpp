@@ -21,8 +21,8 @@ class ThrustController
     *   is considered aligned.
     */
     ThrustController(char thrust_config, float priority_yaw_range, float motor_cmd_limit, 
-      float lateral_scale_factor, float neg_scale_factor, float strafe_thrust, 
-      float station_tolerance_ang);
+      float lateral_scale_x, float lateral_scale_y, float neg_scale_factor, 
+      float strafe_thrust, float station_tolerance_ang);
 
     /*!
     * Destructor.
@@ -123,8 +123,11 @@ class ThrustController
     //! Maximum motor command value.
     float motor_cmd_limit_;
 
-    //! Factor by which to scale lateral thrust commands.
-    float lateral_scale_factor_;
+    //! Factor by which to scale lateral thrust commands for x strafing.
+    float lateral_scale_x_;
+
+    //! Factor by which to scale lateral thrust commands for y strafing.
+    float lateral_scale_y_;
 
     //! Factor by which to scale negative thrust commands.
     float neg_scale_factor_;
