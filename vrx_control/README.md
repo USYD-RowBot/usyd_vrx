@@ -21,11 +21,11 @@ Configuration files are located in the config directory.
 
 * **course_controller.launch:** Launches the wamv course controller node.
 
-     Optional Arguments:
+	Optional Arguments:
 
-		 - **`thrust_config`** Specifies the thruster configuration for the vessel. Possibilities are 'H' for standard differential hull thrusters, and 'T' for an additional front lateral thruster. Note that station keeping is disabled for the 'H' configuration. Default: `'H'`.
+	- **`thrust_config`** Specifies the thruster configuration for the vessel. Possibilities are 'H' for standard differential hull thrusters, and 'T' for an additional front lateral thruster. Note that station keeping is disabled for the 'H' configuration. Default: `'H'`.
 
-     - **`overlying_config_file`** Provide a path to a different configuration file, e.g. `value="$(find vrx_control)/config/<your_config_file.yaml>"`. Default: `gazebo_wamv_course_controller.yaml`.
+	- **`overlying_config_file`** Provide a path to a different configuration file, e.g. `value="$(find vrx_control)/config/<your_config_file.yaml>"`. Default: `gazebo_wamv_course_controller.yaml`.
 
 ## Nodes
 
