@@ -114,8 +114,6 @@ void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
 
   thrust_sm_->updateState(msg->keep_station); // Update state machine
 
-  ROS_INFO_STREAM("ThrustSM state is " << thrust_sm_->getState());
-
   switch (thrust_sm_->getState()) // Get current state machine state
   {
     case ThrustSM::THRUST_TRAVERSE:

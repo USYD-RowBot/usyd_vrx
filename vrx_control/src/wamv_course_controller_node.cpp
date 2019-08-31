@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 
   // Set up heartbeat timer
   hbeat_received_ = false;
-  ros::Subscriber sub_hbeat = nh.subscribe("/cmd_course", 1, hbeatCb);
+  ros::Subscriber sub_hbeat = nh.subscribe("/course_cmd", 1, hbeatCb);
   double hbeat_target_time = ros::Time::now().toSec() + heartbeat_duration;  
 
   ros::Rate rate(PID_rate);

@@ -124,8 +124,6 @@ bool ThrustController::stationAngleHit()
 {
   float error = fabs(station_yaw_ - vessel_yaw_);
 
-  std::cout << "error is " << error << ".\n";
-
   // Change error to shortest route around the unit circle from -PI to PI
   if (error > M_PI)
     error = 2*M_PI - error;
