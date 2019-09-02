@@ -11,9 +11,9 @@ ThrustSM::ThrustSM(float strafe_duration, float reconfig_duration):
 
 void ThrustSM::resetStateMachine()
 {
-  strafe_time_target_   = 0;
-  reconfig_time_target_ = 0;
-  state_                = THRUST_TRAVERSE;
+  strafe_time_target_     = 0;
+  reconfig_time_target_   = 0;
+  state_                  = THRUST_TRAVERSE;
 }
 
 void ThrustSM::checkTimers()
