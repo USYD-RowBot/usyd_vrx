@@ -15,4 +15,10 @@
 
     <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py"/>
 
+    <include file="$(find vrx_control)/launch/course_controller.launch">
+        <arg name="thrust_config" value="$(arg thrust_config)"/>
+    </include>
+
+    <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch"/>
+
 </launch>

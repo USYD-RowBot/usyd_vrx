@@ -226,6 +226,8 @@ void WaypointFollower::followRoute()
         break;
     }
   }
+  else
+    return; // Don't publish course command
   
   pub_course_.publish(course_cmd); // Publish to course controller
 }

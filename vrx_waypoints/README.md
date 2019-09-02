@@ -8,32 +8,35 @@ for the vessel (vrx_msgs/Course) in order to command its movement along the rout
 
 ## Usage
 
-Run the waypoint follower node with:
+To run solely the waypoint follower node, use:
 
 	  roslaunch vrx_waypoints waypoint_follower.launch
 
-Waypoint following (without station keeping) can be tested using the simple_waypoints package. For example, in two terminals:
+To test the whole system with waypoint following, instead run:
 
-	  roslaunch vrx_control course_controller.launch
+	  roslaunch vrx_bringup T_boat.launch
+
+From here, waypoint following (without station keeping) can be tested using the simple_waypoints package. For example:
+
 	  roslaunch simple_waypoints simple_waypoints.launch
 
-To test station keeping, launch the course controller with a 'T' thruster configuration and publish a vrx_msgs/WaypointRoute message in the terminal, e.g.:
+To test station keeping, instead publish a vrx_msgs/WaypointRoute message in the terminal, e.g.:
 
-	  roslaunch vrx_control course_controller.launch thrust_config:=T
-
-      rostopic pub /waypoints_cmd vrx_msgs/WaypointRoute "waypoints:
-      - nav_type: 1
-        pose:
-          position:
-            x: 140.0
-            y: 120.0
-          orientation:
-            x: 0.0
-            y: 0.0
-            z: 1.57
-            w: 1.0
-        station_duration: -1.0
-      speed: 2.0"
+```
+rostopic pub /waypoints_cmd vrx_msgs/WaypointRoute "waypoints:
+- nav_type: 1
+  pose:
+    position:
+      x: 140.0
+      y: 120.0
+    orientation:
+      x: 0.0
+      y: 0.0
+      z: 2.0
+      w: 1.0
+  station_duration: -1.0
+speed: 2.0"
+```
 
 The 'station_duration' field indicates how long the vessel should remain at a station after aligning the correct pose, with a negative duration meaning the vessel should remain there indefinitely until receiving a new waypoint route. The 'nav_type' field uses a constant defined in the msg file (essentially an enumerator) to specify if the coordinate is a waypoint (for simply passing through) or a station to be kept with a required pose and duration. 
 
