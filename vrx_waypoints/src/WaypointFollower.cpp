@@ -178,7 +178,7 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
   if (station) // Slow down when reaching station position
   {
     float distance_to_wp = 
-      GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance/2;
+      GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance_/2;
 
     // If less than threshold, reduce speed on approach
     if (distance_to_wp < station_brake_distance_) 
