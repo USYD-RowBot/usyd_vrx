@@ -21,8 +21,8 @@ waypointPub = rospy.Publisher(params["outTopic"], Path, queue_size=10)
 #    waypointPub.publish(data)
 
 #rospy.Subscriber(params["inTopic"],Twist,cb, queue_size=10)
-rate = rospy.Rate(10)
-tf_frame_id = "world"
+rate = rospy.Rate(1)
+tf_frame_id = "map"
 
 
 # subscribe to odometry to get initial position for point holding when this is run
@@ -36,12 +36,13 @@ while not rospy.is_shutdown():
     if (tf0 is None):
         try:
             tf0 = listener.lookupTransform(
-                '/base_link', '/map', rospy.Time(0))
+                '/base_link', tf_frame_id, rospy.Time(0))
             print("lookup ok")
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
     if not (tf0 is None):
         print("publish hold")
+        print (tf0)
         position = PoseStamped()
         path = Path()
         position.pose.position.x=tf0[0][0]
@@ -58,4 +59,11 @@ while not rospy.is_shutdown():
         path.header.frame_id = tf_frame_id
         path.poses = [position]
         waypointPub.publish(path)
+        try:
+            tf1 = listener.lookupTransform(
+                '/base_link', tf_frame_id, rospy.Time(0))
+            print("current pos:")
+            print(tf1)
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
     rate.sleep()
