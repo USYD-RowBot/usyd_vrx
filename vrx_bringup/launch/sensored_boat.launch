@@ -3,10 +3,14 @@
     <include file="$(find vrx_gazebo)/launch/sandisland.launch">
         <arg name="urdf" value="$(find vrx_description)/configs/default_config.urdf"/>
     </include>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-        <param name="publish_frequency" value="30"/>
-    </node>
+    <group ns = "wamv">
+      <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+          <param name="publish_frequency" value="30"/>
+      </node>
 
-    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py"/>
+      <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py">
+        <remap from="p3d_wamv" to="sensors/position/p3d_wamv"/>
+      </node>
+    </group>
 
 </launch>
