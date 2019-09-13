@@ -624,12 +624,7 @@
       </material>
     </visual>
     <collision name="left_camera_post_collision">
-      <ge
-    <group ns="wamv">
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-            <param name="publish_frequency" value="30"/>
-        </node>
-    </group>ometry>
+      <geometry>
         <cylinder length="0.1765" radius="0.0076"/>
       </geometry>
     </collision>
