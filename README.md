@@ -57,4 +57,3 @@ roslaunch vrx_navigation lidar_node.launch
 ```
 roslaunch vrx_bringup mapping_bringup.launch
 ```
-

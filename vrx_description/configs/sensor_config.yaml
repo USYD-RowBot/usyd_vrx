@@ -1,16 +1,16 @@
 wamv_camera:
-    - name: front_left_camera
+    - name: left_camera
       x: 0.75
       y: 0.1
-      P: ${radians(15)}
-    - name: front_right_camera
+      Y: ${radians(30)}
+    - name: right_camera
       x: 0.75
       y: -0.1
-      P: ${radians(15)}
-    - name: middle_right_camera
+      Y: ${radians(-30)}
+    - name: middle_camera
       x: 0.75
-      y: 0.3
-      P: ${radians(15)}
+      y: 0
+      Y: ${radians(0)}
 wamv_gps:
     - name: gps_wamv
       x: -0.85
