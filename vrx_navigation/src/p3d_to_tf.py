@@ -25,7 +25,7 @@ def handle_odom_pose(ros_odom_msg, tf_frame_id):
     t.transform.rotation.y = ros_odom_msg.pose.pose.orientation.y
     t.transform.rotation.z = ros_odom_msg.pose.pose.orientation.z
     t.transform.rotation.w = ros_odom_msg.pose.pose.orientation.w
-    
+
     #Odom to map frame
     t2.child_frame_id = "odom"
     t2.header.frame_id="map"
@@ -36,7 +36,7 @@ def handle_odom_pose(ros_odom_msg, tf_frame_id):
         t0frame = copy.deepcopy(t)
         t0frame.child_frame_id="t0home"
     t0frame.header.stamp=rospy.Time.now()
-    
+
 
 
     br.sendTransform(t)
