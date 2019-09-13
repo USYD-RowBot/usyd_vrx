@@ -8,8 +8,8 @@
           <param name="publish_frequency" value="30"/>
       </node>
 
-      <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py">
-        <remap from="p3d_wamv" to="sensors/position/p3d_wamv"/>
+      <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py">
+        <remap from="odom" to="sensors/position/p3d_wamv"/>
       </node>
     </group>
 
