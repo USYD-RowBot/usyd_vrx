@@ -16,7 +16,9 @@
         </node>
     </group>
 
-    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py"/>
+    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py">
+        <remap from="/p3d_wamv" to="/wamv/sensors/position/p3d_wamv"/>
+    </node>
 
     <include file="$(find vrx_control)/launch/course_controller.launch">
         <arg name="thrust_config" value="$(arg thrust_config)"/>

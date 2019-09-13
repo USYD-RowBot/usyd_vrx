@@ -12,7 +12,7 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
   pub_thrust_right_       = nh_.advertise<std_msgs::Float32>("/right_thrust_cmd", 1);
   pub_thrust_right_angle_ = nh_.advertise<std_msgs::Float32>("/right_thrust_angle", 1);
   pub_thrust_left_        = nh_.advertise<std_msgs::Float32>("/left_thrust_cmd", 1);
-  pub_thrust_lat_ = nh_.advertise<std_msgs::Float32>("/lateral_thrust_cmd", 1);
+  pub_thrust_lat_         = nh_.advertise<std_msgs::Float32>("/lateral_thrust_cmd", 1);
 
   // Set up course command and odometry subscribers
   sub_course_ = nh_.subscribe("/course_cmd", 1, &CourseController::courseCb, this);

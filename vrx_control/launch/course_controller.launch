@@ -15,6 +15,12 @@
     <param name="thrust_config" value="$(arg thrust_config)"/>
     <rosparam command="load" file="$(arg default_config_file)" />
     <rosparam command="load" file="$(arg overlying_config_file)" />
+
+    <remap from="/p3d_wamv"           to="/wamv/sensors/position/p3d_wamv"/>
+    <remap from="/right_thrust_cmd"   to="/wamv/thrusters/right_thrust_cmd"/>
+    <remap from="/right_thrust_angle" to="/wamv/thrusters/right_thrust_angle"/>
+    <remap from="/left_thrust_cmd"    to="/wamv/thrusters/left_thrust_cmd"/>
+    <remap from="/lateral_thrust_cmd" to="/wamv/thrusters/lateral_thrust_cmd"/>
   </node>
 
 </launch>
