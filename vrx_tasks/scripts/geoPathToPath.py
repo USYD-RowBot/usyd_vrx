@@ -10,10 +10,11 @@ from geographic_msgs.msg import GeoPoseStamped
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 import tf
+import pyproj
 params = {
     "inTopic": "/pointToHold",
     "outTopic": "/waypoints",
-    "gpsTopic": "/GPS",
+    "gpsTopic": "wamv/sensors/gps/gps/fix",
     "toConvert": True
 }
 rospy.init_node("geoPathToPath",anonymous=True)
@@ -28,40 +29,44 @@ def satcb(data):
     global lastSatPos
     lastSatPos=data
 
+outProj = pyproj.Proj("+init=EPSG:4326")
+
+def transformCoordinates(latpos,XYZpos):
+    R = 6378100 #Radius of Earth Metres
+    pi=3.14159265359
+    crs="+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996)
+    inp = pyproj.Proj(crs)
+    y,x = pyproj.transform(outProj,inp,latpos.longitude,latpos.latitude)
+    XYZpos.x=x
+    XYZpos.y=y
+    XYZpos.z=0
+
+
 def cb(data):
     print("RECEIVED GEO PATH MESSAGE")
     global pub
     global lastSatPos
     global listener
+    print (data)
     if lastSatPos is None:
         print("NO SAT DATA, FAIL")
         return
+    print (lastSatPos)
     path = Path()
     path.header = data.header
+    path.header.frame_id="map"# not sure why this isnt published :3
     poses = []
     for dps in data.poses:
         ps = PoseStamped()
         ps.header = dps.header
         ps.pose.orientation = dps.pose.orientation
-        
-        # convert to relative coordinates
-        ps.pose.position.x = (dps.pose.position.latitude-lastSatPos.latitude) * \
-            (1000 if (params['toConvert']) else 1)
-        ps.pose.position.y = (dps.pose.position.longitude-lastSatPos.longitude) * \
-            (1000 if (params['toConvert']) else 1)
-        ps.pose.position.z = dps.pose.position.altitude-lastSatPos.altitude
-
+        transformCoordinates(dps.pose.position,ps.pose.position)
         # move into map frame
         ps.header.frame_id='map'
-        relative=listener.lookupTransform('/base_link','/map')
-        ps.pose.position.x-=relative.position.x
-        ps.pose.position.y-=relative.position.y
-        ps.pose.position.z-=relative.position.z
-
         poses.append(ps)
     path.poses=poses
-    print(path)
     pub.publish(path)
+    print(path)
 
 sat = rospy.Subscriber(params['gpsTopic'], NavSatFix, satcb)
 sub = rospy.Subscriber(params['inTopic'], GeoPath, cb)

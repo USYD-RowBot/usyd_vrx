@@ -46,5 +46,5 @@ def callback(data):
 
 if __name__ == "__main__":
     rospy.init_node('odom_to_tf')
-    rospy.Subscriber("p3d_wamv",Odometry,callback)
+    rospy.Subscriber("wamv/sensors/position/p3d_wamv",Odometry,callback)
     rospy.spin()
