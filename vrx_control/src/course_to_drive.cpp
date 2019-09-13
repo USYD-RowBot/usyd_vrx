@@ -28,8 +28,8 @@ public:
     CourseToDrive()
 	{
             // ros::NodeHandle n_("~");
-            stbdPub_ = n_.advertise<std_msgs::Float32>("right_thrust_cmd", 1);
-            portPub_ = n_.advertise<std_msgs::Float32>("left_thrust_cmd", 1);
+            stbdPub_ = n_.advertise<std_msgs::Float32>("/thrusters/right_thrust_cmd", 1);
+            portPub_ = n_.advertise<std_msgs::Float32>("/thrusters/left_thrust_cmd", 1);
             ros::param::get("~use_vel_fitting", use_vel_fitting_);
             ros::param::get("~negative_scaling_factor", negative_scaling_factor_);
             ros::param::get("~positive_scaling_factor", positive_scaling_factor_);

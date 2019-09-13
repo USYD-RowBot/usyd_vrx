@@ -45,13 +45,13 @@ class WamNav():
         if robot_name is None or robot_name == "":
             course_topic = '/cmd_course'
             request_topic = '/request_waypoints'
-            odom_topic = '/p3d_wamv'
-            waypoint_topic = '/waypoints'
+            odom_topic = '/wamv/robot_localization/odometry/filtered'
+            waypoint_topic = '/vrx/wayfinding/waypoints'
             vtp_topic = '/target_point'
         else:
             course_topic = '/' + robot_name + '/cmd_course'
             request_topic = '/' + robot_name + '/request_waypoints'
-            odom_topic = '/' + robot_name + '/odom'
+            odom_topic = '/' + robot_name + '/robot_localization/odometry/filtered'
             waypoint_topic = '/' + robot_name + '/waypoints'
             vtp_topic = '/' + robot_name + '/target_point'
         # The publishers
@@ -81,7 +81,7 @@ class WamNav():
         # Tolerance to hit the waypoints
         self.speed = rospy.get_param("~speed", 1.0)  # If speed control is on, this is max speed
         self.use_nlgl = rospy.get_param("~use_nlgl", True)
-        self.tolerance = rospy.get_param("~tolerance", 2.0)
+        self.tolerance = rospy.get_param("~tolerance", 20.0)
         self.nlgl_radius = rospy.get_param("~nlgl_radius", 4.0)
         self.speed_control = rospy.get_param("~speed_control", False)
         self.braking_distance = rospy.get_param("~braking_distance", 4.0)

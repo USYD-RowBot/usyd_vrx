@@ -49,7 +49,7 @@ public:
 
 
             // Subscribe to EKF
-            subLocalise_ =  n_.subscribe("/odometry/filtered", 1, &CourseToVel::localisationCallback, this);
+            subLocalise_ =  n_.subscribe("/wamv/robot_localization/odometry/filtered", 1, &CourseToVel::localisationCallback, this);
             // Subscribe to course command
             courseSub_ =  n_.subscribe("/cmd_course", 1, &CourseToVel::courseCallback, this);
     }
@@ -82,11 +82,13 @@ public:
             // std::cout << "Yaw: " << phi_ << "Diff: " << phid<< std::endl;
             // Fill out the twist message
             twist.linear.x = CourseToVel::limitSpeed(set_speed_, phid);
+	           //twist.linear.x = 111;
             twist.linear.y = 0.;
             twist.linear.z = 0.;
             twist.angular.x = 0.;
             twist.angular.y = 0.;
             twist.angular.z = kp_*phid;
+
             velPub_.publish(twist);
             // std::cout << "Speed: " << twist.linear.x << " YawRate: " << twist.angular.z << std::endl;
 		}
@@ -115,10 +117,23 @@ public:
     {
         if(ros::ok() && !received_odom_)
         {
+
             heartbeat_timer_ = 0.; //Reset the timer
             received_course_ = true; // Allow velocity commands to now be publisheds
             set_speed_ = msg->speed;
             set_yaw_ = msg->yaw;
+
+ //geometry_msgs::Twist twist;
+//	    twist.linear.x = 111;
+//            twist.linear.y = 0.;
+//            twist.linear.z = 0.;
+//            twist.angular.x = 0.;
+//            twist.angular.y = 0.;
+//            twist.angular.z = 0;
+
+//            velPub_.publish(twist);
+
+
         }
     }
 

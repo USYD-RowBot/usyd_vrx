@@ -29,8 +29,8 @@ public:
 	{
             // ros::NodeHandle n_("~");
             // Course Publish
-            stbdPub_ = n_.advertise<std_msgs::Float32>("/right_thrust_cmd", 1);
-            portPub_ = n_.advertise<std_msgs::Float32>("/left_thrust_cmd", 1);
+            stbdPub_ = n_.advertise<std_msgs::Float32>("/thrusters/right_thrust_cmd", 1);
+            portPub_ = n_.advertise<std_msgs::Float32>("/thrusters/left_thrust_cmd", 1);
             ros::param::get("~use_vel_fitting", use_vel_fitting_);
             ros::param::get("~negative_scaling_factor", negative_scaling_factor_);
             ros::param::get("~positive_scaling_factor", positive_scaling_factor_);
@@ -60,7 +60,7 @@ public:
             time_prev_ = ros::Time::now().toSec();
 
             // Subscribe to EKF
-            subLocalise_ =  n_.subscribe("/odometry/filtered", 1, &TwistToDrive::localisationCallback, this);
+            subLocalise_ =  n_.subscribe("/wamv/robot_localization/odometry/filtered", 1, &TwistToDrive::localisationCallback, this);
             velSub_ =  n_.subscribe("/cmd_vel", 1, &TwistToDrive::velCallback, this);
 
             ROS_DEBUG_STREAM("END OF INIT");
@@ -75,6 +75,8 @@ public:
 	{
 		if(ros::ok() && heartbeat_timer_ < heartbeat_limit_)
 		{
+    //  ROS_INFO("tdcalled");
+
             double time_now = ros::Time::now().toSec();
             double time_diff;
             time_diff = time_now - time_prev_;
@@ -338,6 +340,7 @@ public:
             tp_msg.data = float(Tp);
             // ROS_DEBUG_STREAM("Ts: " << Ts << " Tp: " << Tp);
             // Publish to the motors
+	    ROS_INFO("r u ok?");
             stbdPub_.publish(ts_msg);
             portPub_.publish(tp_msg);
 		}
@@ -407,6 +410,17 @@ public:
             // Saves the command message
             twistSet_ = *msg;
             //ROS_DEBUG_STREAM("Twist received");
+	               // Create the output messages
+            //std_msgs::Float32 ts_msg;
+            //std_msgs::Float32 tp_msg;
+            // Convert to float (from double)
+            //ts_msg.data = float(200);
+            //tp_msg.data = float(155);
+            // ROS_DEBUG_STREAM("Ts: " << Ts << " Tp: " << Tp);
+            // Publish to the motors
+            //stbdPub_.publish(ts_msg);
+            //portPub_.publish(tp_msg);
+
         }
     }
 
