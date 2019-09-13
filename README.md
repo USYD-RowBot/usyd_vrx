@@ -35,11 +35,11 @@ And you should be ready to go!
 ### Barebones
 To launch the base system without sensors or course elements:
 ```
-roslaunch roslaunch vrx_bringup barebones.launch
+roslaunch vrx_bringup barebones.launch
 ```
 To launch with sensors and obstacles:
 ```
-roslaunch roslaunch vrx_bringup sensored_boat.launch
+roslaunch vrx_bringup sensored_boat.launch
 ```
 
 ### Using mapping
@@ -70,7 +70,7 @@ sudo apt-get install ros-melodic-global-planner
 Launch in separate tabs:
 ```roslaunch vrx_bringup sensored_boat.launch```
 
-```roslaunch vrx_control_2 course_controller.launch```
+```roslaunch vrx_control course_controller.launch```
 
 With these two nodes you can publish a message to /cmd_course  of message type vrx_msgs/Course, and it will try to follow direction. e.g :
 ```rostopic pub -r 10 /cmd_course vrx_msgs/Course  '{speed: 1.0, yaw: 0.0}'```

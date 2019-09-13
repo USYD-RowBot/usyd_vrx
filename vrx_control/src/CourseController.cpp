@@ -4,7 +4,7 @@ namespace usyd_vrx {
 
 CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 {
-  CourseController::setupThrustController(); 
+  CourseController::setupThrustController();
 
   thrusters_enabled_ = false;
 
@@ -16,7 +16,7 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 
   // Set up course command and odometry subscribers
   sub_course_ = nh_.subscribe("/course_cmd", 1, &CourseController::courseCb, this);
-  sub_odom_   = nh_.subscribe("/p3d_wamv", 1, &CourseController::odomCb, this);
+  sub_odom_   = nh_.subscribe("/odom", 1, &CourseController::odomCb, this);
 
   tf_listener_ = new tf::TransformListener();
 
@@ -33,7 +33,7 @@ CourseController::~CourseController()
 
 void CourseController::setupThrustController()
 {
-  bool use_sim_time; 
+  bool use_sim_time;
   std::string thrust_config;
   float reconfig_duration, strafe_duration, strafe_thrust, station_tolerance_ang;
   float priority_yaw_range, motor_cmd_limit;
@@ -62,23 +62,23 @@ void CourseController::setupThrustController()
   ros::param::get("~station_tolerance_ang", station_tolerance_ang);
 
   thrust_config_ = thrust_config[0]; // Convert to char
-  ROS_INFO_STREAM("CourseController: Vessel is using " << thrust_config_ 
+  ROS_INFO_STREAM("CourseController: Vessel is using " << thrust_config_
     << " thruster configuration.");
 
   if (use_sim_time)
     ROS_INFO("CourseController: Using simulator time for thruster PID control.");
   else
     ROS_INFO("CourseController: Using real time for thruster PID control.");
-  
+
   // Instantiate and configure thrust controller
   thrust_controller_ = new usyd_vrx::ThrustController(thrust_config_,
     priority_yaw_range, motor_cmd_limit, lateral_scale_x, lateral_scale_y,
     neg_scale_factor, strafe_thrust, station_tolerance_ang);
 
   // Set up thruster PID controllers
-  thrust_controller_->initLinearPID(lin_Kp, lin_Ki, lin_Kd, 
+  thrust_controller_->initLinearPID(lin_Kp, lin_Ki, lin_Kd,
     max_integral, use_sim_time);
-  thrust_controller_->initAngularPID(ang_Kp, ang_Ki, ang_Kd, 
+  thrust_controller_->initAngularPID(ang_Kp, ang_Ki, ang_Kd,
     max_integral, use_sim_time);
 
   // Instantiate thrust state machine
@@ -97,14 +97,14 @@ void CourseController::reconfigureThrusters(ThrustSM::THRUST_STATE state)
 
   else
     return; // Don't publish if not in correct state
-  
+
   pub_thrust_right_angle_.publish(msg); // Publish to thruster
 }
 
 void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
 {
   // Only permit station keeping in T thruster configuration.
-  if (msg->keep_station && thrust_config_ != 'T') 
+  if (msg->keep_station && thrust_config_ != 'T')
   {
     ROS_INFO_STREAM("CourseController: Can only perform station keeping "
       << "operation in T thruster configuration.");
@@ -144,9 +144,9 @@ void CourseController::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
 {
   // Convert from quaternion to RPY to get yaw
   tf::Quaternion quat;
-  quat.setValue(msg->pose.pose.orientation.x, 
-                msg->pose.pose.orientation.y, 
-                msg->pose.pose.orientation.z, 
+  quat.setValue(msg->pose.pose.orientation.x,
+                msg->pose.pose.orientation.y,
+                msg->pose.pose.orientation.z,
                 msg->pose.pose.orientation.w);
 
   // Convert quaternion to roll, pitch and yaw
@@ -160,7 +160,7 @@ void CourseController::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
   vel_odom.vector.z = msg->twist.twist.linear.z;
   vel_odom.header.stamp = ros::Time();
   vel_odom.header.frame_id = "/odom";
-    
+
   try // Transform velocity vector to base_link frame
   {
     tf_listener_->transformVector("/base_link", vel_odom, vel_base_link);
@@ -194,7 +194,7 @@ void CourseController::updateController()
 
   switch (thrust_sm_->getState()) // Get current state machine state
   {
-    case ThrustSM::THRUST_TRAVERSE:    
+    case ThrustSM::THRUST_TRAVERSE:
       thrust_controller_->getControlSignalTraverse(
         thrust_right, thrust_left, sim_time); // Normal traverse
       break;
@@ -208,16 +208,16 @@ void CourseController::updateController()
     case ThrustSM::THRUST_ROTATE:
       if (thrust_controller_->stationAngleHit()) // Check if station angle aligned
       {
-        thrust_sm_->reportRotationComplete(); // Tell state machine 
+        thrust_sm_->reportRotationComplete(); // Tell state machine
         thrust_controller_->resetPIDs();
         return;
       }
       else
         thrust_controller_->getControlSignalRotate( // Rotate for station keeping
           thrust_right, thrust_lateral, sim_time);
-      break; 
-      
-    case ThrustSM::THRUST_STRAFE: 
+      break;
+
+    case ThrustSM::THRUST_STRAFE:
       thrust_controller_->getStrafingThrust(      // Station keeping strafing
         thrust_right, thrust_left, thrust_lateral);
       break;
@@ -234,9 +234,8 @@ void CourseController::updateController()
 
     pub_thrust_right_.publish(msg_thrust_right); // Publish to thrusters
     pub_thrust_left_.publish(msg_thrust_left);
-    pub_thrust_lat_.publish(msg_thrust_lateral);  
+    pub_thrust_lat_.publish(msg_thrust_lateral);
   }
 }
 
 }
-

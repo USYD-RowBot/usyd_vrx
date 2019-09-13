@@ -3,8 +3,8 @@
 
 namespace usyd_vrx {
 
-WaypointFollower::WaypointFollower(ros::NodeHandle& nh): 
-  nh_(nh) 
+WaypointFollower::WaypointFollower(ros::NodeHandle& nh):
+  nh_(nh)
 {
   // Set up publishers.
   pub_course_      = nh_.advertise<vrx_msgs::Course>("/course_cmd", 1);
@@ -13,7 +13,7 @@ WaypointFollower::WaypointFollower(ros::NodeHandle& nh):
   WaypointFollower::setupWaypointFollower();
 
   // Set up waypoint command and odometry subscribers
-  sub_odom_      = nh_.subscribe("/p3d_wamv", 1, &WaypointFollower::odomCb, this);
+  sub_odom_      = nh_.subscribe("/odom", 1, &WaypointFollower::odomCb, this);
   sub_waypoints_ = nh_.subscribe("/waypoints_cmd", 1, &WaypointFollower::waypointCb, this);
 }
 
@@ -24,7 +24,7 @@ void WaypointFollower::setupWaypointFollower()
   ros::param::get("~default_speed", speed_);
   ros::param::get("~station_tolerance_pos", station_tolerance_pos_);
   ros::param::get("~station_tolerance_ang", station_tolerance_ang_);
-  ros::param::get("~station_brake_distance", station_brake_distance_);  
+  ros::param::get("~station_brake_distance", station_brake_distance_);
 
   num_wps_      =  0;
   wp_index_     = -1;
@@ -58,7 +58,7 @@ void WaypointFollower::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
 {
   // Convert from quaternion to RPY to get yaw
   tf::Quaternion quat; double roll, pitch, yaw;
-  quat.setValue(msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, 
+  quat.setValue(msg->pose.pose.orientation.x, msg->pose.pose.orientation.y,
                 msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
   tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
 
@@ -90,23 +90,23 @@ void WaypointFollower::setNextWaypoint()
 
     // Get next waypoint pose
     geometry_msgs::Pose pose = waypoint_list_[wp_index_].pose;
-    
+
     wp_next_.x = pose.position.x; // Set next waypoint
-    wp_next_.y = pose.position.y;  
-    
+    wp_next_.y = pose.position.y;
+
     // Convert from quaternion to RPY to set yaw command
     tf::Quaternion quat; double roll, pitch, yaw;
-    quat.setValue(pose.orientation.x, pose.orientation.y, 
+    quat.setValue(pose.orientation.x, pose.orientation.y,
                   pose.orientation.z, pose.orientation.w);
-    tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);  
+    tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
     yaw_next_ = (float) yaw;
 
     if (wp_index_ == 0)
-      ROS_INFO_STREAM("WpFollower: Now heading to waypoint " 
+      ROS_INFO_STREAM("WpFollower: Now heading to waypoint "
         << WaypointFollower::getWaypointString() << ".");
     else
       ROS_INFO_STREAM("WpFollower: Waypoint reached at x=" << wp_prev_.x
-        << ", y=" << wp_prev_.y << ". Now heading to waypoint " 
+        << ", y=" << wp_prev_.y << ". Now heading to waypoint "
         << WaypointFollower::getWaypointString() << ".");
   }
   else
@@ -114,7 +114,7 @@ void WaypointFollower::setNextWaypoint()
     ROS_INFO_STREAM("WpFollower: Waypoint reached at x=" << wp_next_.x
       << ", y=" << wp_next_.y << ". Route completed.");
 
-    wp_index_++; // Increment waypoint index    
+    wp_index_++; // Increment waypoint index
     WaypointFollower::requestNewWaypoints(); // Publish waypoint request
   }
 }
@@ -135,7 +135,7 @@ void WaypointFollower::evaluateWaypoint()
 
     case vrx_msgs::Waypoint::NAV_STATION:
       //
-      ROS_INFO_STREAM("WpFollower: Keeping station at waypoint " 
+      ROS_INFO_STREAM("WpFollower: Keeping station at waypoint "
         << WaypointFollower::getWaypointString() << ".");
 
       double duration = (double) waypoint_list_[wp_index_].station_duration;
@@ -173,21 +173,21 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
 
   Vec2D virtual_wp = GuidanceAlgorithms::NonlinearGuidanceLaw(
     wp_prev_, wp_next_, vessel_pos_, nlgl_radius_);
-  msg.yaw = GuidanceAlgorithms::PurePursuit(virtual_wp, vessel_pos_); 
+  msg.yaw = GuidanceAlgorithms::PurePursuit(virtual_wp, vessel_pos_);
 
   if (station) // Slow down when reaching station position
   {
-    float distance_to_wp = 
+    float distance_to_wp =
       GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance_/2;
 
     // If less than threshold, reduce speed on approach
-    if (distance_to_wp < station_brake_distance_) 
+    if (distance_to_wp < station_brake_distance_)
       msg.speed = (distance_to_wp/station_brake_distance_)*speed_;
     else
       msg.speed = speed_;
   }
   else
-    msg.speed = speed_;  
+    msg.speed = speed_;
 }
 
 void WaypointFollower::followRoute()
@@ -202,7 +202,7 @@ void WaypointFollower::followRoute()
         //
         ROS_INFO("WpFollower: Station completed. Continuing on route.");
         station_sm_.resetStateMachine();
-        WaypointFollower::setNextWaypoint();      
+        WaypointFollower::setNextWaypoint();
         return; // Exit method, don't publish course_cmd
 
       case StationSM::STATION_WAIT:
@@ -212,7 +212,7 @@ void WaypointFollower::followRoute()
 
       case StationSM::STATION_ALIGN:
         //
-        if (WaypointFollower::stationPoseHit(station_tolerance_ang_)) 
+        if (WaypointFollower::stationPoseHit(station_tolerance_ang_))
           station_sm_.completeAlignment(); // Vessel now aligned, tell state machine
 
         WaypointFollower::assignCourse(course_cmd, true); // Align pose at station
@@ -229,7 +229,7 @@ void WaypointFollower::followRoute()
   }
   else
     return; // Don't publish course command
-  
+
   pub_course_.publish(course_cmd); // Publish to course controller
 }
 
