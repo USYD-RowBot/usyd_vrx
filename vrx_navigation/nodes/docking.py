@@ -30,17 +30,17 @@ class DockSM:
   def getState(self):
     return self.state
 
-  def beginDocking():
+  def beginDocking(self):
     if self.state is self.DockState.DOCK_STANDBY:
       self.state = self.DockState.DOCK_ENTER
 
-  def hold():
+  def hold(self):
     if self.state is self.DockState.DOCK_ENTER:
       # Reset hold timer and change state to HOLD
       self.hold_time_target = rospy.get_time() + self.hold_duration
       self.state = self.DockState.DOCK_HOLD
 
-  def tryExitDock():
+  def tryExitDock(self):
     exiting = False # Are we going to exit the dock now?
 
     if self.state is self.DockState.DOCK_HOLD:
@@ -50,7 +50,7 @@ class DockSM:
 
     return exiting
 
-  def finished():
+  def finished(self):
     if self.state is self.DockState.DOCK_EXIT:
       self.state = self.DockState.DOCK_STANDBY
 
@@ -161,7 +161,7 @@ class Docker:
         print(e)
         return
 
-      processImage(cv_img) # Pass converted image to processing algorithm
+      self.processImage(cv_img) # Pass converted image to processing algorithm
 
   def odomCb(self, odom):
     # Store current vessel position in odom frame
