@@ -1,8 +1,8 @@
 <launch>
   <arg name="filename" default="$(find simple_waypoints)/example_local_waypoints/keyhole.csv"/>
     <node pkg="simple_waypoints" name="simple_waypoints" type="gen_waypoints.py">
-	     <param name="~filename" value="$(arg filename)"/>
-	     <param name="~geo" value="false"/>
+	    <param name="~filename" value="$(arg filename)"/>
+	    <param name="~geo" value="false"/>
     </node>
 
 </launch>

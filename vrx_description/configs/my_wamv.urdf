@@ -343,6 +343,61 @@
     <limit effort="100" velocity="100"/>
     <dynamics damping="0.05" friction="0.05"/>
   </joint>
+  <link name="lateral_engine_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://wamv_description/models/engine/mesh/engine.dae"/>
+      </geometry>
+    </visual>
+    <collision name="lateral_engine_vertical_axis_collision">
+      <origin rpy="0 0 0" xyz="-0.16 0 -0.24"/>
+      <geometry>
+        <box size="0.2 0.15 0.83"/>
+      </geometry>
+    </collision>
+    <collision name="lateral_engine_rear_end_collision">
+      <origin rpy="0 0 0" xyz="-0.34 0 0.12"/>
+      <geometry>
+        <box size="0.12 0.15 0.12"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="15"/>
+      <inertia ixx="0.889245" ixy="0.0" ixz="0.0" iyy="0.911125" iyz="0.0" izz="0.078125"/>
+    </inertial>
+  </link>
+  <link name="lateral_propeller_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://wamv_description/models/propeller/mesh/propeller.dae"/>
+      </geometry>
+    </visual>
+    <collision name="lateral_propeller_collision">
+      <origin rpy="0 1.57 0" xyz="-0.08 0 0"/>
+      <geometry>
+        <cylinder length="0.18" radius="0.24"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <inertia ixx="0.008545" ixy="0.0" ixz="0.0" iyy="0.008545" iyz="0.0" izz="0.0144"/>
+    </inertial>
+  </link>
+  <joint name="lateral_chasis_engine_joint" type="revolute">
+    <axis xyz="0 0 1"/>
+    <limit effort="10" lower="-3.14159265359" upper="3.14159265359" velocity="10"/>
+    <origin rpy="0.0 0.0 1.570796327" xyz="1.186888 0.300000 0.318237"/>
+    <parent link="base_link"/>
+    <child link="lateral_engine_link"/>
+  </joint>
+  <joint name="lateral_engine_propeller_joint" type="continuous">
+    <axis rpy="0 0 0" xyz="1 0 0"/>
+    <parent link="lateral_engine_link"/>
+    <child link="lateral_propeller_link"/>
+    <origin rpy="0 0 0" xyz="-0.278156 0 -0.509371"/>
+    <limit effort="100" velocity="100"/>
+    <dynamics damping="0.05" friction="0.05"/>
+  </joint>
   <gazebo>
     <plugin filename="libusv_gazebo_thrust_plugin.so" name="wamv_gazebo_thrust" xmlns:xacro="http://ros.org/wiki/xacro">
       <cmdTimeout>1.0</cmdTimeout>
@@ -369,6 +424,21 @@
         <engineJointName>right_chasis_engine_joint</engineJointName>
         <cmdTopic>thrusters/right_thrust_cmd</cmdTopic>
         <angleTopic>thrusters/right_thrust_angle</angleTopic>
+        <enableAngle>true</enableAngle>
+        <!-- Optional Parameters -->
+        <mappingType>1</mappingType>
+        <maxCmd>1.0</maxCmd>
+        <maxForceFwd>250.0</maxForceFwd>
+        <maxForceRev>-100.0</maxForceRev>
+        <maxAngle>1.57079632679</maxAngle>
+      </thruster>
+      <thruster>
+        <!-- Required Parameters -->
+        <linkName>lateral_propeller_link</linkName>
+        <propJointName>lateral_engine_propeller_joint</propJointName>
+        <engineJointName>lateral_chasis_engine_joint</engineJointName>
+        <cmdTopic>thrusters/lateral_thrust_cmd</cmdTopic>
+        <angleTopic>thrusters/lateral_thrust_angle</angleTopic>
         <enableAngle>true</enableAngle>
         <!-- Optional Parameters -->
         <mappingType>1</mappingType>
@@ -414,7 +484,7 @@
   <link name="imu_wamv_link">
     <visual name="imu_wamv_visual">
       &gt;
-
+        
       <geometry>
         <box size="0.05 0.025 0.005"/>
       </geometry>
@@ -489,7 +559,7 @@
       <topicName>wamv/sensors/gps/gps/fix</topicName>
       <!-- Note that the hector_gazebo_ros_gps plugin uses NWU coordinates
              for reporting velocities.  This may cause problems if localization
-             requires velocity in ENU.
+             requires velocity in ENU.  
              See Issue #64 in VRX project for details
              https://bitbucket.org/osrf/vrx/issues/64 -->
       <velocityTopicName>wamv/sensors/gps/gps/fix_velocity</velocityTopicName>
@@ -627,7 +697,7 @@
       <plugin filename="libgazebo_ros_camera.so" name="camera_plugin_left_camera">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>wamv/sensors/cameras/front_left_camera</cameraName>
+        <cameraName>wamv/sensors/cameras/left_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>left_camera_link_optical</frameName>
@@ -754,7 +824,7 @@
       <plugin filename="libgazebo_ros_camera.so" name="camera_plugin_right_camera">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>wamv/sensors/cameras/front_right_camera</cameraName>
+        <cameraName>wamv/sensors/cameras/right_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>right_camera_link_optical</frameName>
@@ -881,7 +951,7 @@
       <plugin filename="libgazebo_ros_camera.so" name="camera_plugin_middle_camera">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>wamv/sensors/cameras/middle_right_camera</cameraName>
+        <cameraName>wamv/sensors/cameras/middle_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>middle_camera_link_optical</frameName>

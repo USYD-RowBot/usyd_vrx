@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-    <include file="$(find vrx_gazebo)/launch/sandisland.launch">
-        <arg name="urdf" value="~/vrx_ws/src/vrx_usydrx/configs/default_config.urdf"/>
-    </include>
-    <node name="runforward" pkg="vrx_usydrx" type="runforward.py">
-    </node>
-
-</launch>

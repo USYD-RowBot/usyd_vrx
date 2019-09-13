@@ -119,7 +119,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+  include/vrx_control
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -144,6 +144,7 @@ add_executable(wamv_course_controller
   src/CourseController.cpp
   src/SimplePID.cpp
   src/ThrustController.cpp
+  src/ThrustSM.cpp
 )
 target_link_libraries(wamv_course_controller ${catkin_LIBRARIES})
 add_dependencies(wamv_course_controller ${catkin_EXPORTED_TARGETS})

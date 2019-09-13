@@ -1,0 +1,9 @@
+# Waypoint follower configuration
+nlgl_radius:    4.0 # m
+wp_tolerance:   2.0 # m
+default_speed:  2.0 # m/s
+
+# Station keeping configuration
+station_tolerance_pos:  0.5  # m
+station_tolerance_ang:  0.35 # rad (0.35 is 20deg)
+station_brake_distance: 5.0  # m
