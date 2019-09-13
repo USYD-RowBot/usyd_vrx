@@ -5,13 +5,14 @@
         <arg name="urdf" value="$(find vrx_description)/configs/default_config.urdf"/>
 	<arg name="gui" value="$(arg gui)" />
     </include>
+    <group ns = "wamv">
+      <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+          <param name="publish_frequency" value="30"/>
+      </node>
 
-    <group ns="wamv">
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-            <param name="publish_frequency" value="30"/>
-        </node>
+      <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py">
+        <remap from="odom" to="sensors/position/p3d_wamv"/>
+      </node>
     </group>
-
-    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py"/>
 
 </launch>

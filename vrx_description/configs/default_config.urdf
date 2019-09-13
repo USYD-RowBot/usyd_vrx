@@ -346,6 +346,7 @@
   <gazebo>
     <plugin filename="libusv_gazebo_thrust_plugin.so" name="wamv_gazebo_thrust" xmlns:xacro="http://ros.org/wiki/xacro">
       <cmdTimeout>1.0</cmdTimeout>
+      <robotNamespace>wamv</robotNamespace>
       <thruster>
         <!-- Required Parameters -->
         <linkName>left_propeller_link</linkName>
@@ -413,7 +414,7 @@
   <link name="imu_wamv_link">
     <visual name="imu_wamv_visual">
       &gt;
-        
+
       <geometry>
         <box size="0.05 0.025 0.005"/>
       </geometry>
@@ -488,7 +489,7 @@
       <topicName>sensors/gps/gps/fix</topicName>
       <!-- Note that the hector_gazebo_ros_gps plugin uses NWU coordinates
              for reporting velocities.  This may cause problems if localization
-             requires velocity in ENU.  
+             requires velocity in ENU.
              See Issue #64 in VRX project for details
              https://bitbucket.org/osrf/vrx/issues/64 -->
       <velocityTopicName>sensors/gps/gps/fix_velocity</velocityTopicName>
