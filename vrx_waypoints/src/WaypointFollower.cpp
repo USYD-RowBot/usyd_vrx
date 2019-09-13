@@ -26,10 +26,10 @@ void WaypointFollower::setupWaypointFollower()
   ros::param::get("~station_tolerance_ang", station_tolerance_ang_);
   ros::param::get("~station_brake_distance", station_brake_distance_);  
 
-  num_wps_      = 0;
+  num_wps_      =  0;
   wp_index_     = -1;
   vessel_pos_   = {0, 0};
-  vessel_yaw_   = 0;
+  vessel_yaw_   =  0;
   wp_next_      = {0, 0};
   wp_prev_      = {0, 0};
 }

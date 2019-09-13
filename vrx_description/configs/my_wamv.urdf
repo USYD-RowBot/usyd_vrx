@@ -624,7 +624,12 @@
       </material>
     </visual>
     <collision name="left_camera_post_collision">
-      <geometry>
+      <ge
+    <group ns="wamv">
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+            <param name="publish_frequency" value="30"/>
+        </node>
+    </group>ometry>
         <cylinder length="0.1765" radius="0.0076"/>
       </geometry>
     </collision>
@@ -697,7 +702,7 @@
       <plugin filename="libgazebo_ros_camera.so" name="camera_plugin_left_camera">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>wamv/sensors/cameras/left_camera</cameraName>
+        <cameraName>wamv/sensors/cameras/front_left_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>left_camera_link_optical</frameName>
@@ -824,7 +829,7 @@
       <plugin filename="libgazebo_ros_camera.so" name="camera_plugin_right_camera">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>wamv/sensors/cameras/right_camera</cameraName>
+        <cameraName>wamv/sensors/cameras/front_right_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>right_camera_link_optical</frameName>
@@ -951,7 +956,7 @@
       <plugin filename="libgazebo_ros_camera.so" name="camera_plugin_middle_camera">
         <alwaysOn>true</alwaysOn>
         <updateRate>0.0</updateRate>
-        <cameraName>wamv/sensors/cameras/middle_camera</cameraName>
+        <cameraName>wamv/sensors/cameras/middle_right_camera</cameraName>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
         <frameName>middle_camera_link_optical</frameName>

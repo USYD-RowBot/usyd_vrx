@@ -10,6 +10,8 @@
   <node pkg="vrx_waypoints" type="wamv_waypoint_follower" name="wamv_waypoint_follower" output="screen">
     <rosparam command="load" file="$(arg default_config_file)" />
     <rosparam command="load" file="$(arg overlying_config_file)" />
+
+    <remap from="/p3d_wamv" to="/wamv/sensors/position/p3d_wamv"/>
   </node>
 
 </launch>
