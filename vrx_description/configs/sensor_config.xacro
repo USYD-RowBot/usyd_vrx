@@ -11,9 +11,9 @@
       <xacro:wamv_p3d name="p3d_wamv" />
 
     <!-- === wamv_camera === -->
-      <xacro:wamv_camera y="0.1" x="0.75" name="front_left_camera" P="${radians(15)}" />
-      <xacro:wamv_camera y="-0.1" x="0.75" name="front_right_camera" P="${radians(15)}" />
-      <xacro:wamv_camera y="0.3" x="0.75" name="middle_right_camera" P="${radians(15)}" />
+      <xacro:wamv_camera y="0.1" x="0.75" Y="${radians(30)}" name="left_camera" />
+      <xacro:wamv_camera y="-0.1" x="0.75" Y="${radians(-30)}" name="right_camera" />
+      <xacro:wamv_camera y="0" x="0.75" Y="${radians(0)}" name="middle_camera" />
 
     <!-- === lidar === -->
       <xacro:lidar P="${radians(8)}" type="16_beam" name="lidar_wamv" />
