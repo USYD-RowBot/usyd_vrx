@@ -1,10 +1,12 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="wamv_name" default="my_wamv"/>
 
+
+
+
+  <arg name="wamv_name" default="usyd_wamv"/>
   <arg name="namespace" value="usyd_wamv_config"/>
-
   <group ns="$(arg namespace)">
     <arg name="sensor_yaml" default="$(find vrx_description)/configs/sensor_config.yaml"/>
     <param name="sensor_yaml" value="$(arg sensor_yaml)"/>
@@ -18,7 +20,7 @@
     <param name="wamv_gazebo" value="$(find wamv_gazebo)/urdf/wamv_gazebo.urdf.xacro"/>
 
     <param name="sensors_dir" value="$(find wamv_gazebo)/urdf/sensors"/>
-    
+
     <param name="thrusters_dir" value="$(find wamv_description)/urdf/thrusters"/>
 
     <param name="compliance_dir" value="$(find vrx_gazebo)/src/vrx_gazebo_python/generator_scripts/wamv_config"/>

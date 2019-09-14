@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <include file="$(find vrx_bringup)/launch/sandisland_nogui.launch">
-        <arg name="urdf" value="$(find vrx_description)/configs/default_config.urdf"/>
+        <arg name="urdf" value="$(find vrx_description)/configs/usyd_wamv.urdf"/>
     </include>
     <group ns = "wamv">
       <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
