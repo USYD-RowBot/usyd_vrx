@@ -88,11 +88,11 @@ To test with an example path:
 ```roslaunch simple_waypoints simple_waypoints.launch```
 
 ### Headless mode
-Wherever you see 
+Wherever you see
 
 ```roslaunch vrx_bringup sensored_boat.launch```
 
-, you can replace it with 
+, you can replace it with
 
 ```roslaunch vrx_bringup sensored_boat_nogui.launch```
 
@@ -112,3 +112,18 @@ roslaunch vrx_navigation lidar_node.launch
 ```
 
 Now you should be able to set a 2d goal pose through rviz and the wam_v will attempt to follow that path.
+
+#### Wayfinding Task
+To check the wayfinding performance
+
+Launch the task node
+```
+roslaunch vrx_gazebo wayfinding.launch
+```
+
+Launch the wayfinding control node
+```
+roslaunch vrx_control waypoint_following.launch
+```
+
+TODO: figure out the correct GEOPATH to PATH conversion
