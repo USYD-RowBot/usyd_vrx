@@ -7,10 +7,14 @@ import argparse
 import rospy
 import numpy as np
 from nav_msgs.msg import Odometry, Path
-from geometry_msgs.msg import PoseWithCovarianceStamped, PoseArray, Point
+from geometry_msgs.msg import PoseWithCovarianceStamped, PoseArray, Point,PoseStamped
+from geographic_msgs.msg import GeoPath
 from std_msgs.msg import Float64, Bool, Float32
 import math
 import tf
+import pyproj
+
+
 from rospy.numpy_msg import numpy_msg
 
 import shapely
@@ -96,10 +100,21 @@ class WamNav():
         self.allowable_distance_to_path = rospy.get_param("~allowable_distance_to_path", 6.0)
         # Prefer adding the subscribers at the end of init
         rospy.Subscriber(odom_topic, Odometry, self.localisationCallback)
-        rospy.Subscriber(waypoint_topic, Path, self.waypointCallback)
+        rospy.Subscriber(waypoint_topic, GeoPath, self.waypointCallback)
 
         print("End of Init")
 
+
+    def transformCoordinates(self,latpos,XYZpos):
+        outProj = pyproj.Proj("+init=EPSG:4326")
+        R = 6378100 #Radius of Earth Metres
+        pi=3.14159265359
+        crs="+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996)
+        inp = pyproj.Proj(crs)
+        y,x = pyproj.transform(outProj,inp,latpos.longitude,latpos.latitude)
+        XYZpos.x=x
+        XYZpos.y=y
+        XYZpos.z=0
 
     def localisationCallback(self, data):
         """ Receives the localisation data and navigates the vessel
@@ -171,8 +186,16 @@ class WamNav():
         self.waypoints = []
         # Append the current position
         self.waypoints.append(np.array([self.px, self.py]))
-        for pose in path_msg.poses:
-            self.waypoints.append(np.array([pose.pose.position.x, pose.pose.position.y]))
+
+        for dps in path_msg.poses:
+            #self.waypoints.append(np.array([dps.pose.position.x, dps.pose.position.y]))
+            ps = PoseStamped()
+            self.transformCoordinates(dps.pose.position,ps.pose.position)
+            self.waypoints.append(np.array([ps.pose.position.x,ps.pose.position.y]))
+
+        print(self.waypoints);
+        #for pose in path_msg.poses:
+        #    self.waypoints.append(np.array([pose.pose.position.x, pose.pose.position.y]))
         self.wIdx = 0
         self.wcount = len(self.waypoints)
         # Set the targets here - avoids it hitting waypoint select with the wrong targets

@@ -12,9 +12,5 @@
     <param name="~request_mode" value="hard"/> <!-- Options 'hard' or 'soft'. Hard reaches the waypoint at all costs. Soft will request new waypoints if it veers to far from the path or misses a waypoints -->
   </node>
 
-    <!-- Translate from geo path to normal path -->
-  <node pkg="vrx_control" type="geo.py" name="gptranslate" output="screen">
-        <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
-        <param name="~outTopic" value="waypoints"></param>
-  </node>
+
 </launch>
