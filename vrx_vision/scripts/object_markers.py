@@ -31,7 +31,7 @@ def callback(data):
             marker.color.g = 0.0
             marker.color.b = 0.0
             marker.color.a = 1.0
-            marker.lifetime = rospy.Duration()
+            marker.lifetime = rospy.Duration(5)
             pub.publish(marker)
 if __name__ == "__main__":
     rospy.init_node("simple_marker")

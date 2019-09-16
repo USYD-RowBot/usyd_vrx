@@ -1039,7 +1039,7 @@
   </joint>
   <!-- Sensor post arm to lidar joint -->
   <joint name="lidar_wamv_post_arm_to_lidar_wamv_joint" type="fixed">
-    <origin rpy="0 0.13962634016 0" xyz="0.04 0 0.05"/>
+    <origin rpy="0 0 0" xyz="0.04 0 0.05"/>
     <parent link="lidar_wamv_post_arm_link"/>
     <child link="lidar_wamv_link"/>
   </joint>

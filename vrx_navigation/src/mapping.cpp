@@ -55,7 +55,9 @@ public:
     ROS_INFO("Waiting for odometry.");
     while(ros::ok()){
       try{
-        odom_transform = tf_buffer.lookupTransform("odom","lidar_wamv_link",ros::Time(0));
+
+        //TODO get tf_prefix from params
+        odom_transform = tf_buffer.lookupTransform("odom","wamv/lidar_wamv_link",ros::Time(0));
         ROS_INFO("Found odometry.");
         break;
       }
@@ -87,7 +89,7 @@ public:
   void getOdom(tf2_ros::Buffer *tf_buffer){
       //Attempt to get the odometry transform and save it.
     try{
-      odom_transform = tf_buffer->lookupTransform("odom","lidar_wamv_link",ros::Time(0));
+      odom_transform = tf_buffer->lookupTransform("odom","wamv/lidar_wamv_link",ros::Time(0));
       ROS_DEBUG("Found odom_transform.");
     }
     catch (tf2::TransformException &ex){

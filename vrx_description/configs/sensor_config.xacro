@@ -16,7 +16,7 @@
       <xacro:wamv_camera y="0" x="0.75" Y="${radians(0)}" name="middle_camera" />
 
     <!-- === lidar === -->
-      <xacro:lidar P="${radians(8)}" type="16_beam" name="lidar_wamv" />
+      <xacro:lidar P="0" type="16_beam" name="lidar_wamv" />
 
   </xacro:macro>
 </robot>

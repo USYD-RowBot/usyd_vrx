@@ -22,4 +22,4 @@ wamv_p3d:
 lidar:
     - name: lidar_wamv
       type: 16_beam
-      P: ${radians(8)}
+      P: 0
