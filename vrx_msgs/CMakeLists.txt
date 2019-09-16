@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   std_msgs
   genmsg
+  sensor_msgs
   actionlib_msgs
 )
 
@@ -55,22 +56,23 @@ add_message_files(
   Course.msg
   VesselWaypoint.msg
   VesselPath.msg
-  
+  Object.msg
+  ObjectArray.msg
   Waypoint.msg
   WaypointRoute.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
+add_service_files(
+ FILES
+   ClassifyBuoy.srv
 #   Service2.srv
-# )
+)
 
 ## Generate actions in the 'action' folder
 add_action_files(
-  DIRECTORY action 
-  FILES 
+  DIRECTORY action
+  FILES
   Dock.action
 )
 
@@ -79,6 +81,8 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+=======
+  sensor_msgs
   actionlib_msgs
 )
 

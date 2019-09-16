@@ -1,0 +1,6 @@
+sensor_msgs/Image image
+float32 distance
+---
+string type
+float32 confidence
+bool success
