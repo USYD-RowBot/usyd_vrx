@@ -81,7 +81,6 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
-=======
   sensor_msgs
   actionlib_msgs
 )
@@ -118,7 +117,9 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES vrx_msgs
+
 CATKIN_DEPENDS geometry_msgs message_generation nav_msgs std_msgs
+
 #  DEPENDS system_lib
 )
 
