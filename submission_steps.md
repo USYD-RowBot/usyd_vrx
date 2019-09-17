@@ -5,12 +5,13 @@
 3. run `docker run <name_of_your_container>`
 4. run `docker ps` to find your container name under the NAMES Column:
 5. open a bash in the docker with `docker exec -it <container_name> bash`
-6. create a catkin workspace: http://wiki.ros.org/catkin/Tutorials/create_a_workspace (you'll need to source the setup bash because ltr nothing is in bashrc)
-7. pull our files: `git clone whatever`
+6. Make sure you have sourced the ros melodic files, so you can call catkin_make `source /opt/ros/melodic/setup.bash`
+6. create a catkin workspace: http://wiki.ros.org/catkin/Tutorials/create_a_workspace 
+7. pull our files: `git clone https://github.com/USYD-RowBot/usyd_vrx.git`
 8. IF YOU'RE WORKING ON A BRANCH: checkout to and fetch the branch: `git checkout --track origin/stable_steven`
 9. Install tf: `apt install ros-melodic-tf`
 10. catkin_make
-11. change the run file `run_my_system.bash` to whatever script you want to run.
+11. change the run file `run_my_system.bash` to whatever script you want to run. An example is included in `vrx_tasks/sampleRunbash.sh`.
 
 # Testing
 0. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
