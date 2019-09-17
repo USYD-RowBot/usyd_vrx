@@ -4,7 +4,16 @@
     <arg name="thrust_config" default="T"/>
     <arg name="ground_truth_enabled" default="true"/>
 
+    <!-- Initial WAMV position and yaw. -->
+    <!--
+    <arg name="x" default="18.2" />
+    <arg name="y" default="-10.9" />
+    <arg name="yaw" default="-2.9" /> -->
+
     <include file="$(find vrx_gazebo)/launch/sandisland.launch">
+        <!--<arg name="x" value="$(arg x)" />
+        <arg name="y" value="$(arg y)" />
+        <arg name="Y" value="$(arg yaw)" />-->
         <arg name="thrust_config" value="$(arg thrust_config)"/>
         <arg name="ground_truth_enabled" value="$(arg ground_truth_enabled)"/>
         <arg name="urdf" value="$(find vrx_description)/configs/my_wamv.urdf"/>
@@ -14,7 +23,6 @@
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
             <param name="publish_frequency" value="30"/>
         </node>
-
 
         <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py">
             <remap from="odom" to="sensors/position/p3d_wamv"/>

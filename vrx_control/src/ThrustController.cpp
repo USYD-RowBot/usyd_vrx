@@ -139,9 +139,9 @@ void ThrustController::getControlSignalTraverse(
 
   // Generate thrust commands from PID control signals and constrain
   thrust_right = (float)
-    ThrustController::constrainThrust(lin_ctrl_signal + ang_ctrl_signal);        
+    ThrustController::constrainThrust(lin_ctrl_signal + ang_ctrl_signal);
   thrust_left  = (float)
-    ThrustController::constrainThrust(lin_ctrl_signal - ang_ctrl_signal);  
+    ThrustController::constrainThrust(lin_ctrl_signal - ang_ctrl_signal); 
 }
 
 void ThrustController::getControlSignalRotate(float &thrust_right, 
@@ -161,6 +161,8 @@ void ThrustController::getControlSignalRotate(float &thrust_right,
 void ThrustController::getStrafingThrust(
   float &thrust_right, float &thrust_left, float &thrust_lat)
 {
+  float new_thrust = strafe_thrust_; // TODO add PID control
+
   // Relative y direction strafing, left thruster is at original angle
   thrust_left  = (float)
     ThrustController::constrainThrust(strafe_y_*strafe_thrust_); 

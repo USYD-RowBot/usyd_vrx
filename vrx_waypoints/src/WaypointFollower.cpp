@@ -175,7 +175,16 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
     wp_prev_, wp_next_, vessel_pos_, nlgl_radius_);
   msg.yaw = GuidanceAlgorithms::PurePursuit(virtual_wp, vessel_pos_);
 
-  if (station) // Slow down when reaching station position
+  float distance_to_wp =
+      GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance_/2;
+
+  // If less than threshold, reduce speed on approach
+  if (distance_to_wp < station_brake_distance_)
+    msg.speed = (distance_to_wp/station_brake_distance_)*speed_;
+  else
+    msg.speed = speed_;
+
+  /*if (station) // Slow down when reaching station position
   {
     float distance_to_wp =
       GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance_/2;
@@ -187,7 +196,7 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
       msg.speed = speed_;
   }
   else
-    msg.speed = speed_;
+    msg.speed = speed_;*/
 }
 
 void WaypointFollower::followRoute()

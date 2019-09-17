@@ -1,5 +1,5 @@
 # Waypoint follower configuration
-nlgl_radius:    4.0 # m
+nlgl_radius:    7.0 # m
 wp_tolerance:   2.0 # m
 default_speed:  2.0 # m/s
 
