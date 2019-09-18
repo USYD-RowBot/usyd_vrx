@@ -6,10 +6,12 @@
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
             <param name="publish_frequency" value="30" />
         </node>
+        <!-- Boat odometry -->
+        <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" output="screen">
+            <param name="~inTopic" value="sensors/position/p3d_wamv"></param>
+        </node>
     </group>
 
-    <!-- Boat navigation -->
-    <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" />
 
     <include file="$(find vrx_control)/launch/course_controller.launch">
         <arg name="thrust_config" value="$(arg thrust_config)" />
@@ -27,8 +29,8 @@
     <node pkg="vrx_tasks" type="poseToCourse.py" name="pathCtranslate" output="screen">
         <param name="~inTopic" value="internal/poses"></param>
     </node>
-    
-    
+
+
     <!-- wayfinding -->
     <!-- Translate from geo path to normal path -->
     <node pkg="vrx_tasks" type="geoPathToPath.py" name="gpctranslate" output="screen">
@@ -41,8 +43,5 @@
     </node>
 
     <!-- Vision translation -->
-
-    <!-- RVIZ -->
-    <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find vrx_bringup)/rviz/witht0.rviz" />
-    <!--This will fail in the actual sim but that's fine-->
+    <!--TODO:-->
 </launch>

@@ -8,6 +8,11 @@ import geometry_msgs.msg
 
 # Also create a fixed starting broadcast frame so rviz looks and works better
 
+params = {
+    "inTopic": "/odom",
+}
+
+
 t0frame=None
 
 def handle_odom_pose(ros_odom_msg, tf_frame_id):
@@ -48,5 +53,7 @@ def callback(data):
 
 if __name__ == "__main__":
     rospy.init_node('odom_to_tf')
-    rospy.Subscriber("odom",Odometry,callback)
+    for i in params:
+        params[i] = rospy.get_param('~'+i, params[i])
+    rospy.Subscriber(params['inTopic'],Odometry,callback)
     rospy.spin()

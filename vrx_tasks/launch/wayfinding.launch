@@ -8,27 +8,8 @@
         <arg name="gui" value="false"/>
     </include>
     
-    <group ns="wamv">
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-            <param name="publish_frequency" value="30"/>
-        </node>
-    </group>
-    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py"/>
-    
-    <include file="$(find vrx_control)/launch/course_controller.launch">
-        <arg name="thrust_config" value="$(arg thrust_config)"/>
+    <include file="$(find vrx_tasks)/launch/missioncontrol.launch">
     </include>
-    
-    <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch"/>
-
-    <!-- Translate from geo path to normal path -->
-    <node pkg="vrx_tasks" type="geoPathToPath.py" name="gptranslate" output="screen">
-        <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
-        <param name="~outTopic" value="waypoints"></param>
-    </node>
-    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathtranslate" output="screen">
-    </node>
-    <!-- Translate from normal path to vrx waypoints -->
 
     <!-- RVIZ -->
     <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find vrx_bringup)/rviz/witht0.rviz" />

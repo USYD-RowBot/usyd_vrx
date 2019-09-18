@@ -16,18 +16,23 @@
 10. catkin_make and make sure everything is ok.
 11. change the run file `~/run_my_system.bash` to whatever script you want to run. An example is included in `vrx_tasks/sampleRunbash.sh`.
 12. Make sure it works :3 by running `./run_my_system.bash`.
+12. N.B. robot-state-publisher will probably fail. That's ok. the robot-description argument will be presented in the sim.
 12. Save your work: first `docker ps` to find your container ID, then `docker commit <containerID> <name_of_your_container>`.
-
 
 # Testing
 0. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
-1. Get the name of the image you want to test from dockerhub e.g. tisbutascratch/usyd_vrx:v0
+1. Get the name of the image you want to test from dockerhub e.g. tisbutascratch/usyd_vrx:v2
     1. OR Follow `Submitting from scratch` to push to dockerhub
+2. Docker run on your local system just to make sure everything is ok.
+2. ENSURE YOUR ENTRYPOINT IS CORRECT, by running `docker inspect <containername>` and searching for the `entrypoint` datum. It should say `./ros_entrypoint.sh`. If it doesn't,
 2. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial'
-
+3. Everyting will take AGES. this is normal
 
 # Updating
 0. get docker
 1. Get the docker image: `docker run -it --entrypoint bash tisbutascratch/usyd_vrx:v1` (this ensures you run bash instead of just running the launch file)
+2. NOTE THAT THIS WILL OVERWRITE THE ENTRYPOINT, SCREWING UP YOUR DOCKER IMAGE. To fix this, follow the step after saving your work.
 2. do what you need to do
 3. Save your work: first `docker ps` to find your container ID, then `docker commit <containerID> <name_of_your_container>`.
+4. Change the entrypoint: run `docker run <yourcontainername> --entrypoint './ros_entrypoint.sh` and then recommit your work. Then use `docker inspect` and check the `entrypoint` datum to ensure that this has worked.
+
