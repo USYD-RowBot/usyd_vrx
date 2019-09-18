@@ -26,5 +26,6 @@
 
 # Updating
 0. get docker
-1. Get the docker image: docker run tisbutascratch/usyd_vrx:v0
-
+1. Get the docker image: `docker run -it --entrypoint bash tisbutascratch/usyd_vrx:v1` (this ensures you run bash instead of just running the launch file)
+2. do what you need to do
+3. Save your work: first `docker ps` to find your container ID, then `docker commit <containerID> <name_of_your_container>`.
