@@ -1,21 +1,21 @@
 <launch>
     <!-- include the official gazebo file -->
-    <arg name="thrust_config" default="T"/>
+    <arg name="thrust_config" default="T" />
     <!-- Boat controls -->
     <group ns="wamv">
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-            <param name="publish_frequency" value="30"/>
+            <param name="publish_frequency" value="30" />
         </node>
     </group>
 
     <!-- Boat navigation -->
-    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py"/>
-    
+    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py" />
+
     <include file="$(find vrx_control)/launch/course_controller.launch">
-        <arg name="thrust_config" value="$(arg thrust_config)"/>
+        <arg name="thrust_config" value="$(arg thrust_config)" />
     </include>
-    
-    <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch"/>
+
+    <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
 
     <!-- station_keeping -->
     <!-- Translate from geo pose to normal pose -->
@@ -24,30 +24,17 @@
         <param name="~outTopic" value="waypoints"></param>
     </node>
     <!-- Translate from normal course to vrx pose -->
-    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathtranslate" output="screen">
+    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathtranslate" output="screen"></node>
+    <!-- wayfinding -->
+    <!-- Translate from geo path to normal path -->
+    <node pkg="vrx_tasks" type="geoPathToPath.py" name="gptranslate" output="screen">
+        <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
+        <param name="~outTopic" value="waypoints"></param>
+    </node>
+    <!-- Translate from normal path to vrx path -->
+    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathtranslate" output="screen"></node>
 
-    <!-- wayfinding -->
-    <!-- Translate from geo path to normal path -->
-    <node pkg="vrx_tasks" type="geoPathToPath.py" name="gptranslate" output="screen">
-        <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
-        <param name="~outTopic" value="waypoints"></param>
-    </node>
-    <!-- Translate from normal path to vrx path -->
-    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathtranslate" output="screen">
-    </node>
-    
-    <!-- wayfinding -->
-    <!-- Translate from geo path to normal path -->
-    <node pkg="vrx_tasks" type="geoPathToPath.py" name="gptranslate" output="screen">
-        <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
-        <param name="~outTopic" value="waypoints"></param>
-    </node>
-    <!-- Translate from normal path to vrx path -->
-    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathtranslate" output="screen">
-    </node>
-    
     <!-- Vision translation -->
-    
 
     <!-- RVIZ -->
     <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find vrx_bringup)/rviz/witht0.rviz" />

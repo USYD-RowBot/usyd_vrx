@@ -10,14 +10,19 @@
 7. pull our files: `git clone https://github.com/USYD-RowBot/usyd_vrx.git`
 8. IF YOU'RE WORKING ON A BRANCH: checkout to and fetch the branch: `git checkout --track origin/stable_steven`
 9. Install tf: `apt install ros-melodic-tf`
-10. catkin_make
-11. change the run file `run_my_system.bash` to whatever script you want to run. An example is included in `vrx_tasks/sampleRunbash.sh`.
+10. catkin_make and make sure everything is ok.
+11. change the run file `~/run_my_system.bash` to whatever script you want to run. An example is included in `vrx_tasks/sampleRunbash.sh`.
+12. Make sure it works :3 by running `./run_my_system.bash`.
+12. Save your work: first `docker ps` to find your container ID, then `docker commit <containerID> <name_of_your_container>`.
+13. 
+
 
 # Testing
 0. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
 1. Get the name of the image you want to test from dockerhub e.g. tisbutascratch/usyd_vrx:v0
     1. OR Follow `Submitting from scratch` to push to dockerhub
-2. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ 
+2. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial'
+
 
 # Updating
 0. get docker
