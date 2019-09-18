@@ -9,7 +9,7 @@
     </group>
 
     <!-- Boat navigation -->
-    <node name="odom_to_tf" pkg="vrx_navigation" type="p3d_to_tf.py" />
+    <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" />
 
     <include file="$(find vrx_control)/launch/course_controller.launch">
         <arg name="thrust_config" value="$(arg thrust_config)" />
@@ -21,23 +21,28 @@
     <!-- Translate from geo pose to normal pose -->
     <node pkg="vrx_tasks" type="geoPoseToPose.py" name="gpstranslate" output="screen">
         <param name="~inTopic" value="vrx/station_keeping/goal"></param>
-        <param name="~outTopic" value="waypoints"></param>
+        <param name="~outTopic" value="internal/poses"></param>
     </node>
     <!-- Translate from normal course to vrx pose -->
-    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathCtranslate" output="screen"></node>
+    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathCtranslate" output="screen">
+        <param name="~inTopic" value="internal/poses"></param>
+    </node>
     
     
     <!-- wayfinding -->
     <!-- Translate from geo path to normal path -->
     <node pkg="vrx_tasks" type="geoPathToPath.py" name="gpctranslate" output="screen">
         <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
-        <param name="~outTopic" value="waypoints"></param>
+        <param name="~outTopic" value="internal/waypoints"></param>
     </node>
     <!-- Translate from normal path to vrx path -->
-    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathRtranslate" output="screen"></node>
+    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathRtranslate" output="screen">
+        <param name="~inTopic" value="internal/waypoints"></param>
+    </node>
 
     <!-- Vision translation -->
 
     <!-- RVIZ -->
     <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find vrx_bringup)/rviz/witht0.rviz" />
+    <!--This will fail in the actual sim but that's fine-->
 </launch>

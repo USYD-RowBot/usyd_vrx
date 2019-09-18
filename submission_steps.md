@@ -9,12 +9,14 @@
 6. create a catkin workspace: http://wiki.ros.org/catkin/Tutorials/create_a_workspace 
 7. pull our files: `git clone https://github.com/USYD-RowBot/usyd_vrx.git`
 8. IF YOU'RE WORKING ON A BRANCH: checkout to and fetch the branch: `git checkout --track origin/stable_steven`
-9. Install tf: `apt install ros-melodic-tf`
+9. Install tf: `apt install ros-melodic-tf` 
+10. and also install robot state publisher:`apt install ros-melodic-robot-state-publisher`
+10. and also install geographic msgs:`apt install ros-melodic-geographic-msgs`
+10. and also install pyproj:`apt install python-pip` then `pip install pyproj`
 10. catkin_make and make sure everything is ok.
 11. change the run file `~/run_my_system.bash` to whatever script you want to run. An example is included in `vrx_tasks/sampleRunbash.sh`.
 12. Make sure it works :3 by running `./run_my_system.bash`.
 12. Save your work: first `docker ps` to find your container ID, then `docker commit <containerID> <name_of_your_container>`.
-13. 
 
 
 # Testing
