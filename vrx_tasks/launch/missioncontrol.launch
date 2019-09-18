@@ -24,7 +24,7 @@
         <param name="~outTopic" value="waypoints"></param>
     </node>
     <!-- Translate from normal course to vrx pose -->
-    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathtranslate" output="screen"></node>
+    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathCtranslate" output="screen"></node>
     
     
     <!-- wayfinding -->
@@ -34,7 +34,7 @@
         <param name="~outTopic" value="waypoints"></param>
     </node>
     <!-- Translate from normal path to vrx path -->
-    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathtranslate" output="screen"></node>
+    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathRtranslate" output="screen"></node>
 
     <!-- Vision translation -->
 
