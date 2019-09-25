@@ -25,13 +25,19 @@ void WaypointFollower::setupWaypointFollower()
   ros::param::get("~station_tolerance_pos", station_tolerance_pos_);
   ros::param::get("~station_tolerance_ang", station_tolerance_ang_);
   ros::param::get("~station_brake_distance", station_brake_distance_);
+  ros::param::get("~station_default_thrust", station_default_thrust_);
 
   num_wps_      =  0;
   wp_index_     = -1;
-  vessel_pos_   = {0, 0};
   vessel_yaw_   =  0;
   wp_next_      = {0, 0};
   wp_prev_      = {0, 0};
+
+  ROS_INFO("WpFollower: Waiting for vessel odometry to be available.");
+  auto msg = ros::topic::waitForMessage<nav_msgs::Odometry>("/odom", nh_);
+  vessel_pos_.x = msg->pose.pose.position.x;
+  vessel_pos_.y = msg->pose.pose.position.y;
+  ROS_INFO("WpFollower: Vessel odometry received.");
 }
 
 void WaypointFollower::waypointCb(const vrx_msgs::WaypointRoute::ConstPtr& msg)
@@ -175,7 +181,21 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
     wp_prev_, wp_next_, vessel_pos_, nlgl_radius_);
   msg.yaw = GuidanceAlgorithms::PurePursuit(virtual_wp, vessel_pos_);
 
-  if (station) // Slow down when reaching station position
+  float distance_to_wp =
+      GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance_/2;
+
+  // If less than threshold, reduce speed on approach
+  if (distance_to_wp < station_brake_distance_)
+  {
+    if (station) // station-keeping
+      msg.speed = station_default_thrust_;
+    else // traversing
+      msg.speed = (distance_to_wp/station_brake_distance_)*speed_;
+  }  
+  else
+    msg.speed = speed_;
+
+  /*if (station) // Slow down when reaching station position
   {
     float distance_to_wp =
       GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance_/2;
@@ -187,7 +207,7 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
       msg.speed = speed_;
   }
   else
-    msg.speed = speed_;
+    msg.speed = speed_;*/
 }
 
 void WaypointFollower::followRoute()

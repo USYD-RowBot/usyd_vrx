@@ -57,8 +57,6 @@ def handle_odom_pose(ros_odom_msg, tf_frame_id):
     #    t0frame.child_frame_id="t0home"
     #t0frame.header.stamp=rospy.Time.now()
 
-
-
     br.sendTransform(t)
     br.sendTransform(t2)
     #br.sendTransform(t0frame)

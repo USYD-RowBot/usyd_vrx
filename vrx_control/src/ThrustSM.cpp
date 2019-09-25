@@ -2,8 +2,7 @@
 
 namespace usyd_vrx {
 
-ThrustSM::ThrustSM(float strafe_duration, float reconfig_duration):
-  strafe_duration_(fabs(strafe_duration)), 
+ThrustSM::ThrustSM(float reconfig_duration):
   reconfig_duration_(fabs(reconfig_duration))
 {
   ThrustSM::resetStateMachine();
@@ -11,7 +10,6 @@ ThrustSM::ThrustSM(float strafe_duration, float reconfig_duration):
 
 void ThrustSM::resetStateMachine()
 {
-  strafe_time_target_     = 0;
   reconfig_time_target_   = 0;
   state_                  = THRUST_TRAVERSE;
 }
@@ -27,12 +25,7 @@ void ThrustSM::checkTimers()
 
     case THRUST_RECONFIG_LATERAL:
       if (ros::Time::now().toSec() > reconfig_time_target_)
-        state_ = THRUST_ROTATE; // Begin angular alignment prior to strafe
-      break;
-
-    case THRUST_STRAFE:
-      if (ros::Time::now().toSec() > strafe_time_target_)
-        state_ = THRUST_ROTATE; // Switch back to angular alignment
+        state_ = THRUST_STATION; // Begin station keeping
       break;
   }
 }
@@ -56,12 +49,7 @@ void ThrustSM::updateState(bool keep_station)
         ThrustSM::reconfigure(THRUST_RECONFIG_LATERAL);
       break;
 
-    case THRUST_ROTATE:
-      if (keep_station == false)
-        ThrustSM::reconfigure(THRUST_RECONFIG_STRAIGHT);
-      break;
-
-    case THRUST_STRAFE:
+    case THRUST_STATION:
       if (keep_station == false)
         ThrustSM::reconfigure(THRUST_RECONFIG_STRAIGHT);
       break;
@@ -74,15 +62,6 @@ ThrustSM::THRUST_STATE ThrustSM::getState()
 {
   ThrustSM::checkTimers();
   return state_;
-}
-
-void ThrustSM::reportRotationComplete()
-{
-  if (state_ == THRUST_ROTATE)
-  {
-    strafe_time_target_ = ros::Time::now().toSec() + strafe_duration_;
-    state_ = THRUST_STRAFE; // Wait for strafe duration to elapse
-  }
 }
 
 }

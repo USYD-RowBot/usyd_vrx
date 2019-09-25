@@ -22,7 +22,7 @@ class ThrustController
     */
     ThrustController(char thrust_config, float priority_yaw_range, float motor_cmd_limit, 
       float lateral_scale_x, float lateral_scale_y, float neg_scale_factor, 
-      float strafe_thrust, float station_tolerance_ang);
+      float station_tolerance_ang);
 
     /*!
     * Destructor.
@@ -74,7 +74,8 @@ class ThrustController
     * @param linear_velocity current linear x velocity.
     * @param angle current yaw.
     */
-    void setOdometry(double linear_velocity, double angle);
+    void setOdometry(
+      double linear_velocity, double angle);
 
     /*!
     * Checks whether the desired station angle has been reached.
@@ -92,23 +93,14 @@ class ThrustController
       float &thrust_right, float &thrust_left, double sim_time=0);
 
     /*!
-    * Use angular PID to set thruster values in station keeping rotation.
+    * Set thruster values for strafing and rotating when station-keeping.
     * @param thrust_right float to store right thrust command in.
     * @param thrust_left float to store left thrust command in.
     * @param thrust_lat float to store lateral thrust command in.
     * @param sim_time current ROS time.
     */
-    void getControlSignalRotate(float &thrust_right, float &thrust_lat, 
-      double sim_time=0);
-
-      /*!
-    * Set thruster values in station keeping strafing.
-    * @param thrust_right float to store right thrust command in.
-    * @param thrust_left float to store left thrust command in.
-    * @param thrust_lat float to store lateral thrust command in.
-    */
-    void getStrafingThrust(float &thrust_right, float &thrust_left,
-      float &thrust_lat);
+    void getControlSignalStation(float &thrust_right, float &thrust_left,
+      float &thrust_lat, double sim_time=0);
 
   private:
     //! Letter indicating thrust configuration. "H" differential, "T" lateral.
@@ -152,9 +144,6 @@ class ThrustController
 
     //! Proportion of strafe speed to strafe at in relative y direction.
     float strafe_y_;
-
-    //! Constant thrust value to use for strafing.
-    float strafe_thrust_;
 
     /*!
     * Constrain thrust to motor command limit and negative scaling.

@@ -10,8 +10,9 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 
   // Set up thruster publishers.
   pub_thrust_right_       = nh_.advertise<std_msgs::Float32>("/right_thrust_cmd", 1);
-  pub_thrust_right_angle_ = nh_.advertise<std_msgs::Float32>("/right_thrust_angle", 1);
+  pub_thrust_right_angle_ = nh_.advertise<std_msgs::Float32>("/right_thrust_angle", 1, true);
   pub_thrust_left_        = nh_.advertise<std_msgs::Float32>("/left_thrust_cmd", 1);
+  pub_thrust_left_angle_  = nh_.advertise<std_msgs::Float32>("/left_thrust_angle", 1, true);
   pub_thrust_lat_         = nh_.advertise<std_msgs::Float32>("/lateral_thrust_cmd", 1);
 
   // Set up course command and odometry subscribers
@@ -20,7 +21,7 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 
   tf_listener_ = new tf::TransformListener();
 
-  // Make sure thrusters are reset to original angles on startup
+  // Make sure thrusters are reset to zero angles on startup: TODO doesn't work :/
   CourseController::reconfigureThrusters(ThrustSM::THRUST_RECONFIG_STRAIGHT);
 }
 
@@ -35,7 +36,7 @@ void CourseController::setupThrustController()
 {
   bool use_sim_time;
   std::string thrust_config;
-  float reconfig_duration, strafe_duration, strafe_thrust, station_tolerance_ang;
+  float reconfig_duration, station_tolerance_ang;
   float priority_yaw_range, motor_cmd_limit;
   float lateral_scale_x, lateral_scale_y, neg_scale_factor;
   float lin_Kp, lin_Ki, lin_Kd, max_integral;
@@ -56,9 +57,7 @@ void CourseController::setupThrustController()
   ros::param::get("~ang_Kd", ang_Kd);
   ros::param::get("~max_integral", max_integral);
   ros::param::get("~use_sim_time", use_sim_time);
-  ros::param::get("~strafe_duration", strafe_duration);
   ros::param::get("~reconfig_duration", reconfig_duration);
-  ros::param::get("~strafe_thrust", strafe_thrust);
   ros::param::get("~station_tolerance_ang", station_tolerance_ang);
 
   thrust_config_ = thrust_config[0]; // Convert to char
@@ -73,7 +72,7 @@ void CourseController::setupThrustController()
   // Instantiate and configure thrust controller
   thrust_controller_ = new usyd_vrx::ThrustController(thrust_config_,
     priority_yaw_range, motor_cmd_limit, lateral_scale_x, lateral_scale_y,
-    neg_scale_factor, strafe_thrust, station_tolerance_ang);
+    neg_scale_factor, station_tolerance_ang);
 
   // Set up thruster PID controllers
   thrust_controller_->initLinearPID(lin_Kp, lin_Ki, lin_Kd,
@@ -82,7 +81,7 @@ void CourseController::setupThrustController()
     max_integral, use_sim_time);
 
   // Instantiate thrust state machine
-  thrust_sm_ = new usyd_vrx::ThrustSM(strafe_duration, reconfig_duration);
+  thrust_sm_ = new usyd_vrx::ThrustSM(reconfig_duration);
 }
 
 void CourseController::reconfigureThrusters(ThrustSM::THRUST_STATE state)
@@ -93,12 +92,15 @@ void CourseController::reconfigureThrusters(ThrustSM::THRUST_STATE state)
     msg.data = 0;
 
   else if (state == ThrustSM::THRUST_RECONFIG_LATERAL)
-    msg.data = M_PI_2;
+    msg.data = M_PI_4; // 45 degrees
 
   else
     return; // Don't publish if not in correct state
 
-  pub_thrust_right_angle_.publish(msg); // Publish to thruster
+  pub_thrust_right_angle_.publish(msg); // Publish to thrusters
+
+  msg.data = -msg.data; // Left thruster angle opposes right thruster
+  pub_thrust_left_angle_.publish(msg); 
 }
 
 void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
@@ -129,14 +131,13 @@ void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
       CourseController::reconfigureThrusters(ThrustSM::THRUST_RECONFIG_LATERAL);
       break;
 
-    case ThrustSM::THRUST_ROTATE:
-      // Update the thrust controller with zero speed and station yaw.
-      thrust_controller_->setTarget(0.0, msg->station_yaw);
-      break;
-
-    case ThrustSM::THRUST_STRAFE:
+    case ThrustSM::THRUST_STATION:
       // Tell thrust controller to work out thrust proportions for strafing.
       thrust_controller_->setStrafeProportions(msg->yaw);
+
+      // Update the thrust controller with strafe thrust and station yaw.
+      thrust_controller_->setTarget(msg->speed, msg->station_yaw);
+      break;
   }
 }
 
@@ -153,26 +154,10 @@ void CourseController::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
   double roll, pitch, yaw;
   tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
 
-  // Create vector3 with linear velocity values from odometry frame
-  geometry_msgs::Vector3Stamped vel_odom, vel_base_link;
-  vel_odom.vector.x = msg->twist.twist.linear.x;
-  vel_odom.vector.y = msg->twist.twist.linear.y;
-  vel_odom.vector.z = msg->twist.twist.linear.z;
-  vel_odom.header.stamp = ros::Time();
-  vel_odom.header.frame_id = "/odom";
-
-  try // Transform velocity vector to base_link frame
-  {
-    tf_listener_->transformVector("/base_link", vel_odom, vel_base_link);
-  }
-  catch (tf::TransformException ex)
-  {
-    ROS_ERROR("%s",ex.what());
-    return;
-  }
+  //std::cout << "reported x velocity is " << msg->twist.twist.linear.x << std::endl;
 
   // Update the thrust controller with the new odometry data
-  thrust_controller_->setOdometry(vel_base_link.vector.x, yaw);
+  thrust_controller_->setOdometry(msg->twist.twist.linear.x, yaw);
 }
 
 void CourseController::enableThrusters(bool enabled)
@@ -205,21 +190,9 @@ void CourseController::updateController()
     case ThrustSM::THRUST_RECONFIG_LATERAL:
       thrust_controller_->resetPIDs(); return; // Reset PIDs when reconfiguring
 
-    case ThrustSM::THRUST_ROTATE:
-      if (thrust_controller_->stationAngleHit()) // Check if station angle aligned
-      {
-        thrust_sm_->reportRotationComplete(); // Tell state machine
-        thrust_controller_->resetPIDs();
-        return;
-      }
-      else
-        thrust_controller_->getControlSignalRotate( // Rotate for station keeping
-          thrust_right, thrust_lateral, sim_time);
-      break;
-
-    case ThrustSM::THRUST_STRAFE:
-      thrust_controller_->getStrafingThrust(      // Station keeping strafing
-        thrust_right, thrust_left, thrust_lateral);
+    case ThrustSM::THRUST_STATION:
+      thrust_controller_->getControlSignalStation( // Station keeping control
+        thrust_right, thrust_left, thrust_lateral, sim_time);
       break;
   }
 

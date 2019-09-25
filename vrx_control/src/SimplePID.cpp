@@ -93,7 +93,7 @@ double SimplePID::getTimeSim(double time_now)
   }
   else // If no sim time has been recorded yet
   {
-    dt = 0.00001; // Ignore very first elapsed time
+    dt = 0.1; // Treat as reasonable time, e.g. 10Hz
     time_prev_sim_ = time_now;
   }  
 
@@ -125,6 +125,11 @@ double SimplePID::getControlSignal(double time_now)
 double SimplePID::getError()
 {
   return (this->*error_function_)(); // Call error function through pointer
+}
+
+double SimplePID::getSetpoint()
+{
+  return setpoint_;
 }
 
 double SimplePID::errorStandard()
