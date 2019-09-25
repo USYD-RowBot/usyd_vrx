@@ -1049,16 +1049,16 @@
       <ray>
         <scan>
           <horizontal>
-            <samples>18750.0</samples>
+            <samples>21870.0</samples>
             <resolution>0.1</resolution>
             <min_angle>-3.14159265359</min_angle>
             <max_angle>3.14159265359</max_angle>
           </horizontal>
           <vertical>
-            <samples>16</samples>
+            <samples>32</samples>
             <resolution>1</resolution>
-            <min_angle>-0.261799387799</min_angle>
-            <max_angle>0.261799387799</max_angle>
+            <min_angle>-0.186</min_angle>
+            <max_angle>0.54</max_angle>
           </vertical>
         </scan>
         <range>
@@ -1082,8 +1082,6 @@
   <gazebo reference="lidar_wamv_post_link">
     <material>Gazebo/Black</material>
   </gazebo>
-  <!--specs for 16 beam lidar are implemented by default.
-          See wamv_3d_lidar for those-->
   <link name="cpu_cases_link">
     <visual name="cpu_cases_visual">
       <origin rpy="0 0 0" xyz="0.073 0 -1.53"/>

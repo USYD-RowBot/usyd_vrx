@@ -319,6 +319,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /wamv/visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 75; 106; 143
@@ -347,25 +355,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 141.71131896972656
+      Distance: 149.1958465576172
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.5756635665893555
-        Y: 0.8828203678131104
-        Z: 5.813022653455846e-6
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4147973656654358
-      Target Frame: base_link
+      Pitch: 0.6153983473777771
+      Target Frame: wamv/base_link
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.86222243309021
+      Yaw: 3.2453994750976562
     Saved: ~
 Window Geometry:
   Displays:
@@ -386,4 +394,4 @@ Window Geometry:
     collapsed: false
   Width: 1200
   X: 124
-  Y: 42
+  Y: 0

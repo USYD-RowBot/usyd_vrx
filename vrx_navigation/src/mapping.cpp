@@ -134,7 +134,7 @@ public:
 
       int origin_x = width/2 - int(offset_x/resolution); //Starting location
       int origin_y = width/2 - int(offset_y/resolution);
-      int increment_value = 15; //Value to increment occupied space
+      int increment_value = 8; //Value to increment occupied space
       int decrement_value = 2; //Value to decrement occupied space.
 
       //Determine current location on map from odometry.
