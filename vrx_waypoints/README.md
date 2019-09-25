@@ -42,6 +42,11 @@ The 'station_duration' field indicates how long the vessel should remain at a st
 
 For more information on the WaypointRoute messages, see the definition for the vrx_msgs/WaypointRoute and vrx_msgs/Waypoint messages in usyd_vrx/vrx_msgs/msg. 
 
+To launch the whole wayfinding/station-keeping suite:
+
+		roslaunch vrx_bringup T_boat.launch
+		roslaunch vrx_bringup control.launch
+
 ## Config files
 
 Configuration files are located in the config directory.

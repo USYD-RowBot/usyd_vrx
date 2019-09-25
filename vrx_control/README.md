@@ -7,7 +7,7 @@ and sends appropriate commands to the boat's thrusters to create the appropriate
 
 ## Usage
 
-Run the course controller node with:
+Run the course controller node individually with:
 
 		roslaunch vrx_control course_controller.launch
 
@@ -16,6 +16,11 @@ For a boat that supports the 'T' thruster configuration, use the following:
 		roslaunch vrx_bringup T_boat.launch
 
 and launch the course controller with the thrust_config argument (see below).
+
+To launch the whole wayfinding/station-keeping suite:
+
+		roslaunch vrx_bringup T_boat.launch
+		roslaunch vrx_bringup control.launch
 
 ## Config files
 
