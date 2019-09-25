@@ -127,6 +127,11 @@ double SimplePID::getError()
   return (this->*error_function_)(); // Call error function through pointer
 }
 
+double SimplePID::getSetpoint()
+{
+  return setpoint_;
+}
+
 double SimplePID::errorStandard()
 {
   return setpoint_ - observation_;

@@ -59,6 +59,12 @@ class SimplePID
     */
     double getError();
 
+    /*!
+    * Get the current setpoint value.
+    * @return the setpoint value.
+    */
+    double getSetpoint();
+
   private:
     //! Proportional gain.
     float Kp_;

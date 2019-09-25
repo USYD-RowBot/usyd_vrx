@@ -79,7 +79,7 @@ class Docker:
     self.sub_img  = rospy.Subscriber(
       "/wamv/sensors/cameras/middle_camera/image_raw", Image, self.imageCb)
     self.sub_odom = rospy.Subscriber(
-      "/wamv/sensors/position/p3d_wamv", Odometry, self.odomCb)
+      "/odom", Odometry, self.odomCb)
 
     self.server = actionlib.SimpleActionServer('docking', DockAction, self.execute, False)
     self.server.start()

@@ -74,7 +74,8 @@ class ThrustController
     * @param linear_velocity current linear x velocity.
     * @param angle current yaw.
     */
-    void setOdometry(double linear_velocity, double angle);
+    void setOdometry(
+      double linear_velocity, double angle);
 
     /*!
     * Checks whether the desired station angle has been reached.
@@ -98,8 +99,8 @@ class ThrustController
     * @param thrust_lat float to store lateral thrust command in.
     * @param sim_time current ROS time.
     */
-    void getControlSignalRotate(float &thrust_right, float &thrust_lat, 
-      double sim_time=0);
+    void getControlSignalRotate(float &thrust_right, float &thrust_left,
+      float &thrust_lat, double sim_time=0);
 
       /*!
     * Set thruster values in station keeping strafing.
@@ -108,7 +109,7 @@ class ThrustController
     * @param thrust_lat float to store lateral thrust command in.
     */
     void getStrafingThrust(float &thrust_right, float &thrust_left,
-      float &thrust_lat);
+      float &thrust_lat, double sim_time=0);
 
   private:
     //! Letter indicating thrust configuration. "H" differential, "T" lateral.

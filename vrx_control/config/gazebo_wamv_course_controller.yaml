@@ -4,11 +4,11 @@ PID_rate:             10.0 # Hz
 
 # Thrust controller general config
 motor_cmd_limit:      2.0
-neg_scale_factor:     1.7
-priority_yaw_range:   1.0 # radians
+neg_scale_factor:     1.9
+priority_yaw_range:   0.77 # radians
 
 # Station keeping config
-lateral_scale_x:        1.23 # experimentally found
+lateral_scale_x:        1.14 # experimentally found
 lateral_scale_y:        0.85 # TODO experimentally find
 strafe_thrust:          0.3
 strafe_duration:        1.0  # secs

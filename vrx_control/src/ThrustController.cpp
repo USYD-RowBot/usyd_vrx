@@ -145,7 +145,7 @@ void ThrustController::getControlSignalTraverse(
 }
 
 void ThrustController::getControlSignalRotate(float &thrust_right, 
-  float &thrust_lat, double sim_time)
+  float &thrust_left, float &thrust_lat, double sim_time)
 {
   double ang_ctrl_signal = angularPID_->getControlSignal(sim_time);
 
@@ -154,28 +154,34 @@ void ThrustController::getControlSignalRotate(float &thrust_right,
   //  about the boat, since the thrusters are positioned differently.
   thrust_lat   = (float)
     ThrustController::constrainThrust(ang_ctrl_signal*lateral_scale_x_); 
+
+  // Rear thrusters at 45 degrees thrust oppositely, cancelling forward/back
+  //  thrust and resulting in purely lateral thrust. Need to tune
+  //  "neg_scale_factor" to achieve the purely lateral thrust.
   thrust_right = (float)
     ThrustController::constrainThrust(-ang_ctrl_signal);  
+
+  thrust_left = (float)
+    ThrustController::constrainThrust(ang_ctrl_signal);  
 }
 
-void ThrustController::getStrafingThrust(
-  float &thrust_right, float &thrust_left, float &thrust_lat)
+void ThrustController::getStrafingThrust(float &thrust_right, 
+  float &thrust_left, float &thrust_lat, double sim_time)
 {
-  float new_thrust = strafe_thrust_; // TODO add PID control
+  float new_thrust = linearPID_->getSetpoint(); // Get thrust from speed in course msg
 
-  // Relative y direction strafing, left thruster is at original angle
-  thrust_left  = (float)
-    ThrustController::constrainThrust(strafe_y_*strafe_thrust_); 
+  // Relative x & y direction strafing, left thruster is at 45 degrees
+  thrust_left  = (float) ThrustController::constrainThrust( 
+    new_thrust*(strafe_y_ + strafe_x_) ); 
 
   // Lateral thruster is tuned to balance the moments from the diff thrusters
   //  about the boat, since the thrusters are positioned differently.
   thrust_lat  = (float) ThrustController::constrainThrust(
-      strafe_y_*strafe_thrust_*lateral_scale_y_
-    - strafe_x_*strafe_thrust_*lateral_scale_x_);  
+    new_thrust*(-strafe_x_*lateral_scale_x_) );  
 
-  // Relative x direction strafing, with right thruster at 90deg angle. 
-  thrust_right = (float)
-    ThrustController::constrainThrust(-strafe_x_*strafe_thrust_);    
+  // Relative x & y direction strafing, right thruster is at 45deg angle. 
+  thrust_right = (float) ThrustController::constrainThrust( 
+    new_thrust*(strafe_y_ - strafe_x_) );    
 }
 
 }

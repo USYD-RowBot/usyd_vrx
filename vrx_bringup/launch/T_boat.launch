@@ -22,18 +22,21 @@
     <group ns="wamv">
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
             <param name="publish_frequency" value="30"/>
+            <param name="tf_prefix" value="wamv"/>
         </node>
 
-        <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py">
-            <remap from="odom" to="sensors/position/p3d_wamv"/>
+        <node name="wamv_tf_expander" pkg="vrx_navigation" type="wamv_tf_expander.py">
+            <remap from="odom" to="robot_localization/odometry/filtered"/>
         </node>
     </group>
 
-    <include file="$(find vrx_control)/launch/course_controller.launch">
+    <!-- Set up Kalman filtered GPS-aided IMU. -->
+    <include file="$(find vrx_bringup)/launch/localisation.launch"/>
+
+    <!-- Launch control system and waypoint follower. -->
+    <!--
+    <include file="$(find vrx_bringup)/launch/control.launch">
         <arg name="thrust_config" value="$(arg thrust_config)"/>
-    </include>
-
-    <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch"/>
-
+    </include> -->
 
 </launch>

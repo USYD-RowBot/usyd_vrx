@@ -10,8 +10,9 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 
   // Set up thruster publishers.
   pub_thrust_right_       = nh_.advertise<std_msgs::Float32>("/right_thrust_cmd", 1);
-  pub_thrust_right_angle_ = nh_.advertise<std_msgs::Float32>("/right_thrust_angle", 1);
+  pub_thrust_right_angle_ = nh_.advertise<std_msgs::Float32>("/right_thrust_angle", 1, true);
   pub_thrust_left_        = nh_.advertise<std_msgs::Float32>("/left_thrust_cmd", 1);
+  pub_thrust_left_angle_  = nh_.advertise<std_msgs::Float32>("/left_thrust_angle", 1, true);
   pub_thrust_lat_         = nh_.advertise<std_msgs::Float32>("/lateral_thrust_cmd", 1);
 
   // Set up course command and odometry subscribers
@@ -20,7 +21,7 @@ CourseController::CourseController(ros::NodeHandle& nh): nh_(nh)
 
   tf_listener_ = new tf::TransformListener();
 
-  // Make sure thrusters are reset to original angles on startup
+  // Make sure thrusters are reset to zero angles on startup: TODO doesn't work :/
   CourseController::reconfigureThrusters(ThrustSM::THRUST_RECONFIG_STRAIGHT);
 }
 
@@ -93,12 +94,15 @@ void CourseController::reconfigureThrusters(ThrustSM::THRUST_STATE state)
     msg.data = 0;
 
   else if (state == ThrustSM::THRUST_RECONFIG_LATERAL)
-    msg.data = M_PI_2;
+    msg.data = M_PI_4; // 45 degrees
 
   else
     return; // Don't publish if not in correct state
 
-  pub_thrust_right_angle_.publish(msg); // Publish to thruster
+  pub_thrust_right_angle_.publish(msg); // Publish to thrusters
+
+  msg.data = -msg.data; // Left thruster angle opposes right thruster
+  pub_thrust_left_angle_.publish(msg); 
 }
 
 void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
@@ -137,6 +141,8 @@ void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
     case ThrustSM::THRUST_STRAFE:
       // Tell thrust controller to work out thrust proportions for strafing.
       thrust_controller_->setStrafeProportions(msg->yaw);
+      // Update linear PID with speed request
+      thrust_controller_->setTarget(msg->speed, 0.0);
   }
 }
 
@@ -159,11 +165,11 @@ void CourseController::odomCb(const nav_msgs::Odometry::ConstPtr& msg)
   vel_odom.vector.y = msg->twist.twist.linear.y;
   vel_odom.vector.z = msg->twist.twist.linear.z;
   vel_odom.header.stamp = ros::Time();
-  vel_odom.header.frame_id = "/odom";
+  vel_odom.header.frame_id = "/wamv/odom";
 
   try // Transform velocity vector to base_link frame
   {
-    tf_listener_->transformVector("/base_link", vel_odom, vel_base_link);
+    tf_listener_->transformVector("/wamv/base_link", vel_odom, vel_base_link);
   }
   catch (tf::TransformException ex)
   {
@@ -214,12 +220,12 @@ void CourseController::updateController()
       }
       else
         thrust_controller_->getControlSignalRotate( // Rotate for station keeping
-          thrust_right, thrust_lateral, sim_time);
+          thrust_right, thrust_left, thrust_lateral, sim_time);
       break;
 
     case ThrustSM::THRUST_STRAFE:
       thrust_controller_->getStrafingThrust(      // Station keeping strafing
-        thrust_right, thrust_left, thrust_lateral);
+        thrust_right, thrust_left, thrust_lateral, sim_time);
       break;
   }
 

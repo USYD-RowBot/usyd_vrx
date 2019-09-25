@@ -7,9 +7,12 @@
   <arg name="overlying_config_file" default="$(arg default_config_file)" />
 
   <!-- Launch wamv course controller-->
-  <node pkg="vrx_navigation" type="docking.py" name="wamv_docking" output="screen">
-    <rosparam command="load" file="$(arg default_config_file)" />
-    <rosparam command="load" file="$(arg overlying_config_file)" />
-  </node>
+  <group ns="wamv">
+    <node pkg="vrx_navigation" type="docking.py" name="wamv_docking" output="screen">
+      <rosparam command="load" file="$(arg default_config_file)" />
+      <rosparam command="load" file="$(arg overlying_config_file)" />
+      <remap from="/odom" to="robot_localization/odometry/filtered"/>
+    </node>
+  </group>
 
 </launch>
