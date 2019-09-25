@@ -10,8 +10,7 @@ namespace usyd_vrx {
 ThrustController::ThrustController(char thrust_config,
   float priority_yaw_range, float motor_cmd_limit, 
   float lateral_scale_x, float lateral_scale_y,
-  float neg_scale_factor, float strafe_thrust, 
-  float station_tolerance_ang):
+  float neg_scale_factor, float station_tolerance_ang):
 
   thrust_config_(thrust_config),
   priority_yaw_range_(fabs(priority_yaw_range)), 
@@ -19,7 +18,6 @@ ThrustController::ThrustController(char thrust_config,
   lateral_scale_x_(fabs(lateral_scale_x)),
   lateral_scale_y_(fabs(lateral_scale_y)),
   neg_scale_factor_(fabs(neg_scale_factor)),
-  strafe_thrust_(fabs(strafe_thrust)),
   station_tolerance_ang_(fabs(station_tolerance_ang))
 {
   vessel_yaw_   = 0;
@@ -144,44 +142,28 @@ void ThrustController::getControlSignalTraverse(
     ThrustController::constrainThrust(lin_ctrl_signal - ang_ctrl_signal); 
 }
 
-void ThrustController::getControlSignalRotate(float &thrust_right, 
+void ThrustController::getControlSignalStation(float &thrust_right, 
   float &thrust_left, float &thrust_lat, double sim_time)
 {
   double ang_ctrl_signal = angularPID_->getControlSignal(sim_time);
+  float strafe_thrust = linearPID_->getSetpoint(); // Get thrust from course speed
 
-  // Generate thrust commands from PID control signals and constrain. Lateral
-  //  thruster is increased by "lateral_scale_x_" to balance the moments
-  //  about the boat, since the thrusters are positioned differently.
-  thrust_lat   = (float)
-    ThrustController::constrainThrust(ang_ctrl_signal*lateral_scale_x_); 
+  // Lateral thruster is increased by "lateral_scale_x_" to balance the 
+  //  moments about the boat, since the thrusters are positioned differently.
+  thrust_lat   = (float) ThrustController::constrainThrust(
+    -strafe_thrust*strafe_x_*lateral_scale_x_ // Strafe component
+    + ang_ctrl_signal*lateral_scale_x_ );     // Rotation component
 
   // Rear thrusters at 45 degrees thrust oppositely, cancelling forward/back
   //  thrust and resulting in purely lateral thrust. Need to tune
   //  "neg_scale_factor" to achieve the purely lateral thrust.
-  thrust_right = (float)
-    ThrustController::constrainThrust(-ang_ctrl_signal);  
+  thrust_right = (float) ThrustController::constrainThrust(
+    strafe_thrust*(strafe_y_ - strafe_x_) // Strafe component
+    - ang_ctrl_signal);                   // Rotation component
 
-  thrust_left = (float)
-    ThrustController::constrainThrust(ang_ctrl_signal);  
-}
-
-void ThrustController::getStrafingThrust(float &thrust_right, 
-  float &thrust_left, float &thrust_lat, double sim_time)
-{
-  float new_thrust = linearPID_->getSetpoint(); // Get thrust from speed in course msg
-
-  // Relative x & y direction strafing, left thruster is at 45 degrees
-  thrust_left  = (float) ThrustController::constrainThrust( 
-    new_thrust*(strafe_y_ + strafe_x_) ); 
-
-  // Lateral thruster is tuned to balance the moments from the diff thrusters
-  //  about the boat, since the thrusters are positioned differently.
-  thrust_lat  = (float) ThrustController::constrainThrust(
-    new_thrust*(-strafe_x_*lateral_scale_x_) );  
-
-  // Relative x & y direction strafing, right thruster is at 45deg angle. 
-  thrust_right = (float) ThrustController::constrainThrust( 
-    new_thrust*(strafe_y_ - strafe_x_) );    
+  thrust_left = (float) ThrustController::constrainThrust(
+    strafe_thrust*(strafe_y_ + strafe_x_) // Strafe component
+    + ang_ctrl_signal);                   // Rotation component
 }
 
 }

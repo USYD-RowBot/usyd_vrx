@@ -10,10 +10,7 @@ priority_yaw_range:   0.77 # radians
 # Station keeping config
 lateral_scale_x:        1.14 # experimentally found
 lateral_scale_y:        0.85 # TODO experimentally find
-strafe_thrust:          0.3
-strafe_duration:        1.0  # secs
 reconfig_duration:      1.0  # secs
-rotation_cooldown:      3.0  # secs
 station_tolerance_ang:  0.1  # rad (0.175 rad ~= 10 deg)
 
 # Linear PID controller gains

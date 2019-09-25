@@ -58,6 +58,9 @@ class WaypointFollower
     //! Tolerance for detecting station angular alignment.
     float station_tolerance_ang_;
 
+    //! Default thrust to strafe with when 1 meter from station wp.
+    float station_default_thrust_;
+
     //! Speed to use for course commands.
     float speed_;
 

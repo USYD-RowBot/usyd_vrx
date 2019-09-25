@@ -2,18 +2,18 @@
 <launch>
 
     <arg name="thrust_config" default="T"/>
-    <arg name="ground_truth_enabled" default="true"/>
+    <arg name="ground_truth_enabled" default="false"/>
 
     <!-- Initial WAMV position and yaw. -->
-    <!--
+    
     <arg name="x" default="18.2" />
     <arg name="y" default="-10.9" />
-    <arg name="yaw" default="-2.9" /> -->
+    <arg name="yaw" default="-2.9" /> 
 
     <include file="$(find vrx_gazebo)/launch/sandisland.launch">
-        <!--<arg name="x" value="$(arg x)" />
+        <arg name="x" value="$(arg x)" />
         <arg name="y" value="$(arg y)" />
-        <arg name="Y" value="$(arg yaw)" />-->
+        <arg name="Y" value="$(arg yaw)" />
         <arg name="thrust_config" value="$(arg thrust_config)"/>
         <arg name="ground_truth_enabled" value="$(arg ground_truth_enabled)"/>
         <arg name="urdf" value="$(find vrx_description)/configs/my_wamv.urdf"/>
@@ -21,17 +21,16 @@
 
     <group ns="wamv">
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-            <param name="publish_frequency" value="30"/>
             <param name="tf_prefix" value="wamv"/>
         </node>
 
         <node name="wamv_tf_expander" pkg="vrx_navigation" type="wamv_tf_expander.py">
-            <remap from="odom" to="robot_localization/odometry/filtered"/>
+            <remap from="odom" to="robot_localization/odometry/filtered"/> 
         </node>
     </group>
 
     <!-- Set up Kalman filtered GPS-aided IMU. -->
-    <include file="$(find vrx_bringup)/launch/localisation.launch"/>
+    <include file="$(find vrx_bringup)/launch/localisation.launch"/>-
 
     <!-- Launch control system and waypoint follower. -->
     <!--

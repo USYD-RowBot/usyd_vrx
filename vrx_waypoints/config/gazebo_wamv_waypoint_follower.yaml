@@ -7,3 +7,4 @@ default_speed:  2.0 # m/s
 station_tolerance_pos:  0.5  # m
 station_tolerance_ang:  0.35 # rad (0.35 is 20deg)
 station_brake_distance: 5.0  # m
+station_default_thrust: 0.3  # thrust at 1 meter
