@@ -133,6 +133,7 @@ class Docker:
       course_cmd.station_yaw = self.dock_yaw
       course_cmd.keep_station = True
       course_cmd.yaw = self.getStrafeYaw() # Get strafe yaw based on state
+      course_cmd.speed = 0.3
 
       self.pub_course.publish(course_cmd) # Publish course command
       rate.sleep
