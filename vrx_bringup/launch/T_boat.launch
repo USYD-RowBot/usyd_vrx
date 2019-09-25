@@ -30,7 +30,7 @@
     </group>
 
     <!-- Set up Kalman filtered GPS-aided IMU. -->
-    <include file="$(find vrx_bringup)/launch/localisation.launch"/>-
+    <include file="$(find vrx_bringup)/launch/localisation.launch"/>
 
     <!-- Launch control system and waypoint follower. -->
     <!--

@@ -1,0 +1,48 @@
+<launch>
+    <!-- Include the official gazebo file -->
+    <arg name="thrust_config" default="T" />
+
+    <!-- Boat controls -->
+    <group ns="wamv">
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+            <param name="tf_prefix" value="wamv"/>
+        </node>
+
+        <node name="wamv_tf_expander" pkg="vrx_navigation" type="wamv_tf_expander.py">
+            <remap from="odom" to="robot_localization/odometry/filtered"/> 
+        </node>
+    </group>
+
+    <!-- Set up Kalman filtered GPS-aided IMU. -->
+    <include file="$(find vrx_bringup)/launch/localisation.launch"/>
+
+    <!-- Launch course controller and waypoint follower. -->
+    <include file="$(find vrx_bringup)/launch/control.launch">
+        <arg name="thrust_config" value="$(arg thrust_config)"/>
+    </include>
+
+    <!-- station_keeping -->
+    <!-- Translate from geo pose to normal pose -->
+    <node pkg="vrx_tasks" type="geoPoseToPose.py" name="gpstranslate" output="screen">
+        <param name="~inTopic" value="vrx/station_keeping/goal"></param>
+        <param name="~outTopic" value="internal/poses"></param>
+    </node>
+    <!-- Translate from normal course to vrx pose -->
+    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathCtranslate" output="screen">
+        <param name="~inTopic" value="internal/poses"></param>
+    </node>
+
+    <!-- wayfinding -->
+    <!-- Translate from geo path to normal path -->
+    <node pkg="vrx_tasks" type="geoPathToPath.py" name="gpctranslate" output="screen">
+        <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
+        <param name="~outTopic" value="internal/waypoints"></param>
+    </node>
+    <!-- Translate from normal path to vrx path -->
+    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathRtranslate" output="screen">
+        <param name="~inTopic" value="internal/waypoints"></param>
+    </node>
+
+    <!-- Vision translation -->
+    <!--TODO:-->
+</launch>
