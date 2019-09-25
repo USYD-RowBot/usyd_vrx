@@ -12,7 +12,7 @@
       <rosparam command="load" file="$(arg default_config_file)" />
       <rosparam command="load" file="$(arg overlying_config_file)" />
 
-      <remap from="/odom" to="robot_localization/odometry/filtered"/>
+      <remap from="/odom" to="odom"/>
     </node>
   </group>
 

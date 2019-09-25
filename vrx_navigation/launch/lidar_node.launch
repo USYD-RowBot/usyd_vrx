@@ -15,7 +15,7 @@
          <param name="use_inf" value="false"/-->
 
 
-         <rosparam>min_height: -1.5
+         <rosparam>min_height: -3
 angle_increment: 0.00872664625
 range_max: 100.0
 range_min: 3

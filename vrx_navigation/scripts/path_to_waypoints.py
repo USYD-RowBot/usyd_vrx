@@ -13,7 +13,7 @@ class WaypointConverter:
     def pathCallback(self,path_msg):
         #WaypointRoute msg
         wpr_msg = WaypointRoute()
-        speed = rospy.get_param("speed", 2)
+        speed = rospy.get_param("speed", 1)
         wpr_msg.speed = speed
         count = 0;
 
@@ -30,7 +30,7 @@ class WaypointConverter:
         #         wpr_msg.waypoints.append(waypoint)
         #     count = count +1
         waypoint = Waypoint()
-        waypoint.nav_type = Waypoint.NAV_WAYPOINT
+        waypoint.nav_type = Waypoint.NAV_STATION
         waypoint.pose = path_msg.poses[len(path_msg.poses)-1].pose
         wpr_msg.waypoints.append(waypoint)
         self.pub.publish(wpr_msg)

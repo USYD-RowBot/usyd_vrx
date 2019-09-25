@@ -17,7 +17,7 @@
       <rosparam command="load" file="$(arg default_config_file)" />
       <rosparam command="load" file="$(arg overlying_config_file)" />
 
-      <remap from="/odom"               to="robot_localization/odometry/filtered"/>
+      <remap from="/odom"               to="odom"/>
       <remap from="/right_thrust_cmd"   to="thrusters/right_thrust_cmd"/>
       <remap from="/right_thrust_angle" to="thrusters/right_thrust_angle"/>
       <remap from="/left_thrust_cmd"    to="thrusters/left_thrust_cmd"/>

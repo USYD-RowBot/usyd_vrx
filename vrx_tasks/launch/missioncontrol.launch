@@ -1,23 +1,8 @@
 <launch>
-    <!-- Include the official gazebo file -->
-    <arg name="thrust_config" default="T" />
 
-    <!-- Boat controls -->
-    <group ns="wamv">
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-            <param name="tf_prefix" value="wamv"/>
-        </node>
-
-        <node name="wamv_tf_expander" pkg="vrx_navigation" type="wamv_tf_expander.py">
-            <remap from="odom" to="robot_localization/odometry/filtered"/> 
-        </node>
-    </group>
-
-    <!-- Set up Kalman filtered GPS-aided IMU. -->
-    <include file="$(find vrx_bringup)/launch/localisation.launch"/>
-
+  <arg name="thrust_config" default="T"/>
     <!-- Launch course controller and waypoint follower. -->
-    <include file="$(find vrx_bringup)/launch/control.launch">
+    <include file="$(find vrx_control)/launch/control.launch">
         <arg name="thrust_config" value="$(arg thrust_config)"/>
     </include>
 

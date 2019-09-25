@@ -1,6 +1,6 @@
 # ROS config
 heartbeat_duration:   1.0  # secs
-PID_rate:             10.0 # Hz
+PID_rate:             20.0 # Hz
 
 # Thrust controller general config
 motor_cmd_limit:      2.0
