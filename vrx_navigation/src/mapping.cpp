@@ -55,7 +55,9 @@ public:
     ROS_INFO("Waiting for odometry.");
     while(ros::ok()){
       try{
-        odom_transform = tf_buffer.lookupTransform("odom","lidar_wamv_link",ros::Time(0));
+
+        //TODO get tf_prefix from params
+        odom_transform = tf_buffer.lookupTransform("odom","wamv/lidar_wamv_link",ros::Time(0));
         ROS_INFO("Found odometry.");
         break;
       }
@@ -87,7 +89,7 @@ public:
   void getOdom(tf2_ros::Buffer *tf_buffer){
       //Attempt to get the odometry transform and save it.
     try{
-      odom_transform = tf_buffer->lookupTransform("odom","lidar_wamv_link",ros::Time(0));
+      odom_transform = tf_buffer->lookupTransform("odom","wamv/lidar_wamv_link",ros::Time(0));
       ROS_DEBUG("Found odom_transform.");
     }
     catch (tf2::TransformException &ex){
@@ -132,7 +134,7 @@ public:
 
       int origin_x = width/2 - int(offset_x/resolution); //Starting location
       int origin_y = width/2 - int(offset_y/resolution);
-      int increment_value = 15; //Value to increment occupied space
+      int increment_value = 8; //Value to increment occupied space
       int decrement_value = 2; //Value to decrement occupied space.
 
       //Determine current location on map from odometry.
@@ -207,7 +209,7 @@ int main(int argc, char **argv){
   tf2_ros::Buffer tf_buffer;
   tf2_ros::TransformListener tf_listener(tf_buffer);
   ros::Subscriber scan_sub = n.subscribe("scan",10,&MappingServer::scanCallback, &mapping_server);
-  ros::Publisher map_publisher = n.advertise<nav_msgs::OccupancyGrid>("map_topic",10);
+  ros::Publisher map_publisher = n.advertise<nav_msgs::OccupancyGrid>("map",10);
 
   //TODO Recieve rate from rosparam. GET VELODYNE LOCATION FROM ROS
   int rate_hz = 10;

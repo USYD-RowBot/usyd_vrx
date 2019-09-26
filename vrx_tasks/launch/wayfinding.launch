@@ -1,0 +1,13 @@
+<launch>
+    <!-- include the official gazebo file -->
+    <arg name="thrust_config" default="T"/>
+
+    <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+        <arg name="world_name" value="wayfinding"/>
+        <arg name="gui" value="true"/>
+    </include>
+
+    <include file="$(find vrx_tasks)/launch/missioncontrol.launch"/>
+
+
+</launch>

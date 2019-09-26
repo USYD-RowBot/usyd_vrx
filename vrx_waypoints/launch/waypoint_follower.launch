@@ -1,0 +1,19 @@
+<launch>
+
+  <!-- Default configuration is for wamv in Gazebo simulation. -->
+  <arg name="default_config_file" value="$(find vrx_waypoints)/config/gazebo_wamv_waypoint_follower.yaml" />
+
+  <!-- Provide a user-specified config file name to overwrite the default configuration. -->
+  <arg name="overlying_config_file" default="$(arg default_config_file)" />
+
+  <!-- Launch wamv course controller-->
+  <group ns="wamv">
+    <node pkg="vrx_waypoints" type="wamv_waypoint_follower" name="wamv_waypoint_follower" output="screen">
+      <rosparam command="load" file="$(arg default_config_file)" />
+      <rosparam command="load" file="$(arg overlying_config_file)" />
+
+      <remap from="/odom" to="odom"/>
+    </node>
+  </group>
+
+</launch>

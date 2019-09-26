@@ -1,0 +1,29 @@
+<launch>
+  <!-- Allow user specified thruster configurations
+    H = stern trusters on each hull
+    T = H with a lateral thruster -->
+  <arg name="thrust_config" default="H"/>
+
+  <!-- Default configuration is for wamv in Gazebo simulation. -->
+  <arg name="default_config_file" value="$(find vrx_control)/config/gazebo_wamv_course_controller.yaml" />
+
+  <!-- Provide a user-specified config file name to overwrite the default configuration. -->
+  <arg name="overlying_config_file" default="$(arg default_config_file)" />
+
+  <!-- Launch wamv course controller-->
+  <group ns = "wamv">
+    <node pkg="vrx_control" type="wamv_course_controller" name="wamv_course_controller" output="screen">
+      <param name="thrust_config" value="$(arg thrust_config)"/>
+      <rosparam command="load" file="$(arg default_config_file)" />
+      <rosparam command="load" file="$(arg overlying_config_file)" />
+
+      <remap from="/odom"               to="odom"/>
+      <remap from="/right_thrust_cmd"   to="thrusters/right_thrust_cmd"/>
+      <remap from="/right_thrust_angle" to="thrusters/right_thrust_angle"/>
+      <remap from="/left_thrust_cmd"    to="thrusters/left_thrust_cmd"/>
+      <remap from="/left_thrust_angle" to="thrusters/left_thrust_angle"/>
+      <remap from="/lateral_thrust_cmd" to="thrusters/lateral_thrust_cmd"/>
+    </node>
+  </group>
+
+</launch>

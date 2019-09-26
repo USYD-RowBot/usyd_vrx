@@ -1,0 +1,9 @@
+# GOAL -------------------------
+geometry_msgs/Pose dock_position  # Position of center of the desired docking bay
+float32            dock_yaw       # Yaw that the vessel must maintain when entering
+---
+# RESULT -----------------------
+# None
+---
+# FEEDBACK ---------------------
+string progress # Provides messages indicating progress in docking
