@@ -12,18 +12,29 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 import cv2
 from threading import Thread
+import Queue
+from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 
 
 THRESHOLD = rospy.get_param('threshold', 80); #Min value of a cell before it is counted
 DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
 EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
+USE_CAMERA = rospy.get_param('use_camera', True)
 MARGIN_X = 200
 MARGIN_Y = 150
+USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
 
 if __name__ == "__main__":
     rospy.init_node("object_server")
     tf_broadcaster = tf.TransformBroadcaster()
     tf_listener = tf.TransformListener()
+    bridge = CvBridge()
+    if(USE_CAMERA):
+        print("Waiting to camera service")
+        rospy.wait_for_service('classify_buoy')
+        classifyBuoy = rospy.ServiceProxy('classify_buoy', ClassifyBuoy)
+
+
 
 
 class Obstacle():
@@ -44,7 +55,6 @@ class Obstacle():
         self.object.pose.position.y = self.y
         self.object.pose.orientation.w = 1
         self.object.frame_id = frame_id;
-        self.use_camera = True
         self.cameras = cameras
         self.best_image = None
         self.object.best_guess = ""
@@ -77,12 +87,7 @@ class Obstacle():
             type = "unknown"
             confidence = 0.1
 
-
-
-
-
-
-        if self.use_camera == True and type=="buoy":
+        if USE_CAMERA == True and type=="buoy":
             for camera in self.cameras.values():
                 #print("FRAME ID", self.object.frame_id,camera.frame_id)
                 #if camera.name == "middle":
@@ -93,7 +98,7 @@ class Obstacle():
 
                 dist=math.sqrt(math.pow(trans[0],2) + math.pow(trans[1],2))
                 angle=math.atan2(trans[1],trans[0])
-                if (angle < camera.fov/2 and angle > -camera.fov/2):
+                if (angle < camera.fov/2 and angle > -camera.fov/2) and dist < USE_CAMERA_RANGE:
 
                     #TODO Specify this in params.
                     x_len = 1.0 #m
@@ -108,7 +113,13 @@ class Obstacle():
                     #print(buoy_pixel_x1,buoy_pixel_x2,buoy_pixel_y1,buoy_pixel_y2)
                     copy_img = camera.image.copy()
                     if buoy_pixel_x2 < camera.width and  buoy_pixel_x1 >0 and buoy_pixel_y1 > 0 and buoy_pixel_y2 < camera.height:
-                        #crop_img = camera.image[(buoy_pixel_y1):(buoy_pixel_y2), (buoy_pixel_x1):(buoy_pixel_x2)]
+                        crop_img = camera.image[(buoy_pixel_y1):(buoy_pixel_y2), (buoy_pixel_x1):(buoy_pixel_x2)]
+                        #SEND FOR CLASSIFICATION
+                        image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
+                        res = classifyBuoy(image_message,dist)
+                        if res.success:
+                             type = res.type
+                             confidence = res.confidence
                         #cv2.imshow("middle_cropped", crop_img)
                         cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
                         # cv2.line(copy_img,(int(buoy_pixel_x1),720),(int(buoy_pixel_x2),0),(0,0,255),1)
@@ -142,6 +153,14 @@ class Camera():
         self.width = 1280
         self.height = 720
         self.fov = math.radians(80) # 80 degrees
+        self.c_q = Queue.Queue() #Classification queue
+
+
+
+
+
+
+
 
 
 class ObjectServer():
@@ -151,8 +170,12 @@ class ObjectServer():
         self.objects = []
         self.map = OccupancyGrid()
         self.cumulative_count=0
-        self.bridge = CvBridge()
+
         self.cameras = {}
+
+
+
+
 
     def callback(self,my_map):
         """Callback when a map is called."""
@@ -170,7 +193,7 @@ class ObjectServer():
 
     def cameraCallback(self,image,type):
         """Call back when image is recieved"""
-        cv_image = self.bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
+        cv_image = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
 
         self.cameras[type].image = cv_image
         self.cameras[type].debug_image = cv_image.copy()
@@ -317,7 +340,7 @@ if __name__ == "__main__":
 
     object_server = ObjectServer()
     object_server.cameraInit()
-    rate = rospy.Rate(15)
+    rate = rospy.Rate(10)
     sub = rospy.Subscriber("map",OccupancyGrid,object_server.callback)
     left = rospy.Subscriber("sensors/cameras/left_camera/image_raw",Image,object_server.cameraCallback,"left")
     middle = rospy.Subscriber("sensors/cameras/middle_camera/image_raw",Image,object_server.cameraCallback,"middle")
