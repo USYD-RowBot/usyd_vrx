@@ -45,7 +45,7 @@ def callback(data):
             marker.id = int(i.frame_id)
             marker.type = Marker.MESH_RESOURCE
             marker.action=Marker.ADD
-            marker.mesh_resource="package://vrx_vision/mesh/dock.dae"
+            marker.mesh_resource="package://vrx_vision/mesh/dock2.dae"
             #marker.text = i.best_guess +" " +  i.frame_id
             marker.scale.x = 1.0
             marker.scale.y = 1.0
