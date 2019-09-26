@@ -79,7 +79,7 @@ class Obstacle():
             confidence = 0.2
         elif self.radius > 5 and self.radius < 15 and len(self.points) > 10 :
             type = "dock"
-            confidence = 0.3
+            confidence = 0.8
             points = numpy.array(self.points)
             hull_points = qhull2D(points)
             hull_points = hull_points[::-1]
@@ -91,7 +91,7 @@ class Obstacle():
 
         elif self.radius >= 15:
             type = "land"
-            confidence = 0.2
+            confidence = 0.9
 
 
         elif self.object.best_guess != "":
