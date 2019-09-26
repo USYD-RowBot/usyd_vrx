@@ -16,7 +16,7 @@ import Queue
 from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 
 
-THRESHOLD = rospy.get_param('threshold', 80); #Min value of a cell before it is counted
+THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
 DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
 EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
 USE_CAMERA = rospy.get_param('use_camera', True)
@@ -31,8 +31,12 @@ if __name__ == "__main__":
     bridge = CvBridge()
     if(USE_CAMERA):
         print("Waiting to camera service")
-        rospy.wait_for_service('classify_buoy')
-        classifyBuoy = rospy.ServiceProxy('classify_buoy', ClassifyBuoy)
+        try:
+            rospy.wait_for_service('classify_buoy',timeout =6))
+            classifyBuoy = rospy.ServiceProxy('classify_buoy', ClassifyBuoy)
+        except rospy.ServiceException as exc:
+            print("No camera service under classify_buoy found, disabling camera usage")
+            USE_CAMERA = False
 
 
 
