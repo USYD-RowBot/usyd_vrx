@@ -14,6 +14,8 @@ import cv2
 from threading import Thread
 import Queue
 from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
+from objhelper.qhull_2d import *
+from objhelper.min_bounding_rect import *
 
 
 THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
@@ -32,9 +34,9 @@ if __name__ == "__main__":
     if(USE_CAMERA):
         print("Waiting to camera service")
         try:
-            rospy.wait_for_service('classify_buoy',timeout =6))
+            rospy.wait_for_service('classify_buoy',timeout =6)
             classifyBuoy = rospy.ServiceProxy('classify_buoy', ClassifyBuoy)
-        except rospy.ServiceException as exc:
+        except:
             print("No camera service under classify_buoy found, disabling camera usage")
             USE_CAMERA = False
 
@@ -75,13 +77,21 @@ class Obstacle():
         if self.radius < 2:
             type = "buoy"
             confidence = 0.2
-        elif self.radius > 5 and self.radius < 15 :
+        elif self.radius > 5 and self.radius < 15 and len(self.points) > 10 :
             type = "dock"
-            confidence = 0.3
+            confidence = 0.8
+            points = numpy.array(self.points)
+            hull_points = qhull2D(points)
+            hull_points = hull_points[::-1]
+            (rot_angle, area, width, height, center_point, corner_points) = minBoundingRect(hull_points)
+            if (width < height):
+                self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle)
+            else:
+                self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle+1.5707)
 
         elif self.radius >= 15:
             type = "land"
-            confidence = 0.2
+            confidence = 0.9
 
 
         elif self.object.best_guess != "":

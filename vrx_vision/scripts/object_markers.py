@@ -30,9 +30,29 @@ def callback(data):
             marker.scale.x = 2.0
             marker.scale.y = 2.0
             marker.scale.z = 2.0
-            marker.color.r = 1.0
+            marker.color.r = 0.0
             marker.color.g = 0.0
             marker.color.b = 0.0
+            marker.color.a = 1.0
+            marker.lifetime = rospy.Duration(5)
+            pub.publish(marker)
+        if i.best_guess == "dock":
+
+            marker = Marker()
+            marker.header.frame_id = i.frame_id
+            marker.header.stamp = rospy.Time.now()
+            marker.ns = "basic text"
+            marker.id = int(i.frame_id)
+            marker.type = Marker.MESH_RESOURCE
+            marker.action=Marker.ADD
+            marker.mesh_resource="package://vrx_vision/mesh/dock.dae"
+            #marker.text = i.best_guess +" " +  i.frame_id
+            marker.scale.x = 1.0
+            marker.scale.y = 1.0
+            marker.scale.z = 1.0
+            marker.color.r = 0.2
+            marker.color.g = 0.2
+            marker.color.b = 0.2
             marker.color.a = 1.0
             marker.lifetime = rospy.Duration(5)
             pub.publish(marker)
