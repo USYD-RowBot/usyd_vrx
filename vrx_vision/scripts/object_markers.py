@@ -13,7 +13,7 @@ def callback(data):
     objects = data.objects
     for i in objects:
 
-        if i.best_guess == "":
+        if len(i.confidences) == 0:
             pass
 
         if i.best_guess == "buoy2":
