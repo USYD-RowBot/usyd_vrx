@@ -29,7 +29,7 @@ def handleImage(req):
 def classifyBuoyServer():
     rospy.init_node('classify_bioy')
     s = rospy.Service('wamv/classify_buoy', ClassifyBuoy, handleImage)
-    print "Ready classify buoy."
+    print("Ready classify buoy.")
     rospy.spin()
 
 if __name__ == "__main__":
