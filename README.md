@@ -65,27 +65,39 @@ Prequisites:
 sudo apt-get install ros-melodic-global-planner
 ```
 
-
-
 Launch in separate tabs:
 ```roslaunch vrx_bringup sensored_boat.launch```
 
 ```roslaunch vrx_control course_controller.launch```
 
-With these two nodes you can publish a message to /cmd_course  of message type vrx_msgs/Course, and it will try to follow direction. e.g :
+With these two nodes you can publish a message to /cmd_course of message type vrx_msgs/Course, and it will try to follow direction. e.g :
 ```rostopic pub -r 10 /cmd_course vrx_msgs/Course  '{speed: 1.0, yaw: 0.0}'```
 
 ### Waypoint Following
 
 ```roslaunch vrx_bringup sensored_boat.launch```
 
-```roslaunch vrx_control waypoint_following.launch```
+```roslaunch vrx_control control.launch```
 
-This Controller listens for a nav_msgs/Path message on the topic /waypoints, when it receives a path message it will follow the path until it is completed.
+This launches the Course Controller and Waypoint Follower, the latter of which listens for a vrx_msgs/WaypointRoute message on the topic /waypoints_cmd. When it receives a WaypointRoute message, it will follow the path until complete.
 
-To test with an example path:
+### Docking
 
-```roslaunch simple_waypoints simple_waypoints.launch```
+To test the docking program, run the following in separate terminals:
+
+```roslaunch vrx_bringup sensored_boat.launch override_location:=true```
+
+```roslaunch vrx_control control.launch```
+
+```roslaunch vrx_navigation docking.launch```
+
+The WAMV will spawn in front of the dock. To attempt a docking procedure: 
+
+```rosrun vrx_navigation tmp_docking_client.py```
+
+This will generate an actionlib client to send a goal to the docking program. The WAMV should enter the dock, hold, then return to where it was when you started the docking client. To view feedback on the progress of the docking procedure, you can use the following:
+
+```rostopic echo /wamv/docking/feedback```
 
 ### Headless mode
 Wherever you see
@@ -94,12 +106,12 @@ Wherever you see
 
 , you can replace it with
 
-```roslaunch vrx_bringup sensored_boat_nogui.launch```
+```roslaunch vrx_bringup sensored_boat.launch gui:=false```
 
- and it will run the simulation with RVIZ as a gui instead of Gazebo. That should reduce the CPU load of running the simulation.
+ and it will run the simulation with only RVIZ as a gui, running no Gazebo gui. This should reduce the CPU load of running the simulation.
 
 #### Path Planner
-To use a demonstrate a path planner with the waypoint_following node, run these in seperate tabs along with the previous nodes (without simple waypoints).
+To use a demonstrate a path planner with the waypoint_follower node, run these in seperate tabs along with the previous nodes (without simple waypoints).
 
 Launching Rviz
 ```
