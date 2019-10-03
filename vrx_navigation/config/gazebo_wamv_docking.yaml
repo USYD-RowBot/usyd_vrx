@@ -2,3 +2,5 @@ hold_duration:      10  # Duration to wait inside docking bay
 goal_tolerance_pos: 0.5 # Distance tolerance for arriving at goal pose
 goal_tolerance_ang: 0.1 # Angular tolerance for arriving at goal yaw
 
+pix_threshold: 13 # (px) Threshold for centering the image (note, img is 300x300)
+pix_offset:    7  # (px) Offset center x position in image (note, img is 300x300)
