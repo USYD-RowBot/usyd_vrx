@@ -10,11 +10,28 @@ WaypointFollower::WaypointFollower(ros::NodeHandle& nh):
   pub_course_      = nh_.advertise<vrx_msgs::Course>("/course_cmd", 1);
   pub_request_wps_ = nh_.advertise<std_msgs::Empty>("/request_waypoints", 1);
 
-  WaypointFollower::setupWaypointFollower();
+  WaypointFollower::enable(true); // Enabled follower and set up subs
+}
 
-  // Set up waypoint command and odometry subscribers
-  sub_odom_      = nh_.subscribe("/odom", 1, &WaypointFollower::odomCb, this);
-  sub_waypoints_ = nh_.subscribe("/waypoints_cmd", 1, &WaypointFollower::waypointCb, this);
+void WaypointFollower::enable(bool do_enable)
+{
+  if (do_enable) // enable
+  {
+    WaypointFollower::setupWaypointFollower(); // Reset everything
+
+    // Set up waypoint command and odometry subscribers
+    sub_odom_      = nh_.subscribe("/odom", 1, &WaypointFollower::odomCb, this);
+    sub_waypoints_ = nh_.subscribe("/waypoints_cmd", 1, &WaypointFollower::waypointCb, this);
+
+    ROS_INFO("WpFollower: Waypoint follower reset and enabled.");
+  }
+  else // disable follower
+  {
+    sub_odom_.shutdown(); // Disable subscribers to stop wp following
+    sub_waypoints_.shutdown();
+    
+    ROS_INFO("WpFollower: Waypoint follower disabled.");
+  }
 }
 
 void WaypointFollower::setupWaypointFollower()
@@ -27,6 +44,7 @@ void WaypointFollower::setupWaypointFollower()
   ros::param::get("~station_brake_distance", station_brake_distance_);
   ros::param::get("~station_default_thrust", station_default_thrust_);
 
+  waypoint_list_.clear();
   num_wps_      =  0;
   wp_index_     = -1;
   vessel_yaw_   =  0;

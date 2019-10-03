@@ -27,6 +27,12 @@ class WaypointFollower
     */
     WaypointFollower(ros::NodeHandle& nh);
 
+    /*!
+    * Enable or disable the waypoint follower.
+    * @param do_enable enable when true, disable when false.
+    */
+    void enable(bool do_enable);
+
   private:
     //! ROS node handle.
     ros::NodeHandle nh_;
@@ -42,7 +48,7 @@ class WaypointFollower
 
     //! ROS subscriber for reading in new waypoints.
     ros::Subscriber sub_waypoints_;
-
+    
     //! Circle radius for nonlinear guidance law calculation.
     float nlgl_radius_;
 
