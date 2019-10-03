@@ -95,6 +95,7 @@ class Docker:
     self.goal_tolerance_ang = rospy.get_param("~goal_tolerance_ang")
     self.pix_threshold      = rospy.get_param("~pix_threshold")
     self.pix_offset         = rospy.get_param("~pix_offset")
+    self.default_thrust     = rospy.get_param("~default_thrust")
 
   def execute(self, goal):
 
@@ -103,7 +104,7 @@ class Docker:
     # Disable waypoint follower to gain control
     if not self.enableWaypointFollower(False): 
       self.server.set_aborted() # Return failure from server
-      return # Earl exit the execute function if service failed
+      return # Early exit the execute function if service failed
 
     # Set goal of docking bay position and yaw
     self.dock_pos = [goal.dock_position.position.x, goal.dock_position.position.y]
@@ -140,8 +141,8 @@ class Docker:
           self.server.set_succeeded() # Return success from server
           rospy.loginfo("docking: Finished docking procedure!")
 
-          # Re-enable waypoint follower to transfer control 
-          self.enableWaypointFollower(True)
+          self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
+          cv2.destroyAllWindows() # Destroy opencv windows
 
           return # Exit execute() function
 
@@ -149,13 +150,14 @@ class Docker:
       course_cmd.station_yaw = self.dock_yaw
       course_cmd.keep_station = True
       course_cmd.yaw = self.getStrafeYaw() # Get strafe yaw based on state
-      course_cmd.speed = 0.3
+      course_cmd.speed = self.default_thrust
 
       self.pub_course.publish(course_cmd) # Publish course command
       rate.sleep
     # end while loop
 
-    self.server.set_aborted() # Abort if we get here somehow
+    self.server.set_aborted()         # Abort if we get here somehow
+    self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
 
   def enableWaypointFollower(self, do_enable):
     try: # Attempt to enable/disable waypoint follower
