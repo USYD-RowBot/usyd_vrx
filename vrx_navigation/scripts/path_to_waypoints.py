@@ -13,6 +13,7 @@ class WaypointConverter:
         self.vis_pub    = rospy.Publisher(
             "visualization_marker", Marker, queue_size=1)
 
+        self.markers        = rospy.get_param("~markers", 1)
         self.speed          = rospy.get_param("~default_speed", 1)
         self.thinning_value = rospy.get_param("~thinning_value", 1)
 
@@ -41,24 +42,25 @@ class WaypointConverter:
         return wp_msg
 
     def pubMarker(self, pose):
-        marker = Marker()
-        marker.header.frame_id = "odom"
-        marker.header.stamp = rospy.Time.now() 
-        marker.ns = "wps"
-        marker.id = self.marker_id
-        marker.type = Marker.SPHERE
-        marker.action = Marker.ADD
-        marker.pose = pose
-        marker.scale.x = 1
-        marker.scale.y = 1
-        marker.scale.z = 1
-        marker.color.a = 1.0
-        marker.color.r = 0.0
-        marker.color.g = 1.0
-        marker.color.b = 0.0
-        marker.lifetime = rospy.Duration(60)
-        self.vis_pub.publish(marker)
-        self.marker_id += 1
+        if self.markers:
+            marker = Marker()
+            marker.header.frame_id = "odom"
+            marker.header.stamp = rospy.Time.now() 
+            marker.ns = "wps"
+            marker.id = self.marker_id
+            marker.type = Marker.SPHERE
+            marker.action = Marker.ADD
+            marker.pose = pose
+            marker.scale.x = 1
+            marker.scale.y = 1
+            marker.scale.z = 1
+            marker.color.a = 1.0
+            marker.color.r = 0.0
+            marker.color.g = 1.0
+            marker.color.b = 0.0
+            marker.lifetime = rospy.Duration(60)
+            self.vis_pub.publish(marker)
+            self.marker_id += 1
 
     def pathCallback(self, path_msg):
         
@@ -68,9 +70,9 @@ class WaypointConverter:
 
         first_wp_msg = self.getStationMsg( # Get first station
             path_msg.poses[0].pose, path_msg.poses[10].pose, 
-            path_msg.poses[0].pose, 2.0, True)
+            path_msg.poses[0].pose, 2.50, True)
         wp_route_msg.waypoints.append(first_wp_msg)
-        #self.pubMarker(first_wp_msg.pose)
+        self.pubMarker(first_wp_msg.pose)
 
         for pose_stamped in path_msg.poses:
             count += 1 # Put at start to avoid setting the immediate waypoint
@@ -79,7 +81,7 @@ class WaypointConverter:
                 wp_msg = Waypoint() # Waypoint msg
                 wp_msg.nav_type = Waypoint.NAV_WAYPOINT
                 wp_msg.pose = pose_stamped.pose
-                #self.pubMarker(wp_msg.pose)
+                self.pubMarker(wp_msg.pose)
                 wp_route_msg.waypoints.append(wp_msg) # Append wp to route
 
         half_thin_value = round(self.thinning_value / 2)
@@ -92,7 +94,7 @@ class WaypointConverter:
             path_msg.poses[-11].pose, path_msg.poses[-1].pose, 
             path_msg.poses[-1].pose, -1.0, False)
         wp_route_msg.waypoints.append(last_wp_msg)
-        #self.pubMarker(last_wp_msg.pose)
+        self.pubMarker(last_wp_msg.pose)
 
         self.wp_cmd_pub.publish(wp_route_msg)
 
