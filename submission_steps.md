@@ -1,7 +1,15 @@
+# System setup
+0. Get docker: `sudo apt install docker`
+1. Make yourself part of the docker group: `sudo usermod -a -G docker $USER`
+2. Logout and login so that it updates your groups. type in `groups` to confirm you are in the docker group.
+3. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
+4. Follow `Submitting from scratch` or `submitting from tisbutascratch`.
+5. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial'.
+6. A sample fileset is in `vrx_tasks/usyd_Team`. You can just copy the entire folder in.
+7. Everyting will take AGES. this is normal
+
 # Submitting from scratch
 0. Pull a branch you want to submit into some folder `<USYD VRX>`.
-1. go to here: https://bitbucket.org/osrf/vrx/wiki/tutorials/Creating%20a%20Dockerhub%20image%20for%20submission
-2. Follow steps in `option 1`
 3. run `docker run <name_of_your_container>`
 4. run `docker ps` to find your container name under the NAMES Column:
 5. open a bash in the docker with `docker exec -it <container_name> bash`
@@ -18,19 +26,22 @@
 12. Make sure it works :3 by running `./run_my_system.bash`.
 12. N.B. robot-state-publisher will probably fail. That's ok. the robot-description argument will be presented in the sim.
 12. Save your work: first `docker ps` to find your container ID, then `docker commit <containerID> <name_of_your_container>`.
+3. go to here: https://bitbucket.org/osrf/vrx/wiki/tutorials/Creating%20a%20Dockerhub%20image%20for%20submission
+4. Follow steps in `option 1`
+5. Go to `testing`.
 
-# Testing
-0. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
-1. Get the name of the image you want to test from dockerhub e.g. tisbutascratch/usyd_vrx:v2
-    1. OR Follow `Submitting from scratch` to push to dockerhub
-2. Docker run on your local system just to make sure everything is ok.
-2. ENSURE YOUR ENTRYPOINT IS CORRECT, by running `docker inspect <containername>` and searching for the `entrypoint` datum. It should say `./ros_entrypoint.sh`. If it doesn't,
-2. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial'
-3. Everyting will take AGES. this is normal
+# Submitting from tisbutascratch
+3. run `docker run tisbutascratch/usyd_vrx:v2` for the latest version.
+5. Go to `Testing`.
+
+# DEBUGGING
+2. To check what docker processes are running: `docker ps`
+2. ENSURE YOUR ENTRYPOINT IS CORRECT, by running `docker inspect <containername>` and searching for the `entrypoint` datum. It should say `./ros_entrypoint.sh`. If it doesn't, run `docker run ---entrypoint ./ros_entrypoint.sh yourdockerfilename`.
+
 
 # Updating
 0. get docker
-1. Get the docker image: `docker run -it --entrypoint bash tisbutascratch/usyd_vrx:v1` (this ensures you run bash instead of just running the launch file)
+1. Get the docker image: `docker run -it bash tisbutascratch/usyd_vrx:v1` (this ensures you run bash instead of just running the launch file)
 2. NOTE THAT THIS WILL OVERWRITE THE ENTRYPOINT, SCREWING UP YOUR DOCKER IMAGE. To fix this, follow the step after saving your work.
 2. do what you need to do
 3. Save your work: first `docker ps` to find your container ID, then `docker commit <containerID> <name_of_your_container>`.
