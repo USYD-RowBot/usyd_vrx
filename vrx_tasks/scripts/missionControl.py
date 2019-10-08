@@ -28,7 +28,7 @@ def cb(data):
     for dps in data.poses:
         wp=Waypoint()
         wp.pose=dps.pose # it starts as a posestamped so extract the pose
-        wp.nav_type=wp.NAV_WAYPOINT
+        wp.nav_type=wp.NAV_STATION
         waypoints.append(wp)
     route.waypoints=waypoints
     route.speed=params["speed"]

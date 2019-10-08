@@ -18,7 +18,7 @@ rospy.init_node("geoPoseToPose",anonymous=True)
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
 
-pub = rospy.Publisher(params['outTopic'], PoseStamped)
+pub = rospy.Publisher(params['outTopic'], PoseStamped, queue_size=1)
 lastSatPos=None
 listener = tf.TransformListener()
 

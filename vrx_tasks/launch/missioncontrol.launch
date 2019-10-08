@@ -1,4 +1,7 @@
 <launch>
+    <!-- Since we can only have one entry point for the competition, the entrypoint (i.e. roslaunch this file) 
+    should contain everything needed to run the boat. Hence all the stuff. ~Steven -->
+    
     <!-- include the official gazebo file -->
     <arg name="thrust_config" default="T" />
     <!-- Boat controls -->
@@ -29,7 +32,6 @@
     <node pkg="vrx_tasks" type="poseToCourse.py" name="pathCtranslate" output="screen">
         <param name="~inTopic" value="internal/poses"></param>
     </node>
-
 
     <!-- wayfinding -->
     <!-- Translate from geo path to normal path -->

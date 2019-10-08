@@ -2,8 +2,9 @@
 <launch>
 
   <group ns="wamv">
-    <node name="object_server" type ="object_server2.py" pkg="vrx_vision">
+    <node name="object_server" type ="object_server.py" pkg="vrx_vision" output="screen">
       <param name="threshold" value="40"/>
+      <param name="use_camera" value="True"/>
     </node>
     <node name="marker_publisher" type="object_markers.py" pkg="vrx_vision"/>
   </group>

@@ -21,7 +21,7 @@ rospy.init_node("geoPathToPath",anonymous=True)
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
 
-pub = rospy.Publisher(params['outTopic'], Path)
+pub = rospy.Publisher(params['outTopic'], Path, queue_size=1)
 lastSatPos=None
 listener = tf.TransformListener()
 

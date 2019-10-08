@@ -58,6 +58,9 @@ class CourseController
     //! ROS publisher for left thruster.
     ros::Publisher  pub_thrust_left_;
 
+    //! ROS publisher for left thruster angle.
+    ros::Publisher  pub_thrust_left_angle_;
+
     //! ROS publisher for lateral thruster.
     ros::Publisher  pub_thrust_lat_;
 

@@ -19,7 +19,7 @@ rospy.init_node("poseToCourse",anonymous=True)
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
 
-pub = rospy.Publisher(params['outTopic'], WaypointRoute)
+pub = rospy.Publisher(params['outTopic'], WaypointRoute, queue_size=1)
 listener = tf.TransformListener()
 
 def cb(data):
@@ -29,10 +29,13 @@ def cb(data):
     route = WaypointRoute()
     waypoints = []
 
-    wp.pose=dps.pose
     wp=Waypoint()
-    wp.nav_type=wp.NAV_WAYPOINT
+    wp.pose=data.pose   
+    wp.nav_type=wp.NAV_STATION
+    wp.station_duration = -1   # Stay at station until received new command
+
     waypoints.append(wp)
+    
     route.waypoints=waypoints
     route.speed=params["speed"]
     pub.publish(route)

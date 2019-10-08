@@ -1,18 +1,47 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="gui" default="true" />
-    <include file="$(find vrx_gazebo)/launch/sandisland.launch">
-        <arg name="urdf" value="$(find vrx_description)/configs/default_config.urdf"/>
-	<arg name="gui" value="$(arg gui)" />
+
+  <arg name="ground_truth_enabled" default="true"/>
+  <arg name="override_location" default="false" />
+  <arg name="x" default="18.2" />
+  <arg name="y" default="-10.9" />
+  <arg name="yaw" default="-2.9" />
+  <arg name="gui" default="true" />
+  <arg name="rviz" default="$(eval not arg('gui') )"/>
+  <arg name="ekf" default="true" />
+  <arg name="world_name" default="sandisland"/>
+  <arg name="thrust_config" default="T"/>
+
+
+    <include file="$(find vrx_gazebo)/launch/$(arg world_name).launch">
+        <arg name="urdf" value="$(find vrx_description)/configs/usyd_wamv.urdf"/>
+        <arg name="x" value="$(arg x)" if="$(arg override_location)" />
+        <arg name="y" value="$(arg y)" if="$(arg override_location)" />
+        <arg name="Y" value="$(arg yaw)" if="$(arg override_location)"/>
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="thrust_config" value="$(arg thrust_config)"/>
+
     </include>
+    <include file="$(find vrx_bringup)/launch/localisation.launch" if="$(arg ekf)"/>
+
     <group ns = "wamv">
+
+      <node name="odom_relay" pkg="topic_tools" type="relay" args="sensors/position/p3d_wamv odom" unless="$(arg ekf)"/>
+      <node name="odom_relay" pkg="topic_tools" type="relay" args="robot_localization/odometry/filtered odom" if="$(arg ekf)"/>
+
+
       <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
           <param name="publish_frequency" value="30"/>
+          <param name="tf_prefix" value="wamv"/>
       </node>
+      <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" output="screen" unless="$(arg ekf)">
 
-      <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py">
-        <remap from="odom" to="sensors/position/p3d_wamv"/>
+        <param name="tf_prefix" value="wamv"/>
       </node>
+      <node name="wamv_tf_expander" pkg="vrx_navigation" type="wamv_tf_expander.py" if="$(arg ekf)"/>
     </group>
+
+    <include file="$(find vrx_bringup)/launch/rviz.launch" if="$(arg rviz)"/>
+
 
 </launch>

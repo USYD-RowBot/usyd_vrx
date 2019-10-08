@@ -7,6 +7,7 @@ import signal
 import sys
 
 import rospy
+import tf
 import actionlib
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
@@ -44,7 +45,7 @@ class DockSM:
     exiting = False # Are we going to exit the dock now?
 
     if self.state is self.DockState.DOCK_HOLD:
-      if rospy.get_time() > hold_time_target: # Check hold timer expired
+      if rospy.get_time() > self.hold_time_target: # Check hold timer expired
         self.state = self.DockState.DOCK_EXIT
         exiting = True
 
@@ -61,6 +62,7 @@ class Docker:
     self.x_cam_error = 0 # Detected x error from image processing
     self.x_gps_error = 0 # Detected x error from gps readings
 
+    self.vessel_yaw  = 0
     self.vessel_pos  = [0, 0] # Current vessel x, y position
     self.initial_pos = [0, 0] # Position to return to when exiting dock
 
@@ -75,9 +77,9 @@ class Docker:
     self.pub_course = rospy.Publisher("/course_cmd", Course, queue_size=1)
 
     self.sub_img  = rospy.Subscriber(
-      "/wamv/sensors/cameras/middle_right_camera/image_raw", Image, self.imageCb)
+      "/wamv/sensors/cameras/middle_camera/image_raw", Image, self.imageCb)
     self.sub_odom = rospy.Subscriber(
-      "/wamv/sensors/position/p3d_wamv", Odometry, self.odomCb)
+      "/odom", Odometry, self.odomCb)
 
     self.server = actionlib.SimpleActionServer('docking', DockAction, self.execute, False)
     self.server.start()
@@ -89,6 +91,8 @@ class Docker:
 
   def execute(self, goal):
 
+    rospy.loginfo("docking: Goal received.")
+
     # Set goal of docking bay position and yaw
     self.dock_pos = [goal.dock_position.position.x, goal.dock_position.position.y]
     self.dock_yaw = goal.dock_yaw
@@ -97,7 +101,7 @@ class Docker:
     self.dock_sm.beginDocking() # Tell state machine we are beginning
 
     rate = rospy.Rate(10) # 10hz loop
-    while not rospy.is_shutdown:
+    while not rospy.is_shutdown():
 
       # ENTERING DOCK
       if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
@@ -122,34 +126,69 @@ class Docker:
           self.server.publish_feedback(DockFeedback("Entering state STANDBY"))
           self.server.publish_feedback(DockFeedback("Docking successful!"))
           self.server.set_succeeded() # Return success from server
+          rospy.loginfo("docking: Finished docking procedure!")
           return # Exit execute() function
 
       course_cmd = Course() # Generate course cmd for strafing
       course_cmd.station_yaw = self.dock_yaw
       course_cmd.keep_station = True
       course_cmd.yaw = self.getStrafeYaw() # Get strafe yaw based on state
+      course_cmd.speed = 0.3
 
-      pub_course.publish(course_cmd) # Publish course command
+      self.pub_course.publish(course_cmd) # Publish course command
       rate.sleep
     # end while loop
 
     self.server.set_aborted() # Abort if we get here somehow
 
   def reachedGoalPos(self, goal_pos):
-    dist = np.sqrt((goal_pos[0]-self.vessel_pos[0])**2, (goal_pos[1]-self.vessel_pos[1])**2)
-    return dist < goal_tolerance_pos
+    dist = np.sqrt((goal_pos[0]-self.vessel_pos[0])**2 + (goal_pos[1]-self.vessel_pos[1])**2)
+    return dist < self.goal_tolerance_pos
+
+  def yawWithinTolerance(self):
+    return abs(self.dock_yaw - self.vessel_yaw) < self.goal_tolerance_ang
     
   def getStrafeYaw(self):
+    yaw = 0
+    thres = 13
+
     if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
-      # Forward thrust
-      pass
+      # Forward thrust TODO scale depending on distance to placard
+      #yaw = self.dock_yaw - np.radians(self.x_cam_error)
+      if abs(self.x_cam_error) > thres and self.yawWithinTolerance(): 
+        if self.x_cam_error > 0:        # Correct lateral position
+          yaw = self.dock_yaw - np.pi/2
+        else:
+          yaw = self.dock_yaw + np.pi/2
+      else:
+        yaw = self.dock_yaw             # Move forwards
+
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
-      # No forward or backward thrust
-      pass
+      # TODO work out forward or backward thrust from dock bay position
+      if self.yawWithinTolerance():
+        if self.x_cam_error > 0:
+          yaw = self.dock_yaw - np.pi/2
+        else:
+          yaw = self.dock_yaw + np.pi/2
+      else:
+        yaw = (self.dock_yaw - np.pi) # TODO get rid of this case, ughhhh
+      
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
-      # Backward thrust
-      pass
-    return 0
+      # Backward thrust TODO scale depending on distance to placard
+      #yaw = (self.dock_yaw - np.pi) + np.radians(self.x_cam_error)
+      if abs(self.x_cam_error) > thres and self.yawWithinTolerance(): 
+        if self.x_cam_error > 0:        # Correct lateral position
+          yaw = self.dock_yaw - np.pi/2
+        else:
+          yaw = self.dock_yaw + np.pi/2
+      else:
+        yaw = (self.dock_yaw - np.pi)   # Move forwards
+
+    # Limit yaw from -PI to PI
+    if (abs(yaw) > np.pi):
+      yaw = -np.sign(yaw)*(2*np.pi - abs(yaw))
+
+    return yaw
 
   def imageCb(self, ros_img):
     # If we aren't in the standby state
@@ -168,6 +207,12 @@ class Docker:
     self.vessel_pos[0] = odom.pose.pose.position.x
     self.vessel_pos[1] = odom.pose.pose.position.y
 
+    # Get vessel yaw
+    quaternion = (odom.pose.pose.orientation.x, odom.pose.pose.orientation.y,
+      odom.pose.pose.orientation.z, odom.pose.pose.orientation.w)
+    euler = tf.transformations.euler_from_quaternion(quaternion)
+    self.vessel_yaw = euler[2]
+
   def processImage(self, img):
 
     #test_imgs = ['0_dock_approach.png', '1_edge_dock_boundary.png', '2_halfway_cross_dock_boundary.png', '3_dock.png']
@@ -185,8 +230,8 @@ class Docker:
       cv2.BORDER_CONSTANT, value=(255, 255, 255))
 
     params = cv2.SimpleBlobDetector_Params() # Set blob detector parameters
-    #params.filterByArea = True  # Filter by area.
-    #params.maxArea = 200
+    # params.filterByArea = True  # Filter by area.
+    # params.maxArea = 200
     
     detector = cv2.SimpleBlobDetector_create(params) # Create blob detector
      
@@ -195,7 +240,7 @@ class Docker:
     # Only record x error if exactly 1 blob is detected.
     if len(keypoints) is 1:
       # Calculate error in x direction, in pixels.
-      self.x_cam_error = keypoints[0].pt[0] - np.round(300/2)
+      self.x_cam_error = keypoints[0].pt[0] - np.round(300/2) + 10 #TODO hacky
       print(self.x_cam_error)
 
     elif len(keypoints) is 0:
