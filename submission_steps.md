@@ -5,7 +5,7 @@
 3. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
 4. Follow `Submitting from scratch` or `submitting from tisbutascratch`.
 5. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial'.
-6. A sample fileset is in `vrx_tasks/usyd_Team`. You can just copy the entire folder in.
+6. A sample fileset is in `vrx_tasks/usyd_Team`. You can just copy the entire folder into `vrx-docker/team_config`.
 7. Everyting will take AGES. this is normal
 
 # Submitting from scratch
