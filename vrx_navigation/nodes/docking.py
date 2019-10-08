@@ -13,6 +13,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from vrx_msgs.msg import *
+from std_srvs.srv import SetBool
 
 # State machine for docking procedure
 class DockSM:
@@ -62,8 +63,8 @@ class Docker:
     self.x_cam_error = 0 # Detected x error from image processing
     self.x_gps_error = 0 # Detected x error from gps readings
 
-    self.vessel_yaw  = 0
     self.vessel_pos  = [0, 0] # Current vessel x, y position
+    self.vessel_yaw  = 0
     self.initial_pos = [0, 0] # Position to return to when exiting dock
 
     self.dock_pos = [0, 0] # Position of desired docking bay
@@ -74,12 +75,16 @@ class Docker:
     self.dock_sm = DockSM(self.hold_duration) # Initialise docking state machine
     self.bridge  = CvBridge()                 # For converting ROS images to CV images
 
+    rospy.loginfo("docking: Waiting for vessel odometry.")
+    self.odomCb(rospy.wait_for_message("/odom", Odometry)) # Wait to fill vessel_pos
+    rospy.loginfo("docking: Vessel odometry received.")
+
     self.pub_course = rospy.Publisher("/course_cmd", Course, queue_size=1)
 
     self.sub_img  = rospy.Subscriber(
       "/wamv/sensors/cameras/middle_camera/image_raw", Image, self.imageCb)
     self.sub_odom = rospy.Subscriber(
-      "/odom", Odometry, self.odomCb)
+      "/odom", Odometry, self.odomCb)    
 
     self.server = actionlib.SimpleActionServer('docking', DockAction, self.execute, False)
     self.server.start()
@@ -88,15 +93,23 @@ class Docker:
     self.hold_duration      = rospy.get_param("~hold_duration")
     self.goal_tolerance_pos = rospy.get_param("~goal_tolerance_pos")
     self.goal_tolerance_ang = rospy.get_param("~goal_tolerance_ang")
+    self.pix_threshold      = rospy.get_param("~pix_threshold")
+    self.pix_offset         = rospy.get_param("~pix_offset")
+    self.default_thrust     = rospy.get_param("~default_thrust")
 
   def execute(self, goal):
 
     rospy.loginfo("docking: Goal received.")
 
+    # Disable waypoint follower to gain control
+    if not self.enableWaypointFollower(False): 
+      self.server.set_aborted() # Return failure from server
+      return # Early exit the execute function if service failed
+
     # Set goal of docking bay position and yaw
     self.dock_pos = [goal.dock_position.position.x, goal.dock_position.position.y]
     self.dock_yaw = goal.dock_yaw
-    self.initial_pos = self.vessel_pos # Store initial vessel position for exiting
+    self.initial_pos = list(self.vessel_pos) # Store initial vessel position for exiting
 
     self.dock_sm.beginDocking() # Tell state machine we are beginning
 
@@ -127,19 +140,37 @@ class Docker:
           self.server.publish_feedback(DockFeedback("Docking successful!"))
           self.server.set_succeeded() # Return success from server
           rospy.loginfo("docking: Finished docking procedure!")
+
+          self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
+          cv2.destroyAllWindows() # Destroy opencv windows
+
           return # Exit execute() function
 
       course_cmd = Course() # Generate course cmd for strafing
       course_cmd.station_yaw = self.dock_yaw
       course_cmd.keep_station = True
       course_cmd.yaw = self.getStrafeYaw() # Get strafe yaw based on state
-      course_cmd.speed = 0.3
+      course_cmd.speed = self.default_thrust
 
       self.pub_course.publish(course_cmd) # Publish course command
       rate.sleep
     # end while loop
 
-    self.server.set_aborted() # Abort if we get here somehow
+    self.server.set_aborted()         # Abort if we get here somehow
+    self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
+
+  def enableWaypointFollower(self, do_enable):
+    try: # Attempt to enable/disable waypoint follower
+        wp_follower_enable = rospy.ServiceProxy(
+          '/wamv/wamv_waypoint_follower/enable_follower', SetBool)
+        wp_follower_enable(do_enable)
+
+    except rospy.ServiceException, e:
+        rospy.loginfo("docking: Unable to transfer control to/from waypoint follower: %s"%e)
+        return False # Server failed
+    
+    rospy.loginfo("docking: Transferred control to/from waypoint follower.")
+    return True # Succesfully contacted server
 
   def reachedGoalPos(self, goal_pos):
     dist = np.sqrt((goal_pos[0]-self.vessel_pos[0])**2 + (goal_pos[1]-self.vessel_pos[1])**2)
@@ -150,12 +181,9 @@ class Docker:
     
   def getStrafeYaw(self):
     yaw = 0
-    thres = 13
 
     if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
-      # Forward thrust TODO scale depending on distance to placard
-      #yaw = self.dock_yaw - np.radians(self.x_cam_error)
-      if abs(self.x_cam_error) > thres and self.yawWithinTolerance(): 
+      if abs(self.x_cam_error) > self.pix_threshold and self.yawWithinTolerance(): 
         if self.x_cam_error > 0:        # Correct lateral position
           yaw = self.dock_yaw - np.pi/2
         else:
@@ -164,7 +192,6 @@ class Docker:
         yaw = self.dock_yaw             # Move forwards
 
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
-      # TODO work out forward or backward thrust from dock bay position
       if self.yawWithinTolerance():
         if self.x_cam_error > 0:
           yaw = self.dock_yaw - np.pi/2
@@ -174,9 +201,7 @@ class Docker:
         yaw = (self.dock_yaw - np.pi) # TODO get rid of this case, ughhhh
       
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
-      # Backward thrust TODO scale depending on distance to placard
-      #yaw = (self.dock_yaw - np.pi) + np.radians(self.x_cam_error)
-      if abs(self.x_cam_error) > thres and self.yawWithinTolerance(): 
+      if abs(self.x_cam_error) > self.pix_threshold and self.yawWithinTolerance(): 
         if self.x_cam_error > 0:        # Correct lateral position
           yaw = self.dock_yaw - np.pi/2
         else:
@@ -197,7 +222,7 @@ class Docker:
       try: # Convert ROS image to CV image
         cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
       except CvBridgeError as e:
-        print(e)
+        rospy.logdebug(e)
         return
 
       self.processImage(cv_img) # Pass converted image to processing algorithm
@@ -215,9 +240,6 @@ class Docker:
 
   def processImage(self, img):
 
-    #test_imgs = ['0_dock_approach.png', '1_edge_dock_boundary.png', '2_halfway_cross_dock_boundary.png', '3_dock.png']
-    #img = cv2.imread('/home/benjamin/Pictures/VRX/' + test_imgs[0], cv2.IMREAD_GRAYSCALE)
-
     new_width = 300 # Scale image down so width is 300 pixels
     aspect = float(img.shape[0]) / float(img.shape[1])
     scaled_img = cv2.resize(img, (new_width, int(new_width * aspect)))
@@ -230,8 +252,8 @@ class Docker:
       cv2.BORDER_CONSTANT, value=(255, 255, 255))
 
     params = cv2.SimpleBlobDetector_Params() # Set blob detector parameters
-    # params.filterByArea = True  # Filter by area.
-    # params.maxArea = 200
+    params.filterByArea = True  # Filter by area.
+    params.minArea = 50
     
     detector = cv2.SimpleBlobDetector_create(params) # Create blob detector
      
@@ -240,25 +262,18 @@ class Docker:
     # Only record x error if exactly 1 blob is detected.
     if len(keypoints) is 1:
       # Calculate error in x direction, in pixels.
-      self.x_cam_error = keypoints[0].pt[0] - np.round(300/2) + 10 #TODO hacky
-      print(self.x_cam_error)
+      self.x_cam_error = keypoints[0].pt[0] - np.round(300/2) + self.pix_offset
 
     elif len(keypoints) is 0:
-      print("docking: Error: no blob detected.")
+      rospy.logdebug("docking: Error: no blob detected.")
     else:
-      print("docking: Error: more than 1 blob detected.")
-
-    #cv2.imshow('gabor filtered image', gabor_img) # Show filtered image.
+      rospy.logdebug("docking: Error: more than 1 blob detected.")
 
     # Draw detected blobs on gabor filtered image as red circles.
     blob_img = cv2.drawKeypoints(bordered_img, keypoints, np.array([]), (0,0,255), 
       cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     cv2.imshow("detected blobs", blob_img)
     cv2.waitKey(1)
-
-    #h, w     = g_kernel.shape[:2] # Visualise the gabor kernel
-    #g_kernel = cv2.resize(g_kernel, (20*w, 20*h), interpolation=cv2.INTER_CUBIC)
-    #cv2.imshow('gabor kernel', g_kernel)
     
 def signalHandler(sig, frame):
   cv2.destroyAllWindows()

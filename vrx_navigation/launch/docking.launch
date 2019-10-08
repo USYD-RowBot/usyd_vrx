@@ -1,17 +1,18 @@
 <launch>
 
   <!-- Default configuration is for wamv in Gazebo simulation. -->
-  <arg name="default_config_file" value="$(find vrx_navigation)/config/gazebo_wamv_docking.yaml" />
+  <arg name="default_config_file" value="$(find vrx_navigation)/config/gazebo_wamv_docking.yaml"/>
 
   <!-- Provide a user-specified config file name to overwrite the default configuration. -->
   <arg name="overlying_config_file" default="$(arg default_config_file)" />
 
   <!-- Launch wamv course controller-->
   <group ns="wamv">
-    <node pkg="vrx_navigation" type="docking.py" name="wamv_docking" output="screen">
+    <node pkg="vrx_navigation" type="docking.py" name="docking" output="screen">
       <rosparam command="load" file="$(arg default_config_file)" />
       <rosparam command="load" file="$(arg overlying_config_file)" />
-    
+
+      <remap from="/odom" to="odom"/>
     </node>
   </group>
 

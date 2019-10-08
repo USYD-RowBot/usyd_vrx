@@ -48,7 +48,7 @@ use_inf: false </rosparam>
        <param name = "costmap/footprint" value = "[[-2, -1.2], [2, -1.2], [2, 1.2], [-2,1.2]]"/>
        <param name = "costmap/height" value = "100"/>
        <param name = "costmap/width" value = "100"/>
-      <param name = "costmap/robot_radius" value = "1.5"/>
+      <param name = "costmap/robot_radius" value = "3.0"/>
        <param name = "costmap/static_map" value = "true"/>
        <param name = "costmap/inflation_layer/inflation_radius" value = "2.5"/>
        <param name = "costmap/inflation_layer/cost_scaling_factor" value = "1"/>
@@ -57,6 +57,9 @@ use_inf: false </rosparam>
 </group>
    <!--node pkg="vrx_navigation" type="waypoint_thinner.py" name="waypoint_thinner" /-->
 
-   <node pkg="vrx_navigation" type="path_to_waypoints.py" name="path_to_waypoints"/>
+  <arg name="ptw_config_file" value="$(find vrx_navigation)/config/gazebo_wamv_path_to_waypoints.yaml"/>
+  <node pkg="vrx_navigation" type="path_to_waypoints.py" name="path_to_waypoints" output="screen">
+    <rosparam command="load" file="$(arg ptw_config_file)" />
+  </node>
 
 </launch>
