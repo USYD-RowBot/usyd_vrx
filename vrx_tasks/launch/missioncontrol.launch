@@ -45,5 +45,8 @@
     </node>
 
     <!-- Vision translation -->
+    <node pkg="vrx_tasks" type="perceptionConverter.py" name="perceptionConverter" output="screen">
+        <param name="~inTopic" value="internal/waypoints"></param>
+    </node>
     <!--TODO:-->
 </launch>
