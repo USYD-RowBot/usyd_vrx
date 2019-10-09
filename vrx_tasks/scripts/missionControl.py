@@ -5,7 +5,7 @@
 import rospy
 from vrx_gazebo.msg import Task
 params = {
-    "taskTopic": "/waypoints",
+    "taskTopic": "/vrx/task/info",
 }
 
 rospy.init_node("missionControl.py",anonymous=True)
@@ -14,25 +14,20 @@ for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
 
 def cb(data):
-    if data.name=="something":
+    if data.name=="station_keeping":
+
+    elif data.name=="wayfinding":
+
+    elif data.name=="perception":
+
+    elif data.name=="navigation_course":
+
+    elif data.name=="scan":
+    
+    elif data.name=="scan_and_dock":
+
+    
         # do something
 
-pub = rospy.Subscriber(params['taskTopic'], Task,cb);
-
-def cb(data):
-    print("RECEIVED WAYPOINT MESSAGE")
-    global pub
-    global listener
-    route = WaypointRoute()
-    waypoints = []
-    for dps in data.poses:
-        wp=Waypoint()
-        wp.pose=dps.pose # it starts as a posestamped so extract the pose
-        wp.nav_type=wp.NAV_STATION
-        waypoints.append(wp)
-    route.waypoints=waypoints
-    route.speed=params["speed"]
-    pub.publish(route)
-
-sub = rospy.Subscriber(params['inTopic'], Path, cb)
+pub = rospy.Subscriber(params['taskTopic'], Task,cb)
 rospy.spin()
