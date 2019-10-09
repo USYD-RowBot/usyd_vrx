@@ -55,11 +55,13 @@ def convertToLatLon(pose):
 
 def cb(data):
     for i in data.objects:
+        #lookup relative to map
+        position,q=listener.lookupTransform(i.frame_id,"map",rospy.Time(0))
         #Create a new geopose to publish
         gp=GeoPoseStamped()
         gp.header.stamp=rospy.Time.now()
         gp.header.frame_id=allowed_strings[i.best_guess]
-        latlon=convertToLatLon(data.position.pose)
+        latlon=convertToLatLon(position)# OR i.pose.position if that works without transform
         gp.pose.orientation=i.pose.orientation
         gp.pose.position.latitude=latlon['latitude']
         gp.pose.position.longitude=latlon['longitude']
