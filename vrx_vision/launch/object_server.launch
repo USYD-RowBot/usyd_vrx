@@ -1,11 +1,18 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="use_camera" default="true"/>
+  <arg name="distance_threshold" default="3"/>
+  <arg name="expiry_time" default="3"/>
+
   <group ns="wamv">
+    <param name="threshold" value="40"/>
+    <param name="use_camera" value="$(arg use_camera)"/>
+    <param name="expiry_time" value="$(arg expiry_time)"/>
+    <param name="distance_threshold" value="$(arg distance_threshold)"/>
+
     <node name="object_server" type ="object_server.py" pkg="vrx_vision" output="screen">
-      <param name="threshold" value="40"/>
-      <param name="use_camera" value="True"/>
     </node>
-    <node name="marker_publisher" type="object_markers.py" pkg="vrx_vision"/>
+    <node name="marker_publisher" type="object_markers.py" pkg="vrx_vision" output="screen"/>
   </group>
 </launch>

@@ -12,8 +12,9 @@ def callback(data):
     #print(data)
     objects = data.objects
     for i in objects:
+        #print(i)
 
-        if len(i.confidences) == 0:
+        if len(i.confidences) == 0 or i.frame_id is None :
             pass
 
         if i.best_guess == "buoy2":
@@ -64,7 +65,10 @@ def callback(data):
             marker.id = int(i.frame_id)+1
             marker.type = Marker.TEXT_VIEW_FACING
             marker.action=Marker.ADD
-            marker.text = "ID: " +i.frame_id +"\nTYPE: " + i.best_guess +"\nCONF: " +  str(i.confidences[0])
+            try:
+                marker.text = "ID: " +i.frame_id +"\nTYPE: " + i.best_guess +"\nCONF: " +  str(i.confidences[0])
+            except:
+                print(i)
             marker.scale.x = 2.0
             marker.scale.y = 2.0
             marker.scale.z = 2.0
