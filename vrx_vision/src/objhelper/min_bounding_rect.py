@@ -71,7 +71,7 @@ def minBoundingRect(hull_points_2d):
 
     # Test each angle to find bounding box with smallest area
     min_bbox = (0, sys.maxint, 0, 0, 0, 0, 0, 0) # rot_angle, area, width, height, min_x, max_x, min_y, max_y
-    print "Testing", len(edge_angles), "possible rotations for bounding box... \n"
+    #print "Testing", len(edge_angles), "possible rotations for bounding box... \n"
     for i in range( len(edge_angles) ):
 
         # Create rotation matrix to shift points to baseline

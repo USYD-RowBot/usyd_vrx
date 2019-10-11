@@ -18,12 +18,13 @@ def handleImage(req):
     print("Classifying")
     classifier = BuoyClassifier()
     label, confidence = classifier.classify(cv_image, distance)
-    
+
     #cv2.imshow("service reciever",cv_image)
-    #cv2.waitKey(1)
+    #cv2.waitKey(0)
     #cv2.destroyAllWindows()
-    
+
     #Return with your results
+    print(label,confidence)
     return ClassifyBuoyResponse(label,confidence,True)
 
 def classifyBuoyServer():

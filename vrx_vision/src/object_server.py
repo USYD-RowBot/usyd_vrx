@@ -16,6 +16,7 @@ import Queue
 from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 from objhelper.qhull_2d import *
 from objhelper.min_bounding_rect import *
+from objhelper.buoy_classifier import BuoyClassifier
 
 
 THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
@@ -25,20 +26,34 @@ USE_CAMERA = rospy.get_param('use_camera', True)
 MARGIN_X = 200
 MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
-
 if __name__ == "__main__":
     rospy.init_node("object_server")
     tf_broadcaster = tf.TransformBroadcaster()
     tf_listener = tf.TransformListener()
+    classifier = BuoyClassifier()
     bridge = CvBridge()
-    if(USE_CAMERA):
-        print("Waiting to camera service")
-        try:
-            rospy.wait_for_service('classify_buoy',timeout =6)
-            classifyBuoy = rospy.ServiceProxy('classify_buoy', ClassifyBuoy)
-        except:
-            print("No camera service under classify_buoy found, disabling camera usage")
-            USE_CAMERA = False
+
+    THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
+    DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
+    EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
+    USE_CAMERA = rospy.get_param('use_camera', True)
+    print("USING THE CAMERA: " + str(USE_CAMERA))
+    MARGIN_X = 200
+    MARGIN_Y = 150
+    USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
+
+
+
+
+    # if(USE_CAMERA):
+    #     #print("Waiting to camera service")
+    #     try:
+    #         pass
+    #         #rospy.wait_for_service('classify_buoy',timeout =6)
+    #         #classifyBuoy = rospy.ServiceProxy('classify_buoy', ClassifyBuoy)
+    #     except:
+    #         print("No camera service under classify_buoy found, disabling camera usage")
+    #         USE_CAMERA = False
 
 
 
@@ -103,6 +118,7 @@ class Obstacle():
 
         if USE_CAMERA == True and type=="buoy":
             for camera in self.cameras.values():
+
                 #print("FRAME ID", self.object.frame_id,camera.frame_id)
                 #if camera.name == "middle":
                 try:
@@ -116,8 +132,8 @@ class Obstacle():
 
                     #TODO Specify this in params.
                     x_len = 1.0 #m
-                    y_len = 2.0 #m
-                    y_buf =0.5#m
+                    y_len = 1.0 #m
+                    y_buf =0.3#m
                     x_buf =0.5#m
 
                     buoy_pixel_x2 = int((camera.width/2)*(1-((trans[1]-x_len/2 - x_buf)/(trans[0]*math.tan(camera.fov/2)))))
@@ -129,15 +145,17 @@ class Obstacle():
                     if buoy_pixel_x2 < camera.width and  buoy_pixel_x1 >0 and buoy_pixel_y1 > 0 and buoy_pixel_y2 < camera.height:
                         crop_img = camera.image[(buoy_pixel_y1):(buoy_pixel_y2), (buoy_pixel_x1):(buoy_pixel_x2)]
                         #SEND FOR CLASSIFICATION
-                        image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
-                        res = classifyBuoy(image_message,dist)
-                        if res.success:
-                             type = res.type
-                             confidence = res.confidence
+                        #image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
+                        if camera.name == "middle" :
+                            cv2.imshow("middle_cropped", crop_img)
+                            cv2.waitKey(1)
+                            type, confidence = classifier.classify(crop_img, dist)
+                        #confidence = res.confidence
                         #cv2.imshow("middle_cropped", crop_img)
                         cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
                         # cv2.line(copy_img,(int(buoy_pixel_x1),720),(int(buoy_pixel_x2),0),(0,0,255),1)
                         # cv2.line(copy_img,(0,buoy_pixel_y1),(1280,buoy_pixel_y2),(0,0,255),1)
+
 
 
         if len(self.object.confidences) == 0 or confidence > self.object.confidences[0]:
@@ -168,6 +186,8 @@ class Camera():
         self.height = 720
         self.fov = math.radians(80) # 80 degrees
         self.c_q = Queue.Queue() #Classification queue
+
+
 
 
 
@@ -210,7 +230,7 @@ class ObjectServer():
         cv_image = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
 
         self.cameras[type].image = cv_image
-        self.cameras[type].debug_image = cv_image.copy()
+
 
 
 
@@ -286,6 +306,7 @@ class ObjectServer():
                 if (dist<thresh_dist):
                     my_obj.x = x
                     my_obj.y = y
+
                     my_obj.radius = max_dist
                     my_obj.points = clusters[cluster]
                     updated = True
@@ -315,6 +336,10 @@ class ObjectServer():
 
     def classify_objects(self):
         """Classify the objects found so far using appropiate cameras."""
+
+        for camera in self.cameras.values():
+            camera.debug_image = camera.image.copy()
+
         for i in self.objects:
             i.classify()
         #rospy.loginfo("Classifyed clusters")
@@ -354,7 +379,7 @@ if __name__ == "__main__":
 
     object_server = ObjectServer()
     object_server.cameraInit()
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(30)
     sub = rospy.Subscriber("map",OccupancyGrid,object_server.callback)
     left = rospy.Subscriber("sensors/cameras/left_camera/image_raw",Image,object_server.cameraCallback,"left")
     middle = rospy.Subscriber("sensors/cameras/middle_camera/image_raw",Image,object_server.cameraCallback,"middle")
@@ -366,6 +391,7 @@ if __name__ == "__main__":
     thread.start()
 
     count =0
+    time_last = rospy.get_time()
     while not rospy.is_shutdown():
         # if count == 10:
         #     object_server.process_map();
@@ -375,4 +401,8 @@ if __name__ == "__main__":
         object_server.broadcast_objects()
         count = count+1
         rate.sleep()
+
+        dt = rospy.get_time()-time_last
+        print("Hz = " + str(1/dt))
+        time_last = rospy.get_time()
     thread.join()
