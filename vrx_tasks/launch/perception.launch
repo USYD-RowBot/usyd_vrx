@@ -1,0 +1,17 @@
+<launch>
+
+
+  <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+      <arg name="world_name" value="perception_task"/>
+      <arg name="gui" value="true"/>
+  </include>
+
+  <include file="$(find vrx_navigation)/launch/lidar_node.launch">
+  </include>
+
+  <include file="$(find vrx_vision)/launch/object_server.launch">
+    <arg name="distance_threshold" value="0.2"/>
+    <arg name="use_camera" value="true"/>
+    <arg name="expiry_time" value="0.5"/>
+  </include>
+</launch>
