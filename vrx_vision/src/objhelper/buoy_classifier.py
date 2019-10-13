@@ -1,8 +1,16 @@
 import numpy as np
 import cv2
 import rospkg
+import threading
 
 class BuoyClassifier():
+    def matchShape(template_filename):
+            print("{} started!".format(self.getName()))              # "Thread-x started!"
+            print(template_filename)
+            ##for template_filename in template_filename_list: # Compare img with templates
+            template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
+            label_confidences.append(self.percentSimilar(template_img, img))# Pretend to work for a second
+            print("{} finished!".format(self.getName()))             # "Thread-x finished!"
 
     def kMeans(self, img):
 
@@ -152,6 +160,17 @@ class BuoyClassifier():
             return (string, float, float): (label, conf_label, conf_colour), where
                 confidences are from 0 to 1.
         '''
+        label_confidences  = []
+        colour_confidences = []
+        #####
+        ###ADD for Threading
+                #for template_filename in template_filename_list: # Compare img with templates
+        #    template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
+        #    label_confidences.append(self.percentSimilar(template_img, img))
+        for template_filename in template_filename_list:       
+            mythread = threading.Thread(target=matchShape,args=(template_filename,))  # ...Instantiate a thread and pass a unique ID to it
+            mythread.start()                                   # ...Start the thread, invoke the run method
+            time.sleep(.1)                                     # ...Wait 0.1 seconds before starting another
 
         rospack = rospkg.RosPack()
         pre = rospack.get_path('vrx_vision')+"/template_images/"
@@ -174,12 +193,14 @@ class BuoyClassifier():
             ["polyform_?"]                                                             # Sphere TODO estimate size
         ]
 
-        label_confidences  = []
-        colour_confidences = []
 
-        for template_filename in template_filename_list: # Compare img with templates
-            template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
-            label_confidences.append(self.percentSimilar(template_img, img))
+
+
+        # need to thread
+        ########################################
+        #for template_filename in template_filename_list: # Compare img with templates
+        #    template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
+        #    label_confidences.append(self.percentSimilar(template_img, img))
 
             #cv2.imshow('K-Means Clustering', template_img)
             #cv2.waitKey(0)
