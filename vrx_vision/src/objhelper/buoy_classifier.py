@@ -4,13 +4,13 @@ import rospkg
 import threading
 
 class BuoyClassifier():
-    def matchShape(template_filename):
-            print("{} started!".format(self.getName()))              # "Thread-x started!"
-            print(template_filename)
+    def matchShape(self, template_filename,img):
+            #print("started!")              # "Thread-x started!"
+            #print(template_filename)
             ##for template_filename in template_filename_list: # Compare img with templates
             template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
-            label_confidences.append(self.percentSimilar(template_img, img))# Pretend to work for a second
-            print("{} finished!".format(self.getName()))             # "Thread-x finished!"
+            self.label_confidences.append(self.percentSimilar(template_img, img))# Pretend to work for a second
+            #print("finished!")             # "Thread-x finished!"
 
     def kMeans(self, img):
 
@@ -149,7 +149,6 @@ class BuoyClassifier():
             for j in range(img1.shape[1]):
                 if img1[i][j] == img2[i][j]:
                     n_equal_pixels += 1
-
         return float(n_equal_pixels)/float(n_pixels)
 
     def classifyBuoy(self, img, colour):
@@ -160,17 +159,13 @@ class BuoyClassifier():
             return (string, float, float): (label, conf_label, conf_colour), where
                 confidences are from 0 to 1.
         '''
-        label_confidences  = []
+        self.label_confidences  = []
         colour_confidences = []
         #####
         ###ADD for Threading
                 #for template_filename in template_filename_list: # Compare img with templates
         #    template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
         #    label_confidences.append(self.percentSimilar(template_img, img))
-        for template_filename in template_filename_list:       
-            mythread = threading.Thread(target=matchShape,args=(template_filename,))  # ...Instantiate a thread and pass a unique ID to it
-            mythread.start()                                   # ...Start the thread, invoke the run method
-            time.sleep(.1)                                     # ...Wait 0.1 seconds before starting another
 
         rospack = rospkg.RosPack()
         pre = rospack.get_path('vrx_vision')+"/template_images/"
@@ -193,6 +188,10 @@ class BuoyClassifier():
             ["polyform_?"]                                                             # Sphere TODO estimate size
         ]
 
+        for template_filename in template_filename_list:
+            mythread = threading.Thread(target=self.matchShape,args=(template_filename,img,))  # ...Instantiate a thread and pass a unique ID to it
+            mythread.start()                                   # ...Start the thread, invoke the run method
+            #time.sleep(.1)                                     # ...Wait 0.1 seconds before starting another
 
 
 
@@ -204,9 +203,12 @@ class BuoyClassifier():
 
             #cv2.imshow('K-Means Clustering', template_img)
             #cv2.waitKey(0)
-        print(label_confidences)
-        conf_shape       = max(label_confidences) # Get highest confidence label and index
-        best_shape_index = np.argmax(label_confidences)
+        while (len(self.label_confidences)<4):
+            pass
+
+        print(self.label_confidences)
+        conf_shape       = max(self.label_confidences) # Get highest confidence label and index
+        best_shape_index = np.argmax(self.label_confidences)
 
         for template_colour in template_colours[best_shape_index]: # Compare colour with templates
             colour_confidences.append(self.colourConfidenceRGB(template_colour, colour))
