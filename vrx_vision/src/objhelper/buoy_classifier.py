@@ -2,15 +2,20 @@ import numpy as np
 import cv2
 import rospkg
 import threading
+import time
 
 class BuoyClassifier():
     def matchShape(self, template_filename,img):
             #print("started!")              # "Thread-x started!"
             #print(template_filename)
             ##for template_filename in template_filename_list: # Compare img with templates
+            start = time.time()
             template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
             self.label_confidences.append(self.percentSimilar(template_img, img))# Pretend to work for a second
             #print("finished!")             # "Thread-x finished!"
+            end = time.time()
+            elapsed = end - start
+
 
     def kMeans(self, img):
 
@@ -220,16 +225,24 @@ class BuoyClassifier():
         return label, conf_shape, conf_colour
 
     def classify(self, img, distance):
-
+        start = time.time()
         clustered_img = self.kMeans(img)
         object_mask   = self.getObjectMask(clustered_img)
         cropped_img   = self.rotateCropScale(object_mask)
         mirrored_img  = self.mirrorCombine(cropped_img)
+        end = time.time()
+        elapsed = end - start
+        print("Time for image cropping")
+        print(elapsed)
 
         # Classify the buoy
+        start = time.time()
         label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centreColour(img)))
         print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
-
+        end = time.time()
+        elapsed = end - start
+        print("Time for classification")
+        print(elapsed)
         #cv2.imshow('Shape',mirrored_img)
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
