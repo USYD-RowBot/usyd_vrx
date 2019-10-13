@@ -15,7 +15,7 @@ class BuoyClassifier():
             #print("finished!")             # "Thread-x finished!"
             end = time.time()
             elapsed = end - start
-
+            #print(elapsed)
 
     def kMeans(self, img):
 
@@ -192,6 +192,7 @@ class BuoyClassifier():
             ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
             ["polyform_?"]                                                             # Sphere TODO estimate size
         ]
+        start = time.time()
 
         for template_filename in template_filename_list:
             mythread = threading.Thread(target=self.matchShape,args=(template_filename,img,))  # ...Instantiate a thread and pass a unique ID to it
@@ -210,6 +211,10 @@ class BuoyClassifier():
             #cv2.waitKey(0)
         while (len(self.label_confidences)<4):
             pass
+        end = time.time()
+        elapsed = end - start
+        print("Time for threading Template image classification")
+        print(elapsed)
 
         print(self.label_confidences)
         conf_shape       = max(self.label_confidences) # Get highest confidence label and index
