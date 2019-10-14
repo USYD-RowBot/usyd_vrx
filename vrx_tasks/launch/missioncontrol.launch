@@ -19,7 +19,8 @@
     <include file="$(find vrx_control)/launch/course_controller.launch">
         <arg name="thrust_config" value="$(arg thrust_config)" />
     </include>
-
+    <node pkg="vrx_tasks" type="missionControl.py" name="missioncontrol" output="screen">
+    </node>
     <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
 
     <!-- station_keeping -->
