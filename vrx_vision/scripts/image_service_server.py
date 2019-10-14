@@ -5,6 +5,7 @@ import rospy
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+from buoy_classifier import BuoyClassifier
 
 def handleImage(req):
     #print(req)
@@ -12,19 +13,24 @@ def handleImage(req):
     bridge = CvBridge()
 
     distance = req.distance
-    #cv_image = bridge.imgmsg_to_cv2(req.image, desired_encoding="bgr8")
-    ##cv_image is now the image you can work with.
-    #cv2.imshow("service reciever",cv_image)
-    #cv2.waitKey(1)
-    #cv2.destroyAllWindows()
+    cv_image = bridge.imgmsg_to_cv2(req.image, desired_encoding="bgr8")
+
     print("Classifying")
+    classifier = BuoyClassifier()
+    label, confidence = classifier.classify(cv_image, distance)
+
+    #cv2.imshow("service reciever",cv_image)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+
     #Return with your results
-    return ClassifyBuoyResponse("Hello",1.1,True)
+    print(label,confidence)
+    return ClassifyBuoyResponse(label,confidence,True)
 
 def classifyBuoyServer():
     rospy.init_node('classify_bioy')
     s = rospy.Service('wamv/classify_buoy', ClassifyBuoy, handleImage)
-    print "Ready classify buoy."
+    print("Ready classify buoy.")
     rospy.spin()
 
 if __name__ == "__main__":
