@@ -15,17 +15,17 @@ for i in params:
 
 def cb(data):
     if data.name=="station_keeping":
-
+        pass
     elif data.name=="wayfinding":
-
+        pass
     elif data.name=="perception":
-
+        pass
     elif data.name=="navigation_course":
-
+        pass
     elif data.name=="scan":
-    
+        pass
     elif data.name=="scan_and_dock":
-
+        pass
     
         # do something
 

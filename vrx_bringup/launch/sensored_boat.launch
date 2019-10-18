@@ -30,10 +30,14 @@
       <node name="odom_relay" pkg="topic_tools" type="relay" args="robot_localization/odometry/filtered odom" if="$(arg ekf)"/>
 
 
-      <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+      <!--
+        I'm commenting this out because the real competition won't have it and so we need to include it in our launch files for submission - so it can't be here
+
+        
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
           <param name="publish_frequency" value="30"/>
           <param name="tf_prefix" value="wamv"/>
-      </node>
+      </node>-->
       <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" output="screen" unless="$(arg ekf)">
 
         <param name="tf_prefix" value="wamv"/>

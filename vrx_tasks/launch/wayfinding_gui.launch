@@ -4,7 +4,7 @@
     
     <include file="$(find vrx_gazebo)/launch/wayfinding.launch">
         <arg name="thrust_config" value="$(arg thrust_config)"/>
-        <arg name="urdf" value="$(find vrx_description)/configs/my_wamv.urdf"/>
+        <arg name="urdf" value="$(find vrx_description)/configs/usyd_wamv.urdf"/>
         <arg name="gui" value="true"/>
     </include>
     

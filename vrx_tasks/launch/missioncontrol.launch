@@ -1,7 +1,7 @@
 <launch>
     <!-- Since we can only have one entry point for the competition, the entrypoint (i.e. roslaunch this file) 
     should contain everything needed to run the boat. Hence all the stuff. ~Steven -->
-    
+
     <!-- include the official gazebo file -->
     <arg name="thrust_config" default="T" />
     <!-- Boat controls -->
@@ -11,7 +11,7 @@
         </node>
         <!-- Boat odometry -->
         <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" output="screen">
-            <param name="~inTopic" value="sensors/position/p3d_wamv"></param>
+            <remap from="sensors/position/p3d_wamv" to="odom"></remap>
         </node>
     </group>
 
@@ -19,9 +19,20 @@
     <include file="$(find vrx_control)/launch/course_controller.launch">
         <arg name="thrust_config" value="$(arg thrust_config)" />
     </include>
-    <node pkg="vrx_tasks" type="missionControl.py" name="missioncontrol" output="screen">
-    </node>
     <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
+
+    <include file="$(find vrx_navigation)/launch/lidar_node.launch"></include>
+
+    <include file="$(find vrx_vision)/launch/object_server.launch">
+        <arg name="distance_threshold" value="0.2" />
+        <arg name="use_camera" value="true" />
+        <arg name="expiry_time" value="0.5" />
+    </include>
+
+
+
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+    </node>
 
     <!-- station_keeping -->
     <!-- Translate from geo pose to normal pose -->
@@ -45,9 +56,10 @@
         <param name="~inTopic" value="internal/waypoints"></param>
     </node>
 
+
     <!-- Vision translation -->
     <node pkg="vrx_tasks" type="perceptionConverter.py" name="perceptionConverter" output="screen">
-        <param name="~inTopic" value="internal/waypoints"></param>
+
     </node>
     <!--TODO:-->
 </launch>

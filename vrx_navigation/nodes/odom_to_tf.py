@@ -66,7 +66,5 @@ def callback(data):
 
 if __name__ == "__main__":
     rospy.init_node('odom_to_tf')
-    for i in params:
-        params[i] = rospy.get_param('~'+i, params[i])
-    rospy.Subscriber(params['inTopic'],Odometry,callback)
+    rospy.Subscriber("odom",Odometry,callback)
     rospy.spin()
