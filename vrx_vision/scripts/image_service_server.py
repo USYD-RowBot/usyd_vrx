@@ -28,7 +28,7 @@ def handleImage(req):
     return ClassifyBuoyResponse(label,confidence,True)
 
 def classifyBuoyServer():
-    rospy.init_node('classify_bioy')
+    rospy.init_node('classify_buoy')
     s = rospy.Service('wamv/classify_buoy', ClassifyBuoy, handleImage)
     print("Ready classify buoy.")
     rospy.spin()
