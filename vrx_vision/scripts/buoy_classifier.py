@@ -59,7 +59,9 @@ class BuoyClassifier():
 
     def rotateCropScale(self, img):
         # Crop image to buoy
-        _, contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -77,7 +79,9 @@ class BuoyClassifier():
         rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim, largest_dim))
 
         # Crop image again, since rotation changes positioning
-        _, contours, _ = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = rotated_img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -157,21 +161,25 @@ class BuoyClassifier():
         pre = rospack.get_path('vrx_vision')+"/template_images/"
 
         template_filename_list = [
-            pre+"template_conical.png", pre+"template_tophat.png", pre+"template_totem.png", pre+"template_sphere.png"]
+            pre+"template_conical.png", pre+"template_tophat.png", 
+            pre+"template_totem.png", pre+"template_sphere.png",
+            pre+"template_scan.png"]
 
         # (106, 183, 150)
         template_colours = [
             [(169, 71, 65)],                                                   # Conical
             [(222, 222, 222), (106, 183, 150)],                                # Tophat: (white, green)
             [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
-            [(0, 0, 0)]                                                        # Sphere
+            [(0, 0, 0)],                                                       # Sphere
+            [(20, 20, 20)]                                                        # Scan buoy
         ]
 
         template_labels = [
             ["surmark_950410"],                                                        # Conical
             ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
             ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
-            ["polyform_?"]                                                             # Sphere TODO estimate size
+            ["polyform_?"],                                                            # Sphere TODO estimate size
+            ["scan_buoy"]                                                              # Scan buoy
         ]
 
         label_confidences  = []
