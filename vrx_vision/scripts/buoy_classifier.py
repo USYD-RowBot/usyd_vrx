@@ -28,9 +28,75 @@ class BuoyClassifier():
         return res2
 
     def centreColour(self, img):
-        rows, columns, _ = np.shape(img)
-        centre = img[int(rows/2), int(columns/2)]
-        return tuple(centre)
+      # Change to HSV colour space
+      hsv = cv2.cvtColor(kmeans_img, cv2.COLOR_BGR2HSV) 
+
+      # Threshold the image to remove unsaturated parts (want to keep the light)
+      lower_colour = np.array([0, 100, 60])#0, 140, 60
+      upper_colour = np.array([360, 360, 180])
+      mask = cv2.inRange(hsv, lower_colour, upper_colour) 
+
+      #invert image for blob detection 
+      inverted_img = cv2.bitwise_not(mask)
+
+      blob_min_area=3
+      blob_min_int=.5
+      blob_max_int=.95
+      blob_th_step=10
+
+      # apply a gaussian blur over the image to create a more circular shape
+      # for blob detection 
+      blurred_img = cv2.blur(inverted_img,(100,100))
+      _,rounded_img = cv2.threshold(blurred_img,127,255,cv2.THRESH_BINARY)
+
+      #resize images 
+      small_img_binary = cv2.resize(rounded_img, (0,0), fx=0.4, fy=0.4)
+      small_img = cv2.resize(img, (0,0), fx=0.4, fy=0.4)
+
+      params = cv2.SimpleBlobDetector_Params()
+
+      # Change thresholds
+      params.minThreshold = 10
+      params.maxThreshold = 200
+
+
+      # Filter by Area.
+      params.filterByArea = True
+      params.minArea = 10
+
+      # Filter by Circularity
+      params.filterByCircularity = True
+      params.minCircularity = 0.1
+
+      # Filter by Convexity
+      params.filterByConvexity = True
+      params.minConvexity = 0.1
+
+      # Filter by Inertia
+      params.filterByInertia = True
+      params.minInertiaRatio = 0.3
+
+      # Set up the detector with default parameters.
+      detector = cv2.SimpleBlobDetector_create()
+
+      # Detect blobs.
+      keypoints = detector.detect(small_img_binary)
+
+      # Draw detected blobs as red circles.
+      #cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle
+      #corresponds to the size of blob
+      im_with_keypoints = cv2.drawKeypoints(small_img_binary, keypoints,
+                  np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+      # Show keypoints
+      #cv2.imshow("Keypoints", im_with_keypoints)
+      #cv2.waitKey(0)
+      #cv2.destroyAllWindows()
+      #for i in range(len(keypoints)):
+      x = keypoints[0].pt[0] #i is the index of the blob you want to get the position
+      y = keypoints[0].pt[1]
+      centre = small_img[int(x), int(y)] #only take the first blob centre, there may be others 
+      return tuple(centre)
 
     def getObjectMask(self, img):
         # Separate buoy cluster and make white
@@ -76,10 +142,12 @@ class BuoyClassifier():
         # Rotate image to align with major axis of buoy
         rot_mat = cv2.getRotationMatrix2D(center, np.degrees(-theta), 1.0)
         largest_dim  = max(cropped_img.shape)
-        rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim, largest_dim))
+        rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim,
+                 largest_dim))
 
         # Crop image again, since rotation changes positioning
-        cont_return = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL,
+                 cv2.CHAIN_APPROX_SIMPLE)
         contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
 
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
