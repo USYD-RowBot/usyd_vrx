@@ -1,6 +1,6 @@
 # System setup
-0. MAKE SURE VRX IS INSTALLED EXACTLY AS PER THESE INSTRUCTIONS: https://bitbucket.org/osrf/vrx/wiki/tutorials/SystemSetupInstall Including the location of the file.
-0. Get docker: `sudo apt install docker`
+0. make sure you have VRX installed somewhere: https://bitbucket.org/osrf/vrx/wiki/tutorials/SystemSetupInstall Including the location of the file.
+0. Get docker: https://docs.docker.com/install/linux/docker-ce/ubuntu/ (note: its not as easy as sudo apt install docker!)
 1. Make yourself part of the docker group: `sudo usermod -a -G docker $USER`
 2. Logout and login so that it updates your groups. type in `groups` to confirm you are in the docker group.
 3. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
