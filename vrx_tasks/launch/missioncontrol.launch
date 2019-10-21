@@ -3,25 +3,21 @@
     should contain everything needed to run the boat. Hence all the stuff. ~Steven -->
 
     <!-- include the official gazebo file -->
-    <arg name="thrust_config" default="T" />
-    <!-- Boat controls -->
-    <group ns="wamv">
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
-            <param name="publish_frequency" value="30" />
-            <param name="robot_description" value="$(find vrx_description)/configs/usyd_wamv.urdf"/>
-        </node>
-        <!-- Boat odometry -->
-        <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" output="screen">
-            <remap from="sensors/position/p3d_wamv" to="odom"></remap>
-        </node>
-    </group>
+    <arg name="thrust_config" default="T"/>
+    <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+        <arg name="comp" value="true"/>
+        <arg name='rviz' value="false"/>
+    </include>
+
+
 
 
     <include file="$(find vrx_control)/launch/course_controller.launch">
         <arg name="thrust_config" value="$(arg thrust_config)" />
     </include>
     <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
-    
+
+
     <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
     </node>
 

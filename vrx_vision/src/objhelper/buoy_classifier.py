@@ -168,8 +168,8 @@ class BuoyClassifier():
         ]
 
         template_labels = [
-            ["surmark950410"],                                                        # Conical
-            ["surmark46104", "surmark950400"],                                       # Tophat: (white, green)
+            ["surmark_950410"],                                                        # Conical
+            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
             ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
             ["polyform_a5"]                                                             # Sphere TODO estimate size
         ]

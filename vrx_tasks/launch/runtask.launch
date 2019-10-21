@@ -1,0 +1,26 @@
+<launch>
+    <arg name="ground_truth_enabled" default="true"/>
+    <arg name="override_location" default="false" />
+    <arg name="x" default="22.9" />
+    <arg name="y" default="-9.9" />
+    <arg name="yaw" default="-2.95" />
+    <arg name="gui" default="true" />
+    <arg name="rviz" default="$(eval not arg('gui') )"/>
+    <arg name="task" default="sandisland"/>
+    <arg name="thrust_config" default="T"/>
+    <arg name="comp" default="false"/>
+
+
+    <include file="$(find vrx_gazebo)/launch/$(arg task).launch" unless="$(arg comp)">
+        <arg name="urdf" value="$(find vrx_description)/configs/usyd_wamv.urdf"/>
+        <arg name="x" value="$(arg x)" if="$(arg override_location)" />
+        <arg name="y" value="$(arg y)" if="$(arg override_location)" />
+        <arg name="Y" value="$(arg yaw)" if="$(arg override_location)"/>
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="thrust_config" value="$(arg thrust_config)"/>
+
+    </include>
+    <include file="$(find vrx_tasks)/launch/missioncontrol.launch">
+    </include>
+    <include file="$(find vrx_bringup)/launch/rviz.launch" if="$(arg rviz)"/>
+</launch>

@@ -151,7 +151,7 @@ class Obstacle():
                             type, confidence = classifier.classify(crop_img, dist)
                         #confidence = res.confidence
                         #cv2.imshow("middle_cropped", crop_img)
-                        cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
+                        #cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
                         # cv2.line(copy_img,(int(buoy_pixel_x1),720),(int(buoy_pixel_x2),0),(0,0,255),1)
                         # cv2.line(copy_img,(0,buoy_pixel_y1),(1280,buoy_pixel_y2),(0,0,255),1)
 
@@ -379,9 +379,9 @@ class ObjectServer():
 
     def classify_objects(self):
         """Classify the objects found so far using appropiate cameras."""
-        if USE_CAMERA:
-            for camera in self.cameras.values() :
-                camera.debug_image = camera.image.copy()
+        #if USE_CAMERA:
+            #for camera in self.cameras.values() :
+            #    camera.debug_image = camera.image.copy()
 
             #cv2.imshow("middle", self.cameras["middle"].debug_image)
             #cv2.waitKey(1)
