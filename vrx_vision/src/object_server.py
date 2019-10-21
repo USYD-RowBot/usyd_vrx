@@ -25,14 +25,12 @@ DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between cluster
 EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
 <<<<<<< Updated upstream
 USE_CAMERA = rospy.get_param('use_camera', True)
-=======
 USE_CAMERA = rospy.get_param("use_camera", True)
 DEBUG = False
 print("USING THE CAMERA: " + str(USE_CAMERA))
 print("DISTANCE THRESHOLD: " + str(DIST_THRESH))
 print("EXPIRY_TIME: " + str(EXPIRY_TIME))
 
->>>>>>> Stashed changes
 MARGIN_X = 200
 MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
@@ -43,7 +41,6 @@ if __name__ == "__main__":
     classifier = BuoyClassifier()
     bridge = CvBridge()
 
-<<<<<<< Updated upstream
     THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
     DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
     EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
@@ -56,8 +53,6 @@ if __name__ == "__main__":
 
 
 
-=======
->>>>>>> Stashed changes
     # if(USE_CAMERA):
     #     #print("Waiting to camera service")
     #     try:
@@ -266,17 +261,14 @@ class ObjectServer():
             return
         #Apply a distance threshold Cluster on the objects.
         #print(my_data,thresh)
+        if len(my_data) == 0 :
+            return
         try:
             clust = hcluster.fclusterdata(my_data, DIST_THRESH, criterion="distance")
-<<<<<<< Updated upstream
-        except Exception:
-            print(my_data,DIST_THRESH)
-=======
         except Exception :
             if DEBUG:
                 print(my_data,DIST_THRESH, "ERROR CLUSTERING")
             return
->>>>>>> Stashed changes
         clusters = {}
         count = 0
         for point in my_data:
@@ -347,15 +339,17 @@ class ObjectServer():
 
     def classify_objects(self):
         """Classify the objects found so far using appropiate cameras."""
+        if USE_CAMERA:
+            for camera in self.cameras.values() :
+                camera.debug_image = camera.image.copy()
 
-        for camera in self.cameras.values():
-            camera.debug_image = camera.image.copy()
+            cv2.imshow("middle", self.cameras["middle"].debug_image)
+            cv2.waitKey(1)
 
         for i in self.objects:
             i.classify()
         #rospy.loginfo("Classifyed clusters")
-        cv2.imshow("middle", self.cameras["middle"].debug_image)
-        cv2.waitKey(1)
+
 
     def broadcast_objects(self):
         """Broadcast the objects found"""
@@ -414,12 +408,11 @@ if __name__ == "__main__":
         rate.sleep()
 
         dt = rospy.get_time()-time_last
-<<<<<<< Updated upstream
-        print("Hz = " + str(1/dt))
-=======
         if dt != 0 and DEBUG:
 
             print("Hz = " + str(1/dt))
->>>>>>> Stashed changes
+        if dt != 0 and DEBUG:
+
+            print("Hz = " + str(1/dt))
         time_last = rospy.get_time()
     thread.join()

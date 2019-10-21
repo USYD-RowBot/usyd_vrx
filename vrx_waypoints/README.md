@@ -10,17 +10,15 @@ for the vessel (vrx_msgs/Course) in order to command its movement along the rout
 
 To run solely the waypoint follower node, use:
 
-	  roslaunch vrx_waypoints waypoint_follower.launch
+```roslaunch vrx_waypoints waypoint_follower.launch```
 
 To test the whole system with waypoint following, instead run:
 
-	  roslaunch vrx_bringup T_boat.launch
+```roslaunch vrx_bringup sensored_boat.launch```
 
-From here, waypoint following (without station keeping) can be tested using the simple_waypoints package. For example:
+```roslaunch vrx_control control.launch```
 
-	  roslaunch simple_waypoints simple_waypoints.launch
-
-To test station keeping, instead publish a vrx_msgs/WaypointRoute message in the terminal, e.g.:
+To test station keeping, publish a vrx_msgs/WaypointRoute message in the terminal, e.g.:
 
 ```
 rostopic pub /waypoints_cmd vrx_msgs/WaypointRoute "waypoints:
@@ -41,11 +39,6 @@ speed: 2.0"
 The 'station_duration' field indicates how long the vessel should remain at a station after aligning the correct pose, with a negative duration meaning the vessel should remain there indefinitely until receiving a new waypoint route. The 'nav_type' field uses a constant defined in the msg file (essentially an enumerator) to specify if the coordinate is a waypoint (for simply passing through) or a station to be kept with a required pose and duration. 
 
 For more information on the WaypointRoute messages, see the definition for the vrx_msgs/WaypointRoute and vrx_msgs/Waypoint messages in usyd_vrx/vrx_msgs/msg. 
-
-To launch the whole wayfinding/station-keeping suite:
-
-		roslaunch vrx_bringup T_boat.launch
-		roslaunch vrx_bringup control.launch
 
 ## Config files
 

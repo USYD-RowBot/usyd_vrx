@@ -3,9 +3,9 @@
 
   <arg name="ground_truth_enabled" default="true"/>
   <arg name="override_location" default="false" />
-  <arg name="x" default="18.2" />
-  <arg name="y" default="-10.9" />
-  <arg name="yaw" default="-2.9" />
+  <arg name="x" default="22.9" />
+  <arg name="y" default="-9.9" />
+  <arg name="yaw" default="-2.95" />
   <arg name="gui" default="true" />
   <arg name="rviz" default="true" />
   <arg name="ekf" default="true" />

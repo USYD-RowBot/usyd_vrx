@@ -20,7 +20,7 @@ StationSM::STATION_STATE StationSM::getState()
   if (state_ == STATION_WAIT)
   {
     // If timer elapsed, and not indefinite duration
-    if (ros::Time::now().toSec() > time_target_ && duration_ > 0) 
+    if (ros::Time::now().toSec() > time_target_ && duration_ >= 0) 
       state_ = STATION_COMPLETE;
   }
 

@@ -29,14 +29,14 @@ class BuoyClassifier():
 
     def centreColour(self, img):
       # Change to HSV colour space
-      hsv = cv2.cvtColor(kmeans_img, cv2.COLOR_BGR2HSV) 
+      hsv = cv2.cvtColor(kmeans_img, cv2.COLOR_BGR2HSV)
 
       # Threshold the image to remove unsaturated parts (want to keep the light)
       lower_colour = np.array([0, 100, 60])#0, 140, 60
       upper_colour = np.array([360, 360, 180])
-      mask = cv2.inRange(hsv, lower_colour, upper_colour) 
+      mask = cv2.inRange(hsv, lower_colour, upper_colour)
 
-      #invert image for blob detection 
+      #invert image for blob detection
       inverted_img = cv2.bitwise_not(mask)
 
       blob_min_area=3
@@ -45,11 +45,11 @@ class BuoyClassifier():
       blob_th_step=10
 
       # apply a gaussian blur over the image to create a more circular shape
-      # for blob detection 
+      # for blob detection
       blurred_img = cv2.blur(inverted_img,(100,100))
       _,rounded_img = cv2.threshold(blurred_img,127,255,cv2.THRESH_BINARY)
 
-      #resize images 
+      #resize images
       small_img_binary = cv2.resize(rounded_img, (0,0), fx=0.4, fy=0.4)
       small_img = cv2.resize(img, (0,0), fx=0.4, fy=0.4)
 
@@ -95,7 +95,7 @@ class BuoyClassifier():
       #for i in range(len(keypoints)):
       x = keypoints[0].pt[0] #i is the index of the blob you want to get the position
       y = keypoints[0].pt[1]
-      centre = small_img[int(x), int(y)] #only take the first blob centre, there may be others 
+      centre = small_img[int(x), int(y)] #only take the first blob centre, there may be others
       return tuple(centre)
 
     def getObjectMask(self, img):
@@ -125,7 +125,9 @@ class BuoyClassifier():
 
     def rotateCropScale(self, img):
         # Crop image to buoy
-        _, contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -229,21 +231,25 @@ class BuoyClassifier():
         pre = rospack.get_path('vrx_vision')+"/template_images/"
 
         template_filename_list = [
-            pre+"template_conical.png", pre+"template_tophat.png", pre+"template_totem.png", pre+"template_sphere.png"]
+            pre+"template_conical.png", pre+"template_tophat.png",
+            pre+"template_totem.png", pre+"template_sphere.png",
+            pre+"template_scan.png"]
 
         # (106, 183, 150)
         template_colours = [
             [(169, 71, 65)],                                                   # Conical
             [(222, 222, 222), (106, 183, 150)],                                # Tophat: (white, green)
             [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
-            [(0, 0, 0)]                                                        # Sphere
+            [(0, 0, 0)],                                                       # Sphere
+            [(20, 20, 20)]                                                        # Scan buoy
         ]
 
         template_labels = [
             ["surmark_950410"],                                                        # Conical
             ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
             ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
-            ["polyform_?"]                                                             # Sphere TODO estimate size
+            ["polyform_?"],                                                            # Sphere TODO estimate size
+            ["scan_buoy"]                                                              # Scan buoy
         ]
 
         label_confidences  = []
