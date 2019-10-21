@@ -65,13 +65,21 @@ def callback(data):
             marker.id = int(i.frame_id)+1
             marker.type = Marker.TEXT_VIEW_FACING
             marker.action=Marker.ADD
+            type_string = i.best_guess
             try:
-                marker.text = "ID: " +i.frame_id +"\nTYPE: " + i.best_guess +"\nCONF: " +  str(i.confidences[0])
+                if i.best_guess == "surmark_950400":
+                    type_string = "Green Buoy"
+                if i.best_guess =="surmark_950410":
+                    type_string = "Red Buoy"
+                if i.best_guess =="surmark_46104":
+                    type_string = "White Buoy"
+
+                marker.text = "ID: " +i.frame_id +"\nTYPE: " + type_string +"\nCONF: " +  str(i.confidences[0])
             except:
                 print(i)
-            marker.scale.x = 2.0
-            marker.scale.y = 2.0
-            marker.scale.z = 2.0
+            marker.scale.x = 1.0
+            marker.scale.y = 1.0
+            marker.scale.z = 1.0
             marker.color.r = 1.0
             marker.color.g = 1.0
             marker.color.b = 1.0

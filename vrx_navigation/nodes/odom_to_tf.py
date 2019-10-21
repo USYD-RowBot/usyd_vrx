@@ -35,12 +35,11 @@ def handle_odom_pose(ros_odom_msg, tf_frame_id):
     t2.header.frame_id="map"
     t2.transform.rotation.w = 1
     t2.header.stamp = rospy.Time.now()
-    #rospy.set_param("tf_prefix","tf_prefix2312")
-    param = rospy.search_param("tf_prefix")
+    tf_prefix = rospy.search_param("tf_prefix")
 
     base_frame_id = "base_link"
-    if param is not None:
-        base_frame_id = rospy.get_param(param) + "/base_link"
+    if tf_prefix is not None:
+        base_frame_id = rospy.get_param(tf_prefix) + "/base_link"
 
 
     if base_frame_id != "base_link":

@@ -8,6 +8,7 @@
     <group ns="wamv">
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
             <param name="publish_frequency" value="30" />
+            <param name="robot_description" value="$(find vrx_description)/configs/usyd_wamv.urdf"/>
         </node>
         <!-- Boat odometry -->
         <node name="odom_to_tf" pkg="vrx_navigation" type="odom_to_tf.py" output="screen">
