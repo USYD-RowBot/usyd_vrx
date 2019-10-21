@@ -36,7 +36,7 @@
 
 # Submitting from tisbutascratch
 3. run `docker run tisbutascratch/usyd_vrx:v2` for the latest version.
-5. Go to `Testing`.
+5. Go back to System setup.
 
 # DEBUGGING
 2. To check what docker processes are running: `docker ps`
