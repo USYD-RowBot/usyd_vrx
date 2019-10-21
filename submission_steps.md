@@ -1,13 +1,15 @@
 # System setup
-0. MAKE SURE VRX IS INSTALLED EXACTLY AS PER THESE INSTRUCTIONS: https://bitbucket.org/osrf/vrx/wiki/tutorials/SystemSetupInstall Including the location of the file.
-0. Get docker: `sudo apt install docker`
+0. make sure you have VRX installed somewhere: https://bitbucket.org/osrf/vrx/wiki/tutorials/SystemSetupInstall Including the location of the file.
+0. Get docker: https://docs.docker.com/install/linux/docker-ce/ubuntu/ (note: its not as easy as sudo apt install docker!)
 1. Make yourself part of the docker group: `sudo usermod -a -G docker $USER`
 2. Logout and login so that it updates your groups. type in `groups` to confirm you are in the docker group.
-3. hg pull this: https://bitbucket.org/osrf/vrx-docker/src/default/
-4. Follow `Submitting from scratch` or `submitting from tisbutascratch`.
+3. hg clone this: https://bitbucket.org/osrf/vrx-docker/src/default/
+4. Create a dockerhub account: https://hub.docker.com/
+4. Login with your dockerhub on the command line: `docker login -u username -p password`
+4. Follow `Submitting from scratch` or `submitting from tisbutascratch` (below)
 5. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial -  Setting up workspace to run automated evaluation'.
 6. A sample fileset is in `vrx_tasks/usyd_Team`. You can just copy the entire folder into `vrx-docker/team_config`.
-7. Everyting will take AGES. this is normal
+7. Everyting will take AGES. this is normal. (there are 919 get's if you want some sort of progress indicator, you'll get it when you see it)
 8. Before running, goto `vrx-docker/task_config` and uncomment the data from the trials you are trying to run.
 9. Login for tisbutascratch is u:`tisbutascratch` pw: `PGjpFUjUfE3RBd9`
 10. To debug: You can find the ros-master-uri (i think by default `ROS_MASTER_URI=http://172.16.0.22:11311`) by inspecting the run command. Then `export ROS_MASTER_URI=http://172.16.0.22:11311` in another terminal, then run `rviz` as normal.
@@ -36,7 +38,7 @@
 
 # Submitting from tisbutascratch
 3. run `docker run tisbutascratch/usyd_vrx:v2` for the latest version.
-5. Go to `Testing`.
+5. Go back to System setup.
 
 # DEBUGGING
 2. To check what docker processes are running: `docker ps`
