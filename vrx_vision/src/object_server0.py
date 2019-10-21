@@ -147,7 +147,7 @@ class Obstacle():
                         #image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
                         if camera.name == "middle" :
                             #cv2.imshow("middle_cropped", crop_img)
-                            cv2.waitKey(1)
+                            #cv2.waitKey(1)
                             type, confidence = classifier.classify(crop_img, dist)
                         #confidence = res.confidence
                         #cv2.imshow("middle_cropped", crop_img)
@@ -384,7 +384,7 @@ class ObjectServer():
                 camera.debug_image = camera.image.copy()
 
             #cv2.imshow("middle", self.cameras["middle"].debug_image)
-            cv2.waitKey(1)
+            #cv2.waitKey(1)
 
         for i in self.objects:
             i.classify()
