@@ -5,7 +5,7 @@ import scipy.cluster.hierarchy as hcluster
 import numpy
 import math
 from geographic_msgs.msg import GeoPoseStamped
-
+import pyproj
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid
 from vrx_msgs.msg import ObjectArray, Object
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     tf_listener = tf.TransformListener()
     classifier = BuoyClassifier()
     bridge = CvBridge()
-    p_pub = rospy.Publisher("results", GeoPoseStamped, queue_size="10")
+    p_pub = rospy.Publisher("/vrx/perception/landmark", GeoPoseStamped, queue_size="10")
 
 
     # if(USE_CAMERA):
@@ -189,10 +189,23 @@ class Obstacle():
 
 
     def perception_publish(self,type,frame_id):
+
+        try:
+            (trans, rot) = tf_listener.lookupTransform(frame_id,"base_link", rospy.Time(0))
+        except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+        inFormat = pyproj.Proj("+init=EPSG:4326")
+        zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
+        lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
+
         message = GeoPoseStamped()
+        message.pose.position.latitude = lat
+        message.pose.position.longitude = lon
+
         message.header.frame_id = type
 
-        
+
 
 
         p_pub.publish(message)
