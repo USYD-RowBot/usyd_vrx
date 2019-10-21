@@ -7,7 +7,7 @@
 4. Follow `Submitting from scratch` or `submitting from tisbutascratch`.
 5. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial -  Setting up workspace to run automated evaluation'.
 6. A sample fileset is in `vrx_tasks/usyd_Team`. You can just copy the entire folder into `vrx-docker/team_config`.
-7. Everyting will take AGES. this is normal
+7. Everyting will take AGES. this is normal. (there are 919 get's if you want some sort of progress indicator, you'll get it when you see it)
 8. Before running, goto `vrx-docker/task_config` and uncomment the data from the trials you are trying to run.
 9. Login for tisbutascratch is u:`tisbutascratch` pw: `PGjpFUjUfE3RBd9`
 10. To debug: You can find the ros-master-uri (i think by default `ROS_MASTER_URI=http://172.16.0.22:11311`) by inspecting the run command. Then `export ROS_MASTER_URI=http://172.16.0.22:11311` in another terminal, then run `rviz` as normal.
