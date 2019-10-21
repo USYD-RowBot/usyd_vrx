@@ -2,9 +2,10 @@
 import rospy
 import tf
 import scipy.cluster.hierarchy as hcluster
-import numpyfrom geographic_msgs.msg import GeoPoseStamped
-
+import numpy
 import math
+from geographic_msgs.msg import GeoPoseStamped
+import pyproj
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid
 from vrx_msgs.msg import ObjectArray, Object
@@ -29,6 +30,7 @@ print("USING THE CAMERA: " + str(USE_CAMERA))
 print("DISTANCE THRESHOLD: " + str(DIST_THRESH))
 print("EXPIRY_TIME: " + str(EXPIRY_TIME))
 
+
 MARGIN_X = 200
 MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
@@ -38,6 +40,8 @@ if __name__ == "__main__":
     tf_listener = tf.TransformListener()
     classifier = BuoyClassifier()
     bridge = CvBridge()
+    p_pub = rospy.Publisher("/vrx/perception/landmark", GeoPoseStamped, queue_size="10")
+
 
     # if(USE_CAMERA):
     #     #print("Waiting to camera service")
@@ -73,6 +77,7 @@ class Obstacle():
         self.cameras = cameras
         self.best_image = None
         self.object.best_guess = ""
+        self.printed = False
 
 
 
@@ -152,12 +157,61 @@ class Obstacle():
 
 
 
+
+        if type != "buoy" and confidence > 0.65:
+            print(type,confidence)
+            if self.printed == False:
+                print("NOT PRINTED")
+            #Publish"
+                self.perception_publish(type,self.object.frame_id)
+                self.printed = True
+                self.object.types = [type]
+                self.object.best_guess = type
+                self.object.confidences = [confidence]
+                pass
+
+            elif self.printed and type != self.object.best_guess:
+                print("DIFFERENT")
+                self.perception_publish(type,self.object.frame_id)
+                self.object.types = [type]
+                self.object.best_guess = type
+                self.object.confidences = [confidence]
+            print("REPEAT BUOY")
+            #publish
+
+
         if len(self.object.confidences) == 0 or confidence > self.object.confidences[0]:
             self.object.types = [type]
             self.object.best_guess = type
             self.object.confidences = [confidence]
         else:
             pass
+
+
+    def perception_publish(self,type,frame_id):
+
+        try:
+            (trans, rot) = tf_listener.lookupTransform(frame_id,"base_link", rospy.Time(0))
+        except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+        inFormat = pyproj.Proj("+init=EPSG:4326")
+        zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
+        lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
+
+        message = GeoPoseStamped()
+        message.pose.position.latitude = lat
+        message.pose.position.longitude = lon
+
+        message.header.frame_id = type
+
+
+
+
+        p_pub.publish(message)
+        print("PUBLISHED OBJECT")
+
+
 
     def broadcast(self):
         """Broadcast the object via tf"""

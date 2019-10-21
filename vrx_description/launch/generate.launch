@@ -1,0 +1,10 @@
+<launch>
+
+    <include file="$(find vrx_gazebo)/launch/generate_wamv.launch">
+        <arg name="sensor_yaml" value="$(find vrx_description)/configs/sensor_config.yaml"/>
+        <arg name="thruster_yaml" value="$(find vrx_description)/configs/thruster_config.yaml"/>
+        <arg name="wamv_target" value="$(find vrx_description)/configs/default_config.yaml"/>
+    </include>
+</launch>
+
+roslaunch vrx_gazebo generate_wamv.launch sensor_yaml:=/home/stevenliu/catkin_ws/src/vrx/usyd_vrx/vrx_description/configs/sensor_config.yaml thruster_yaml:=/home/stevenliu/catkin_ws/src/vrx/usyd_vrx/vrx_description/configs/thruster_config.yaml wamv_target:=/home/stevenliu/catkin_ws/src/vrx/usyd_vrx/vrx_description/configs/default_config.urdf

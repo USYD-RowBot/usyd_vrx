@@ -21,7 +21,7 @@ rospy.init_node("geoPathToPath",anonymous=True)
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
 
-pub = rospy.Publisher(params['outTopic'], Path, queue_size=1)
+pub = rospy.Publisher(params['outTopic'], Path)
 lastSatPos=None
 listener = tf.TransformListener()
 
@@ -56,18 +56,19 @@ def cb(data):
     path.header = data.header
     path.header.frame_id="map"# not sure why this isnt published :3
     poses = []
-    for dps in data.poses:
-        ps = PoseStamped()
-        ps.header = dps.header
-        ps.pose.orientation = dps.pose.orientation
-        transformCoordinates(dps.pose.position,ps.pose.position)
-        # move into map frame
-        ps.header.frame_id='map'
-        poses.append(ps)
+
+    ps = PoseStamped()
+    ps.header = data.header
+    ps.pose.orientation = data.pose.orientation
+    transformCoordinates(data.pose.position,ps.pose.position)
+    # move into map frame
+    ps.header.frame_id='map'
+    poses.append(ps)
+
     path.poses=poses
     pub.publish(path)
     print(path)
 
 sat = rospy.Subscriber(params['gpsTopic'], NavSatFix, satcb)
-sub = rospy.Subscriber(params['inTopic'], GeoPath, cb)
+sub = rospy.Subscriber(params['inTopic'], GeoPoseStamped, cb)
 rospy.spin()
