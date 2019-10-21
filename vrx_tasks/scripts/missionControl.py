@@ -3,7 +3,7 @@
 # Checks info messages to determine what needs to be done.
 
 import rospy
-from vrx_gazebo.msg import Task
+from vrx_msgs.msg import Task
 params = {
     "taskTopic": "/vrx/task/info",
 }

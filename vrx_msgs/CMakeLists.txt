@@ -60,6 +60,7 @@ add_message_files(
   ObjectArray.msg
   Waypoint.msg
   WaypointRoute.msg
+  Task.msg
 )
 
 ## Generate services in the 'srv' folder

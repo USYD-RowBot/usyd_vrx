@@ -21,17 +21,7 @@
         <arg name="thrust_config" value="$(arg thrust_config)" />
     </include>
     <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
-
-    <include file="$(find vrx_navigation)/launch/lidar_node.launch"></include>
-
-    <include file="$(find vrx_vision)/launch/object_server.launch">
-        <arg name="distance_threshold" value="0.2" />
-        <arg name="use_camera" value="true" />
-        <arg name="expiry_time" value="0.5" />
-    </include>
-
-
-
+    
     <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
     </node>
 
@@ -59,8 +49,14 @@
 
 
     <!-- Vision translation -->
-    <node pkg="vrx_tasks" type="perceptionConverter.py" name="perceptionConverter" output="screen">
 
-    </node>
+    <include file="$(find vrx_navigation)/launch/lidar_node0.launch">
+    </include>
+
+    <include file="$(find vrx_vision)/launch/object_server0.launch">
+        <arg name="distance_threshold" value="0.2"/>
+        <arg name="use_camera" value="true"/>
+        <arg name="expiry_time" value="2"/>
+    </include>
     <!--TODO:-->
 </launch>

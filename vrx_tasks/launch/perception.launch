@@ -6,15 +6,6 @@
       <arg name="gui" value="true"/>
   </include>
 
-  <include file="$(find vrx_navigation)/launch/lidar_node0.launch">
-  </include>
-
-  <include file="$(find vrx_vision)/launch/object_server0.launch">
-    <arg name="distance_threshold" value="0.2"/>
-    <arg name="use_camera" value="true"/>
-    <arg name="expiry_time" value="2"/>
-  </include>
-
   <!--node pkg="vrx_tasks" name="perception_publisher" type="perception_publisher.py" output="screen"/-->
 
 </launch>
