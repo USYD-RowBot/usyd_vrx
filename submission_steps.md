@@ -4,7 +4,7 @@
 1. Make yourself part of the docker group: `sudo usermod -a -G docker $USER`
 2. Logout and login so that it updates your groups. type in `groups` to confirm you are in the docker group.
 3. hg clone this: https://bitbucket.org/osrf/vrx-docker/src/default/
-4. Follow `Submitting from scratch` or `submitting from tisbutascratch`.
+4. Follow `Submitting from scratch` or `submitting from tisbutascratch` (below)
 5. follow these instructions: https://bitbucket.org/osrf/vrx-docker/src/default/ from 'Quick Start Instructions For a Single Trial -  Setting up workspace to run automated evaluation'.
 6. A sample fileset is in `vrx_tasks/usyd_Team`. You can just copy the entire folder into `vrx-docker/team_config`.
 7. Everyting will take AGES. this is normal. (there are 919 get's if you want some sort of progress indicator, you'll get it when you see it)
