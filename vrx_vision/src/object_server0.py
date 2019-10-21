@@ -2,9 +2,10 @@
 import rospy
 import tf
 import scipy.cluster.hierarchy as hcluster
-import numpyfrom geographic_msgs.msg import GeoPoseStamped
-
+import numpy
 import math
+from geographic_msgs.msg import GeoPoseStamped
+import pyproj
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid
 from vrx_msgs.msg import ObjectArray, Object
@@ -23,16 +24,13 @@ from objhelper.buoy_classifier import BuoyClassifier
 THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
 DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
 EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
-<<<<<<< Updated upstream
-USE_CAMERA = rospy.get_param('use_camera', True)
-=======
 USE_CAMERA = rospy.get_param("use_camera", True)
 DEBUG = False
 print("USING THE CAMERA: " + str(USE_CAMERA))
 print("DISTANCE THRESHOLD: " + str(DIST_THRESH))
 print("EXPIRY_TIME: " + str(EXPIRY_TIME))
 
->>>>>>> Stashed changes
+
 MARGIN_X = 200
 MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
@@ -42,22 +40,9 @@ if __name__ == "__main__":
     tf_listener = tf.TransformListener()
     classifier = BuoyClassifier()
     bridge = CvBridge()
-
-<<<<<<< Updated upstream
-    THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
-    DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
-    EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
-    USE_CAMERA = rospy.get_param('use_camera', True)
-    print("USING THE CAMERA: " + str(USE_CAMERA))
-    MARGIN_X = 200
-    MARGIN_Y = 150
-    USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
+    p_pub = rospy.Publisher("/vrx/perception/landmark", GeoPoseStamped, queue_size="10")
 
 
-
-
-=======
->>>>>>> Stashed changes
     # if(USE_CAMERA):
     #     #print("Waiting to camera service")
     #     try:
@@ -92,6 +77,7 @@ class Obstacle():
         self.cameras = cameras
         self.best_image = None
         self.object.best_guess = ""
+        self.printed = False
 
 
 
@@ -171,12 +157,61 @@ class Obstacle():
 
 
 
+
+        if type != "buoy" and confidence > 0.65:
+            print(type,confidence)
+            if self.printed == False:
+                print("NOT PRINTED")
+            #Publish"
+                self.perception_publish(type,self.object.frame_id)
+                self.printed = True
+                self.object.types = [type]
+                self.object.best_guess = type
+                self.object.confidences = [confidence]
+                pass
+
+            elif self.printed and type != self.object.best_guess:
+                print("DIFFERENT")
+                self.perception_publish(type,self.object.frame_id)
+                self.object.types = [type]
+                self.object.best_guess = type
+                self.object.confidences = [confidence]
+            print("REPEAT BUOY")
+            #publish
+
+
         if len(self.object.confidences) == 0 or confidence > self.object.confidences[0]:
             self.object.types = [type]
             self.object.best_guess = type
             self.object.confidences = [confidence]
         else:
             pass
+
+
+    def perception_publish(self,type,frame_id):
+
+        try:
+            (trans, rot) = tf_listener.lookupTransform(frame_id,"base_link", rospy.Time(0))
+        except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+        inFormat = pyproj.Proj("+init=EPSG:4326")
+        zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
+        lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
+
+        message = GeoPoseStamped()
+        message.pose.position.latitude = lat
+        message.pose.position.longitude = lon
+
+        message.header.frame_id = type
+
+
+
+
+        p_pub.publish(message)
+        print("PUBLISHED OBJECT")
+
+
 
     def broadcast(self):
         """Broadcast the object via tf"""
@@ -266,17 +301,14 @@ class ObjectServer():
             return
         #Apply a distance threshold Cluster on the objects.
         #print(my_data,thresh)
+        if len(my_data) == 0 :
+            return
         try:
             clust = hcluster.fclusterdata(my_data, DIST_THRESH, criterion="distance")
-<<<<<<< Updated upstream
-        except Exception:
-            print(my_data,DIST_THRESH)
-=======
         except Exception :
             if DEBUG:
                 print(my_data,DIST_THRESH, "ERROR CLUSTERING")
             return
->>>>>>> Stashed changes
         clusters = {}
         count = 0
         for point in my_data:
@@ -347,15 +379,17 @@ class ObjectServer():
 
     def classify_objects(self):
         """Classify the objects found so far using appropiate cameras."""
+        if USE_CAMERA:
+            for camera in self.cameras.values() :
+                camera.debug_image = camera.image.copy()
 
-        for camera in self.cameras.values():
-            camera.debug_image = camera.image.copy()
+            cv2.imshow("middle", self.cameras["middle"].debug_image)
+            cv2.waitKey(1)
 
         for i in self.objects:
             i.classify()
         #rospy.loginfo("Classifyed clusters")
-        cv2.imshow("middle", self.cameras["middle"].debug_image)
-        cv2.waitKey(1)
+
 
     def broadcast_objects(self):
         """Broadcast the objects found"""
@@ -414,12 +448,8 @@ if __name__ == "__main__":
         rate.sleep()
 
         dt = rospy.get_time()-time_last
-<<<<<<< Updated upstream
-        print("Hz = " + str(1/dt))
-=======
         if dt != 0 and DEBUG:
 
             print("Hz = " + str(1/dt))
->>>>>>> Stashed changes
         time_last = rospy.get_time()
     thread.join()

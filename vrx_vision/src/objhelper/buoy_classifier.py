@@ -168,10 +168,10 @@ class BuoyClassifier():
         ]
 
         template_labels = [
-            ["surmark_950410"],                                                        # Conical
-            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
+            ["surmark950410"],                                                        # Conical
+            ["surmark46104", "surmark950400"],                                       # Tophat: (white, green)
             ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
-            ["polyform_?"]                                                             # Sphere TODO estimate size
+            ["polyform_a5"]                                                             # Sphere TODO estimate size
         ]
 
         label_confidences  = []
@@ -183,7 +183,7 @@ class BuoyClassifier():
 
             #cv2.imshow('K-Means Clustering', template_img)
             #cv2.waitKey(0)
-        print(label_confidences)
+        #print(label_confidences)
         conf_shape       = max(label_confidences) # Get highest confidence label and index
         best_shape_index = np.argmax(label_confidences)
 
@@ -205,7 +205,7 @@ class BuoyClassifier():
 
         # Classify the buoy
         label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centreColour(img)))
-        print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
+        #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
 
         #cv2.imshow('Shape',mirrored_img)
         #cv2.waitKey(0)
