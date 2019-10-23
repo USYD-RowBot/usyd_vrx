@@ -31,7 +31,8 @@ apt install python-pip && pip install pyproj
 apt install ros-melodic-pointcloud-to-laserscan
 apt install ros-melodic-global-planner
 api install ros-melodic-cv-bridge
-apt install ros-melodic-interactive-markers`
+apt install ros-melodic-interactive-markers
+apt install ros-melodic-robot-localization`
 10. catkin_make and make sure everything is ok.
 11. change the run file `~/run_my_system.bash` to whatever script you want to run. An example is included in `vrx_tasks/sampleRunbash.sh`.
 12. Make sure it works :3 by running `./run_my_system.bash`.
