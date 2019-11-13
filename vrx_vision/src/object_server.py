@@ -87,7 +87,7 @@ class Obstacle():
         if self.radius < 2:
             type = "buoy"
             confidence = 0.2
-        elif self.radius > 5 and self.radius < 15 and len(self.points) > 10 :
+        elif self.radius > 5 and self.radius < 12 and len(self.points) > 10 :
             type = "dock"
             confidence = 0.8
             points = numpy.array(self.points)
@@ -99,7 +99,7 @@ class Obstacle():
             else:
                 self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle+1.5707)
 
-        elif self.radius >= 15:
+        elif self.radius >= 12:
             type = "land"
             confidence = 0.9
 

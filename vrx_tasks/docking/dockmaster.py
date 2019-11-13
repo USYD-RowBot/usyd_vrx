@@ -23,14 +23,14 @@ from vrx_gazebo.msg import Task
 class DockMaster():
 
   def __init__(self):
-    rospy.loginfo("dockmaster: Initialising dock master.")
+    self.logDock("Initialising dock master.")
     self.initMission()
     self.executePlan()
 
   def initMission(self):
     self.do_scan = False  # Scan the sequence on the buoy?
-    self.n_onspot_wps = 3 # Number of waypoints constituting spin on spot
-    self.n_circle_wps = 4 # Number of waypoints constituting circling an object
+    self.n_onspot_wps = 1 # Number of waypoints constituting spin on spot
+    self.n_circle_wps = 3 # Number of waypoints constituting circling an object
     self.general_speed = 2 # Circling speed
     self.scan_radius  = 10 # Radius at which to circle scan buoy
     self.dock_radius  = 20 # Radius at which to circle dock
@@ -48,7 +48,7 @@ class DockMaster():
         ready = True
 
   def executePlan(self):  
-    rospy.loginfo("dockmaster: Executing mission plan.")  
+    self.logDock("Executing mission plan.")  
 
     #self.spinOnSpot(1)
     #self.circleObject("scan_buoy")
@@ -77,7 +77,7 @@ class DockMaster():
     return wp
 
   def spinOnSpot(self, n_times):
-    rospy.loginfo("dockmaster: Spinning on the spot %d times."%n_times)
+    self.logDock("Spinning on the spot %d times."%n_times)
 
     spin_wp_route = WaypointRoute()
     spin_wps = []
@@ -121,13 +121,13 @@ class DockMaster():
         return False # Bad angle on the scan buoy
 
     except rospy.ServiceException, e:
-        print "Service call failed: %s"%e
+        self.logDock("Service call failed: %s"%e)
         return False # I dunno man
   
   def circleObject(self, object_string):
     ''' object_string (string): "dock", "any_dock", "scan_buoy"
     '''
-    rospy.loginfo("dockmaster: Circling the " + object_string + ".")
+    self.logDock("Circling the " + object_string + ".")
 
     radius = 0  # Assign these variables to either circle the dock or scan buoy
     object_pos = []
@@ -139,20 +139,20 @@ class DockMaster():
     else:
       object_pos, _ = self.getScanBuoyPose() # Scan buoy centroid
       radius = self.scan_radius
-      identify_function = self.findFrontOfScanBuoy      
+      identify_function = self.findFrontOfScanBuoy     
 
     if (object_string == "dock"):
       identify_function = self.findPlacardSymbol
     
     odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
 
-    init_vec = [object_pos.x - odom_msg.pose.position.x, # Boat-to-object vector
-                object_pos.y - odom_msg.pose.position.y]
+    init_vec = [object_pos[0] - odom_msg.pose.pose.position.x, # Boat-to-object vector
+                object_pos[1] - odom_msg.pose.pose.position.y]
     init_dist = np.sqrt(init_vec[0]**2 + init_vec[1]**2) # Boat-to-object distance
 
     init_pose = Pose() # First position, at given radius from the object
-    init_pose.position.x = (object_pos.x + float(radius)*(-init_vec[0]/init_dist))
-    init_pose.position.y = (object_pos.y + float(radius)*(-init_vec[1]/init_dist))
+    init_pose.position.x = (object_pos[0] + float(radius)*(-init_vec[0]/init_dist))
+    init_pose.position.y = (object_pos[1] + float(radius)*(-init_vec[1]/init_dist))
 
     init_angle = math.atan2(init_vec[1], init_vec[0]) # Set angle to face object
     self.setPoseQuat(init_pose, init_angle)
@@ -166,17 +166,17 @@ class DockMaster():
       wp_pose = Pose() # Set first circling waypoint pose
       rot = (i+1)*(2*np.pi/self.n_circle_wps)
 
-      x = init_pose.x # Rotate object viewing position
-      y = init_pose.y
-      ox = object_pos.x
-      oy = object_pos.y
+      x = init_pose.position.x # Rotate object viewing position
+      y = init_pose.position.y
+      ox = object_pos[0]
+      oy = object_pos[1]
 
       # Rotation (2x2 matrix essentially)
       wp_pose.position.x = ox + math.cos(rot) * (x - ox) + math.sin(rot) * (y - oy)
       wp_pose.position.y = oy + -math.sin(rot) * (x - ox) + math.cos(rot) * (y - oy)
 
       # Work out angle to object
-      wp_vec = [object_pos.x - wp_pose.x, object_pos.y - wp_pose.y]
+      wp_vec = [object_pos[0] - wp_pose.position.x, object_pos[1] - wp_pose.position.y]
       wp_angle = math.atan2(wp_vec[1], wp_vec[0])
       self.setPoseQuat(wp_pose, wp_angle)
 
@@ -184,23 +184,23 @@ class DockMaster():
       circle_wps.append(spin_wp)
 
     circle_wp_route.waypoints = circle_wps
-    circle_wp_route.speed = self.circle_speed
-    self.route_pub.publish(circle_wps) # Start on route
+    circle_wp_route.speed = self.general_speed
+    self.route_pub.publish(circle_wp_route) # Start on route
 
     r = rospy.Rate(2) # Wait until objective identified
     while not identify_function() and not rospy.is_shutdown:
       r.sleep()
 
   def alignWithDock(self):
-    rospy.loginfo("dockmaster: Aligning with the dock.")
+    self.logDock("Aligning with the dock.")
     dock_pos, dock_quat = self.getDockPose()
 
     euler = tf.transformations.euler_from_quaternion(dock_quat)
     dock_yaw = euler[2]
 
     align_pose = Pose()
-    align_pose.position.x = dock_pos.x + self.align_dist*math.cos(dock_yaw)
-    align_pose.position.y = dock_pos.y + self.align_dist*math.sin(dock_yaw)
+    align_pose.position.x = dock_pos[0] + self.align_dist*math.cos(dock_yaw)
+    align_pose.position.y = dock_pos[1] + self.align_dist*math.sin(dock_yaw)
 
     align_angle = dock_yaw + np.pi
     if (align_angle > np.pi):
@@ -217,15 +217,26 @@ class DockMaster():
     self.waitForWaypointRequest()
 
   def getDockPose(self):
+    objects_msg = rospy.wait_for_message('/wamv/objects', ObjectArray)
+    dock_frame_id = None
+    for object in objects_msg.objects:
+      if object.best_guess == "dock":
+        dock_frame_id = object.frame_id
+        break
+
+    if dock_frame_id is None: # Couldn't find dock
+      self.logDock("Dock not found.")
+      return None
+
     try:
-      tf_map_to_dock = self.tf_listener.lookupTransform('/map', '/dock', rospy.Time(0))
-      return tf_map_to_dock
+      tf_pos, tf_rot = self.tf_listener.lookupTransform('/map', dock_frame_id, rospy.Time(0))
+      return tf_pos, tf_rot
     except tf.LookupException as e:
-      rospy.loginfo("dockmaster: %s" % e)
+      self.logDock(e)
       return None
 
   def performDock(self):
-    rospy.loginfo("dockmaster: Starting docking procedure.")
+    self.logDock("Starting docking procedure.")
 
     client = actionlib.SimpleActionClient('/wamv/docking', vrx_msgs.msg.DockAction)
     client.wait_for_server()
@@ -236,8 +247,8 @@ class DockMaster():
     dock_yaw = euler[2]
 
     bay_pose = Pose()
-    bay_pose.position.x = dock_pos.x + self.bay_dist*math.cos(dock_yaw)
-    bay_pose.position.y = dock_pos.y + self.bay_dist*math.sin(dock_yaw)
+    bay_pose.position.x = dock_pos[0] + self.bay_dist*math.cos(dock_yaw)
+    bay_pose.position.y = dock_pos[1] + self.bay_dist*math.sin(dock_yaw)
     bay_pose.orientation.w = 1
 
     align_angle = dock_yaw + np.pi
@@ -252,6 +263,9 @@ class DockMaster():
 
     # Waits for the server to finish performing the action.
     client.wait_for_result()
+
+  def logDock(self, msg):
+    rospy.loginfo("~dockmaster: %s"%msg)
 
 def main():
   rospy.init_node("dockmaster")  
