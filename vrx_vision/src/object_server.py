@@ -2,7 +2,8 @@
 import rospy
 import tf
 import scipy.cluster.hierarchy as hcluster
-import numpyfrom geographic_msgs.msg import GeoPoseStamped
+import numpy
+from geographic_msgs.msg import GeoPoseStamped
 
 import math
 from nav_msgs.srv import GetMap

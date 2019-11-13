@@ -59,7 +59,9 @@ class BuoyClassifier():
 
     def rotateCropScale(self, img):
         # Crop image to buoy
-        _, contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -77,7 +79,9 @@ class BuoyClassifier():
         rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim, largest_dim))
 
         # Crop image again, since rotation changes positioning
-        _, contours, _ = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = rotated_img[y:y+h, x:x+w] # Crop rectangle around buoy
