@@ -192,24 +192,19 @@ class Obstacle():
 
         try:
             (trans, rot) = tf_listener.lookupTransform(frame_id,"base_link", rospy.Time(0))
+            inFormat = pyproj.Proj("+init=EPSG:4326")
+            zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
+            lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
+            message = GeoPoseStamped()
+            message.pose.position.latitude = lat
+            message.pose.position.longitude = lon
+            message.header.frame_id = type
+            p_pub.publish(message)
+            print("PUBLISHED OBJECT")
         except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
 
-        inFormat = pyproj.Proj("+init=EPSG:4326")
-        zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
-        lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
-
-        message = GeoPoseStamped()
-        message.pose.position.latitude = lat
-        message.pose.position.longitude = lon
-
-        message.header.frame_id = type
-
-
-
-
-        p_pub.publish(message)
-        print("PUBLISHED OBJECT")
+        
 
 
 
