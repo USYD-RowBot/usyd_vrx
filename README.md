@@ -10,12 +10,6 @@ To Get started please have an up to date version of the vrx simulation installed
 
 ### Prequisites
 
-You need to install pointcloud_to_laserscan:
-```
-sudo apt-get install ros-melodic-pointcloud-to-laserscan
-```
-
-
 ### Installing
 To install run these commands
 ```
@@ -26,9 +20,16 @@ catkin_make
 
 echo "source ~/vrx_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
-
 ```
+Two other prerequisites, `hector-gazebo-plugins` and `pointcloud-to-laserscan` also need to be installed. A shell script in vrx_deploy can be used to do this.
+```
+./vrx_deploy/installEverything.sh
+```
+
+
+
 And you should be ready to go!
+
 
 ## Launching
 
@@ -41,6 +42,20 @@ To launch with sensors and obstacles:
 ```
 roslaunch vrx_bringup sensored_boat.launch
 ```
+To launch a competition:
+```
+roslaunch vrx_tasks runtask.launch task:=<task> gui:=<true | false> 
+```
+
+Where task may be one of:
+
+- dock
+- navigation_task
+- perception_task
+- sandisland
+- scan_and_dock
+- station_keeping
+- wayfinding
 
 ### Using mapping
 To launch with mapping there are two ways.

@@ -12,7 +12,7 @@ import tf
 params = {
     "inTopic": "/waypoints",
     "outTopic": "/waypoints_cmd",
-    "speed":1
+    "speed":5
 }
 
 rospy.init_node("pathToRoute",anonymous=True)
