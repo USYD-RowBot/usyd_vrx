@@ -1,0 +1,9 @@
+<launch>
+  <arg name="gui" default="true"/>
+  <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+    <arg name="world_name" value="navigation_task"/>
+    <arg name="gui" value="$(arg gui)"/>
+  </include>
+  <include file="$(find vrx_tasks)/launch/missioncontrol.launch">
+  </include>
+</launch>

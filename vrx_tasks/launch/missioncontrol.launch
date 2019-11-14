@@ -1,10 +1,25 @@
 <launch>
+    <!-- Since we can only have one entry point for the competition, the entrypoint (i.e. roslaunch this file) 
+    should contain everything needed to run the boat. Hence all the stuff. ~Steven -->
 
-  <arg name="thrust_config" default="T"/>
-    <!-- Launch course controller and waypoint follower. -->
-    <include file="$(find vrx_control)/launch/control.launch">
-        <arg name="thrust_config" value="$(arg thrust_config)"/>
+    <!-- include the official gazebo file -->
+    <arg name="thrust_config" default="T"/>
+    <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+        <arg name="comp" value="true"/>
+        <arg name='rviz' value="false"/>
     </include>
+
+
+
+
+    <include file="$(find vrx_control)/launch/course_controller.launch">
+        <arg name="thrust_config" value="$(arg thrust_config)" />
+    </include>
+    <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
+
+
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+    </node>
 
     <!-- station_keeping -->
     <!-- Translate from geo pose to normal pose -->
@@ -28,6 +43,16 @@
         <param name="~inTopic" value="internal/waypoints"></param>
     </node>
 
+
     <!-- Vision translation -->
+
+    <include file="$(find vrx_navigation)/launch/lidar_node0.launch">
+    </include>
+
+    <include file="$(find vrx_vision)/launch/object_server0.launch">
+        <arg name="distance_threshold" value="0.2"/>
+        <arg name="use_camera" value="true"/>
+        <arg name="expiry_time" value="2"/>
+    </include>
     <!--TODO:-->
 </launch>

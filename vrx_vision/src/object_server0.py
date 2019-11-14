@@ -146,12 +146,12 @@ class Obstacle():
                         #SEND FOR CLASSIFICATION
                         #image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
                         if camera.name == "middle" :
-                            cv2.imshow("middle_cropped", crop_img)
-                            cv2.waitKey(1)
+                            #cv2.imshow("middle_cropped", crop_img)
+                            #cv2.waitKey(1)
                             type, confidence = classifier.classify(crop_img, dist)
                         #confidence = res.confidence
                         #cv2.imshow("middle_cropped", crop_img)
-                        cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
+                        #cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
                         # cv2.line(copy_img,(int(buoy_pixel_x1),720),(int(buoy_pixel_x2),0),(0,0,255),1)
                         # cv2.line(copy_img,(0,buoy_pixel_y1),(1280,buoy_pixel_y2),(0,0,255),1)
 
@@ -192,24 +192,19 @@ class Obstacle():
 
         try:
             (trans, rot) = tf_listener.lookupTransform(frame_id,"base_link", rospy.Time(0))
+            inFormat = pyproj.Proj("+init=EPSG:4326")
+            zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
+            lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
+            message = GeoPoseStamped()
+            message.pose.position.latitude = lat
+            message.pose.position.longitude = lon
+            message.header.frame_id = type
+            p_pub.publish(message)
+            print("PUBLISHED OBJECT")
         except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
 
-        inFormat = pyproj.Proj("+init=EPSG:4326")
-        zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
-        lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
-
-        message = GeoPoseStamped()
-        message.pose.position.latitude = lat
-        message.pose.position.longitude = lon
-
-        message.header.frame_id = type
-
-
-
-
-        p_pub.publish(message)
-        print("PUBLISHED OBJECT")
+        
 
 
 
@@ -379,12 +374,12 @@ class ObjectServer():
 
     def classify_objects(self):
         """Classify the objects found so far using appropiate cameras."""
-        if USE_CAMERA:
-            for camera in self.cameras.values() :
-                camera.debug_image = camera.image.copy()
+        #if USE_CAMERA:
+            #for camera in self.cameras.values() :
+            #    camera.debug_image = camera.image.copy()
 
-            cv2.imshow("middle", self.cameras["middle"].debug_image)
-            cv2.waitKey(1)
+            #cv2.imshow("middle", self.cameras["middle"].debug_image)
+            #cv2.waitKey(1)
 
         for i in self.objects:
             i.classify()

@@ -1,0 +1,12 @@
+get nav thru buoy working
+    - setup a course
+    - Check the objectserver
+    - make a node that does it
+        - get pairs of buoys
+        - calculate midpoint of pairs
+        - create path based on distance to midpoitns
+        - publish path
+For docker
+    - install pointcloud to laserscan
+    - install global planner
+    - install scipy for cluster

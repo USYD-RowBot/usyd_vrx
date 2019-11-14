@@ -32,8 +32,6 @@ def satcb(data):
 outProj = pyproj.Proj("+init=EPSG:4326")
 
 def transformCoordinates(latpos,XYZpos):
-    R = 6378100 #Radius of Earth Metres
-    pi=3.14159265359
     crs="+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996)
     inp = pyproj.Proj(crs)
     y,x = pyproj.transform(outProj,inp,latpos.longitude,latpos.latitude)
