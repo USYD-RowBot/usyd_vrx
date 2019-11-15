@@ -4,8 +4,17 @@ import rospkg
 
 class BuoyClassifier():
 
-    def __init__(self, exclusion_list):
+    def __init__(self, exclusion_list, hfov, cam_x_px):
+        '''
+            exclusion list: list of strings detailing which buoys should be removed from search list
+            hfov: camera horizontal field of view
+            cam_x_px: x resolution of camera
+        '''
 
+        ##### CAMERA PARAMS #####
+        self.focal_length = (float(cam_x_px)/2)/np.tan(float(hfov)/2)
+
+        ##### IMAGE TEMPLATE STUFF #####
         rospack = rospkg.RosPack()
         pre = rospack.get_path('vrx_vision')+"/template_images/"
 
@@ -32,7 +41,7 @@ class BuoyClassifier():
             ["scan_buoy"]                                                              # Scan buoy
         ]
 
-        ##### REMOVE EXCLUDED BUOYS ######
+        ##### REMOVE EXCLUDED BUOYS #####
         template_list_length = len(self.template_labels)
         remove_i = []
 
@@ -57,9 +66,9 @@ class BuoyClassifier():
             del self.template_colours[remove_i[k]]
             del self.template_filename_list[remove_i[k]]
 
-        print(self.template_labels)
-        print(self.template_colours)
-        print(self.template_filename_list)
+        #print(self.template_labels)
+        #print(self.template_colours)
+        #print(self.template_filename_list)
 
     def kMeans(self, img):
 
@@ -85,75 +94,78 @@ class BuoyClassifier():
         return res2
 
     def centreColour(self, img):
-      # Change to HSV colour space
-      hsv = cv2.cvtColor(kmeans_img, cv2.COLOR_BGR2HSV) 
+        '''# Change to HSV colour space
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) 
 
-      # Threshold the image to remove unsaturated parts (want to keep the light)
-      lower_colour = np.array([0, 100, 60])#0, 140, 60
-      upper_colour = np.array([360, 360, 180])
-      mask = cv2.inRange(hsv, lower_colour, upper_colour) 
+        # Threshold the image to remove unsaturated parts (want to keep the light)
+        lower_colour = np.array([0, 100, 60]) # 0, 140, 60
+        upper_colour = np.array([360, 360, 180])
+        mask = cv2.inRange(hsv, lower_colour, upper_colour) 
 
-      #invert image for blob detection 
-      inverted_img = cv2.bitwise_not(mask)
+        #invert image for blob detection 
+        inverted_img = cv2.bitwise_not(mask)
 
-      blob_min_area=3
-      blob_min_int=.5
-      blob_max_int=.95
-      blob_th_step=10
+        blob_min_area=3
+        blob_min_int=.5
+        blob_max_int=.95
+        blob_th_step=10
 
-      # apply a gaussian blur over the image to create a more circular shape
-      # for blob detection 
-      blurred_img = cv2.blur(inverted_img,(100,100))
-      _,rounded_img = cv2.threshold(blurred_img,127,255,cv2.THRESH_BINARY)
+        # apply a gaussian blur over the image to create a more circular shape
+        # for blob detection 
+        blurred_img = cv2.blur(inverted_img,(150, 100))
+        _,rounded_img = cv2.threshold(blurred_img,127,255,cv2.THRESH_BINARY)
 
-      #resize images 
-      small_img_binary = cv2.resize(rounded_img, (0,0), fx=0.4, fy=0.4)
-      small_img = cv2.resize(img, (0,0), fx=0.4, fy=0.4)
+        #resize images 
+        small_img_binary = cv2.resize(rounded_img, (0,0), fx=0.4, fy=0.4)
+        small_img = cv2.resize(img, (0,0), fx=0.4, fy=0.4)
 
-      params = cv2.SimpleBlobDetector_Params()
+        params = cv2.SimpleBlobDetector_Params()
 
-      # Change thresholds
-      params.minThreshold = 10
-      params.maxThreshold = 200
+        # Change thresholds
+        params.minThreshold = 10
+        params.maxThreshold = 200
 
+        # Filter by Area.
+        params.filterByArea = True
+        params.minArea = 10
 
-      # Filter by Area.
-      params.filterByArea = True
-      params.minArea = 10
+        # Filter by Circularity
+        params.filterByCircularity = True
+        params.minCircularity = 0.1
 
-      # Filter by Circularity
-      params.filterByCircularity = True
-      params.minCircularity = 0.1
+        # Filter by Convexity
+        params.filterByConvexity = True
+        params.minConvexity = 0.1
 
-      # Filter by Convexity
-      params.filterByConvexity = True
-      params.minConvexity = 0.1
+        # Filter by Inertia
+        params.filterByInertia = True
+        params.minInertiaRatio = 0.3
 
-      # Filter by Inertia
-      params.filterByInertia = True
-      params.minInertiaRatio = 0.3
+        # Set up the detector with default parameters.
+        detector = cv2.SimpleBlobDetector_create()
 
-      # Set up the detector with default parameters.
-      detector = cv2.SimpleBlobDetector_create()
+        # Detect blobs.
+        keypoints = detector.detect(small_img_binary)
 
-      # Detect blobs.
-      keypoints = detector.detect(small_img_binary)
+        # Draw detected blobs as red circles.
+        #cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle
+        #corresponds to the size of blob
+        im_with_keypoints = cv2.drawKeypoints(small_img_binary, keypoints,
+                    np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-      # Draw detected blobs as red circles.
-      #cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle
-      #corresponds to the size of blob
-      im_with_keypoints = cv2.drawKeypoints(small_img_binary, keypoints,
-                  np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        # Show keypoints
+        cv2.imshow("Keypoints", im_with_keypoints)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        #for i in range(len(keypoints)):
+        x = keypoints[0].pt[0] # i is the index of the blob you want to get the position
+        y = keypoints[0].pt[1]
+        centre = small_img[int(x), int(y)] # only take the first blob centre, there may be others 
+        return tuple(centre)'''
 
-      # Show keypoints
-      #cv2.imshow("Keypoints", im_with_keypoints)
-      #cv2.waitKey(0)
-      #cv2.destroyAllWindows()
-      #for i in range(len(keypoints)):
-      x = keypoints[0].pt[0] #i is the index of the blob you want to get the position
-      y = keypoints[0].pt[1]
-      centre = small_img[int(x), int(y)] #only take the first blob centre, there may be others 
-      return tuple(centre)
+        rows, columns, _ = np.shape(img)
+        centre = img[int(rows/2), int(columns/2)]
+        return tuple(centre)
 
     def getObjectMask(self, img):
         # Separate buoy cluster and make white
@@ -214,7 +226,7 @@ class BuoyClassifier():
         # Scale image to constant size
         width = 100
         scaled_img = cv2.resize(cropped_img, (width, width))
-        return scaled_img
+        return scaled_img, w
 
     def mirrorCombine(self, img):
         flipped_img = cv2.flip(img, 1)
@@ -304,15 +316,41 @@ class BuoyClassifier():
         label = self.template_labels[best_shape_index][best_colour_index] # Get best label
         return label, conf_shape, conf_colour
 
+    def getPolyformType(self, obj_width, distance):
+
+        suffixes   = ["_a3", "_a5", "_a7"]
+        #radii     = [0.238, 0.370, 0.550] # Polyform radii in metres
+        thresholds = [0.304, 0.460]
+
+        theta  = np.arctan((float(obj_width)/2)/self.focal_length)
+        polyform_radius = float(distance)*np.sin(theta)
+
+        return_label = "polyform"
+
+        if polyform_radius < thresholds[0]:   # a3
+            return_label += suffixes[0]
+        elif polyform_radius < thresholds[1]: # a5
+            return_label += suffixes[1]
+        else:                                 # a7
+            return_label += suffixes[2]
+
+        return return_label
+
+
     def classify(self, img, distance):
 
-        clustered_img = self.kMeans(img)
-        object_mask   = self.getObjectMask(clustered_img)
-        cropped_img   = self.rotateCropScale(object_mask)
-        mirrored_img  = self.mirrorCombine(cropped_img)
+        clustered_img          = self.kMeans(img)
+        object_mask            = self.getObjectMask(clustered_img)
+        cropped_img, obj_width = self.rotateCropScale(object_mask)
+        mirrored_img           = self.mirrorCombine(cropped_img)
 
         # Classify the buoy
         label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centreColour(img)))
+
+        # If polyform, narrow down size
+        if label == "polyform":
+            label = self.getPolyformType(obj_width, distance)
+
         print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
 
         #cv2.imshow('Shape',mirrored_img)

@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     tf_broadcaster = tf.TransformBroadcaster()
     tf_listener = tf.TransformListener()
-    classifier = BuoyClassifier(exclusion_list)
+    classifier = BuoyClassifier(exclusion_list, 1.3962634, 1280)
     bridge = CvBridge()
 
     # if(USE_CAMERA):
