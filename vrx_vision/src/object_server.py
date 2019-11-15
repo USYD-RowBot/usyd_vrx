@@ -23,6 +23,8 @@ from objhelper.buoy_classifier import BuoyClassifier
 THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
 DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
 EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
+<<<<<<< Updated upstream
+USE_CAMERA = rospy.get_param('use_camera', True)
 USE_CAMERA = rospy.get_param("use_camera", True)
 DEBUG = False
 print("USING THE CAMERA: " + str(USE_CAMERA))
@@ -38,6 +40,18 @@ if __name__ == "__main__":
     tf_listener = tf.TransformListener()
     classifier = BuoyClassifier()
     bridge = CvBridge()
+
+    THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
+    DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
+    EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
+    USE_CAMERA = rospy.get_param('use_camera', True)
+    print("USING THE CAMERA: " + str(USE_CAMERA))
+    MARGIN_X = 200
+    MARGIN_Y = 150
+    USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
+
+
+
 
     # if(USE_CAMERA):
     #     #print("Waiting to camera service")
@@ -394,6 +408,9 @@ if __name__ == "__main__":
         rate.sleep()
 
         dt = rospy.get_time()-time_last
+        if dt != 0 and DEBUG:
+
+            print("Hz = " + str(1/dt))
         if dt != 0 and DEBUG:
 
             print("Hz = " + str(1/dt))

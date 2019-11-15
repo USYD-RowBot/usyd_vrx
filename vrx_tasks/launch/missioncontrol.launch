@@ -1,16 +1,21 @@
 <launch>
-    <!-- Since we can only have one entry point for the competition, the entrypoint (i.e. roslaunch this file) 
+    <!-- Since we can only have one entry point for the competition, the entrypoint (i.e. roslaunch this file)
     should contain everything needed to run the boat. Hence all the stuff. ~Steven -->
-
-    <!-- include the official gazebo file -->
+    <arg name="gazebo" default="true" />
     <arg name="thrust_config" default="T"/>
-    <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
-        <arg name="comp" value="true"/>
-        <arg name='rviz' value="false"/>
+    <arg name="world_name" default="sandisland"/>
+    <arg name="rviz" default="true"/>
+
+    <!-- include the official gazebo file. This is like the server component in
+    the competition. Disable it when runing for the comeptition.-->
+    <include file="$(find vrx_bringup)/launch/sensored_boat.launch" if="$(arg gazebo)">
+        <arg name="world_name" value="$(arg world_name)"/>
     </include>
 
+    <!-- include the localisation code -->
+    <include file="$(find vrx_bringup)/launch/localisation.launch"/>
 
-
+    <include file="$(find vrx_bringup)/launch/rviz.launch" if="$(arg rviz)"/>
 
     <include file="$(find vrx_control)/launch/course_controller.launch">
         <arg name="thrust_config" value="$(arg thrust_config)" />
@@ -46,13 +51,13 @@
 
     <!-- Vision translation -->
 
-    <include file="$(find vrx_navigation)/launch/lidar_node0.launch">
+    <!--include file="$(find vrx_navigation)/launch/lidar_node0.launch">
     </include>
 
     <include file="$(find vrx_vision)/launch/object_server0.launch">
         <arg name="distance_threshold" value="0.2"/>
         <arg name="use_camera" value="true"/>
         <arg name="expiry_time" value="2"/>
-    </include>
+    </include-->
     <!--TODO:-->
 </launch>
