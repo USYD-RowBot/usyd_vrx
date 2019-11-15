@@ -4,6 +4,72 @@ import rospkg
 
 class BuoyClassifier():
 
+    def __init__(self, exclusion_list, hfov, cam_x_px):
+        '''
+            exclusion list: list of strings detailing which buoys should be removed from search list
+            hfov: camera horizontal field of view
+            cam_x_px: x resolution of camera
+        '''
+
+        ##### CAMERA PARAMS #####
+        self.focal_length = (float(cam_x_px)/2)/np.tan(float(hfov)/2)
+
+        ##### IMAGE TEMPLATE STUFF #####
+        rospack = rospkg.RosPack()
+        pre = rospack.get_path('vrx_vision')+"/template_images/"
+
+        self.template_filename_list = [
+            pre+"template_conical.png",
+            pre+"template_tophat.png",
+            pre+"template_totem.png",
+            pre+"template_sphere.png",
+            pre+"template_scan.png"]
+
+        self.template_colours = [
+            [(169, 71, 65)],                                                   # Conical
+            [(222, 222, 222), (106, 183, 150)],                                # Tophat: (white, green)
+            [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
+            [(0, 0, 0)],                                                       # Sphere
+            [(20, 20, 20)]                                                     # Scan buoy
+        ]
+
+        self.template_labels = [
+            ["surmark_950410"],                                                        # Conical
+            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
+            ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
+            ["polyform"],                                                              # Sphere TODO estimate size
+            ["scan_buoy"]                                                              # Scan buoy
+        ]
+
+        ##### REMOVE EXCLUDED BUOYS #####
+        template_list_length = len(self.template_labels)
+        remove_i = []
+
+        for i in range(template_list_length):
+            category_length = len(self.template_labels[i])
+            remove_j = []
+
+            for j in range(category_length):
+                for excluded_buoy in exclusion_list:
+                    if self.template_labels[i][j] == excluded_buoy:
+                        remove_j.append(j) # Mark buoy for deletion
+
+            if len(remove_j) == category_length:
+                remove_i.append(i) # Mark category for deletion
+            else:
+                for k in range(len(remove_j)-1, -1, -1):
+                    del self.template_labels[i][remove_j[k]] # Delete particular buoy
+                    del self.template_colours[i][remove_j[k]]
+
+        for k in range(len(remove_i)-1, -1, -1): # Delete whole category
+            del self.template_labels[remove_i[k]]
+            del self.template_colours[remove_i[k]]
+            del self.template_filename_list[remove_i[k]]
+
+        #print(self.template_labels)
+        #print(self.template_colours)
+        #print(self.template_filename_list)
+
     def kMeans(self, img):
 
         #img = cv2.resize(img, (500, 500))
@@ -28,6 +94,75 @@ class BuoyClassifier():
         return res2
 
     def centreColour(self, img):
+        '''# Change to HSV colour space
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        # Threshold the image to remove unsaturated parts (want to keep the light)
+        lower_colour = np.array([0, 100, 60]) # 0, 140, 60
+        upper_colour = np.array([360, 360, 180])
+        mask = cv2.inRange(hsv, lower_colour, upper_colour)
+
+        #invert image for blob detection
+        inverted_img = cv2.bitwise_not(mask)
+
+        blob_min_area=3
+        blob_min_int=.5
+        blob_max_int=.95
+        blob_th_step=10
+
+        # apply a gaussian blur over the image to create a more circular shape
+        # for blob detection
+        blurred_img = cv2.blur(inverted_img,(150, 100))
+        _,rounded_img = cv2.threshold(blurred_img,127,255,cv2.THRESH_BINARY)
+
+        #resize images
+        small_img_binary = cv2.resize(rounded_img, (0,0), fx=0.4, fy=0.4)
+        small_img = cv2.resize(img, (0,0), fx=0.4, fy=0.4)
+
+        params = cv2.SimpleBlobDetector_Params()
+
+        # Change thresholds
+        params.minThreshold = 10
+        params.maxThreshold = 200
+
+        # Filter by Area.
+        params.filterByArea = True
+        params.minArea = 10
+
+        # Filter by Circularity
+        params.filterByCircularity = True
+        params.minCircularity = 0.1
+
+        # Filter by Convexity
+        params.filterByConvexity = True
+        params.minConvexity = 0.1
+
+        # Filter by Inertia
+        params.filterByInertia = True
+        params.minInertiaRatio = 0.3
+
+        # Set up the detector with default parameters.
+        detector = cv2.SimpleBlobDetector_create()
+
+        # Detect blobs.
+        keypoints = detector.detect(small_img_binary)
+
+        # Draw detected blobs as red circles.
+        #cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle
+        #corresponds to the size of blob
+        im_with_keypoints = cv2.drawKeypoints(small_img_binary, keypoints,
+                    np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+        # Show keypoints
+        cv2.imshow("Keypoints", im_with_keypoints)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        #for i in range(len(keypoints)):
+        x = keypoints[0].pt[0] # i is the index of the blob you want to get the position
+        y = keypoints[0].pt[1]
+        centre = small_img[int(x), int(y)] # only take the first blob centre, there may be others
+        return tuple(centre)'''
+
         rows, columns, _ = np.shape(img)
         centre = img[int(rows/2), int(columns/2)]
         return tuple(centre)
@@ -59,7 +194,9 @@ class BuoyClassifier():
 
     def rotateCropScale(self, img):
         # Crop image to buoy
-        _, contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -74,10 +211,14 @@ class BuoyClassifier():
         # Rotate image to align with major axis of buoy
         rot_mat = cv2.getRotationMatrix2D(center, np.degrees(-theta), 1.0)
         largest_dim  = max(cropped_img.shape)
-        rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim, largest_dim))
+        rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim,
+                 largest_dim))
 
         # Crop image again, since rotation changes positioning
-        _, contours, _ = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL,
+                 cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = rotated_img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -85,7 +226,7 @@ class BuoyClassifier():
         # Scale image to constant size
         width = 100
         scaled_img = cv2.resize(cropped_img, (width, width))
-        return scaled_img
+        return scaled_img, w
 
     def mirrorCombine(self, img):
         flipped_img = cv2.flip(img, 1)
@@ -153,59 +294,64 @@ class BuoyClassifier():
                 confidences are from 0 to 1.
         '''
 
-        rospack = rospkg.RosPack()
-        pre = rospack.get_path('vrx_vision')+"/template_images/"
-
-        template_filename_list = [
-            pre+"template_conical.png", pre+"template_tophat.png", pre+"template_totem.png", pre+"template_sphere.png"]
-
-        # (106, 183, 150)
-        template_colours = [
-            [(169, 71, 65)],                                                   # Conical
-            [(222, 222, 222), (106, 183, 150)],                                # Tophat: (white, green)
-            [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
-            [(0, 0, 0)]                                                        # Sphere
-        ]
-
-        template_labels = [
-            ["surmark_950410"],                                                        # Conical
-            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
-            ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
-            ["polyform_a5"]                                                             # Sphere TODO estimate size
-        ]
-
         label_confidences  = []
         colour_confidences = []
 
-        for template_filename in template_filename_list: # Compare img with templates
+        for template_filename in self.template_filename_list: # Compare img with templates
             template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
             label_confidences.append(self.percentSimilar(template_img, img))
 
             #cv2.imshow('K-Means Clustering', template_img)
             #cv2.waitKey(0)
-        #print(label_confidences)
+        print(label_confidences)
         conf_shape       = max(label_confidences) # Get highest confidence label and index
         best_shape_index = np.argmax(label_confidences)
 
-        for template_colour in template_colours[best_shape_index]: # Compare colour with templates
+        for template_colour in self.template_colours[best_shape_index]: # Compare colour with templates
             colour_confidences.append(self.colourConfidenceRGB(template_colour, colour))
 
         conf_colour       = max(colour_confidences) # Get highest confidence colour and index
         best_colour_index = np.argmax(colour_confidences)
 
-        label = template_labels[best_shape_index][best_colour_index] # Get best label
+        label = self.template_labels[best_shape_index][best_colour_index] # Get best label
         return label, conf_shape, conf_colour
+
+    def getPolyformType(self, obj_width, distance):
+
+        suffixes   = ["_a3", "_a5", "_a7"]
+        #radii     = [0.238, 0.370, 0.550] # Polyform radii in metres
+        thresholds = [0.304, 0.460]
+
+        theta  = np.arctan((float(obj_width)/2)/self.focal_length)
+        polyform_radius = float(distance)*np.sin(theta)
+
+        return_label = "polyform"
+
+        if polyform_radius < thresholds[0]:   # a3
+            return_label += suffixes[0]
+        elif polyform_radius < thresholds[1]: # a5
+            return_label += suffixes[1]
+        else:                                 # a7
+            return_label += suffixes[2]
+
+        return return_label
+
 
     def classify(self, img, distance):
 
-        clustered_img = self.kMeans(img)
-        object_mask   = self.getObjectMask(clustered_img)
-        cropped_img   = self.rotateCropScale(object_mask)
-        mirrored_img  = self.mirrorCombine(cropped_img)
+        clustered_img          = self.kMeans(img)
+        object_mask            = self.getObjectMask(clustered_img)
+        cropped_img, obj_width = self.rotateCropScale(object_mask)
+        mirrored_img           = self.mirrorCombine(cropped_img)
 
         # Classify the buoy
         label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centreColour(img)))
-        #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
+
+        # If polyform, narrow down size
+        if label == "polyform":
+            label = self.getPolyformType(obj_width, distance)
+
+        print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
 
         #cv2.imshow('Shape',mirrored_img)
         #cv2.waitKey(0)

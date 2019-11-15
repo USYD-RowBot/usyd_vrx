@@ -2,7 +2,8 @@
 import rospy
 import tf
 import scipy.cluster.hierarchy as hcluster
-import numpyfrom geographic_msgs.msg import GeoPoseStamped
+import numpy
+from geographic_msgs.msg import GeoPoseStamped
 
 import math
 from nav_msgs.srv import GetMap
@@ -36,9 +37,11 @@ MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
 if __name__ == "__main__":
     rospy.init_node("object_server")
+    exclusion_list = rospy.get_param("~excluded_buoys")
+
     tf_broadcaster = tf.TransformBroadcaster()
     tf_listener = tf.TransformListener()
-    classifier = BuoyClassifier()
+    classifier = BuoyClassifier(exclusion_list, 1.3962634, 1280)
     bridge = CvBridge()
 
     THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
@@ -100,7 +103,7 @@ class Obstacle():
         if self.radius < 2:
             type = "buoy"
             confidence = 0.2
-        elif self.radius > 5 and self.radius < 15 and len(self.points) > 10 :
+        elif self.radius > 5 and self.radius < 15 and len(self.points) > 8:
             type = "dock"
             confidence = 0.8
             points = numpy.array(self.points)

@@ -76,7 +76,8 @@ def callback(data):
 
                 marker.text = "ID: " +i.frame_id +"\nTYPE: " + type_string +"\nCONF: " +  str(i.confidences[0])
             except:
-                print(i)
+                #print(i)
+                pass
             marker.scale.x = 1.0
             marker.scale.y = 1.0
             marker.scale.z = 1.0

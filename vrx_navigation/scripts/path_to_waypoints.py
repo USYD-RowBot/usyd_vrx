@@ -92,7 +92,7 @@ class WaypointConverter:
 
         last_wp_msg = self.getStationMsg( # Get last station
             path_msg.poses[-11].pose, path_msg.poses[-1].pose, 
-            path_msg.poses[-1].pose, -1.0, False)
+            path_msg.poses[-1].pose, 0.0, False)
         wp_route_msg.waypoints.append(last_wp_msg)
         self.pubMarker(last_wp_msg.pose)
 
