@@ -283,7 +283,7 @@ class BuoyClassifier():
         label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centreColour(img)))
         print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
 
-        #cv2.imshow('Shape',mirrored_img)
-        #cv2.waitKey(0)
+        cv2.imshow('Shape',mirrored_img)
+        cv2.waitKey(0)
         #cv2.destroyAllWindows()
         return label, conf_shape*conf_colour

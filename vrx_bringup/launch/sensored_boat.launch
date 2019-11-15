@@ -30,7 +30,7 @@
     <node name="odom_relay" pkg="topic_tools" type="relay" args="sensors/position/p3d_wamv odom" unless="$(arg ekf)"/>
     <node name="odom_relay" pkg="topic_tools" type="relay" args="robot_localization/odometry/filtered odom" if="$(arg ekf)"/>
 
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
       <param name="publish_frequency" value="30"/>
       <param name="tf_prefix" value="wamv"/>
     </node>

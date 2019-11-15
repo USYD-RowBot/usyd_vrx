@@ -1,6 +1,9 @@
 # USYD_VRX
 The USYD RobotX Team's submission into the 2019 Virtual RobotX Competition
 
+## Useful links
+https://bitbucket.org/osrf/vrx/wiki/documentation
+
 ## Getting Started
 This software requires you to have [ros melodic](http://wiki.ros.org/melodic) and the vrx simulation. It is reccomended to install the full-desktop version of ROS.
 You will need Ubuntu Bionic or some derivative.
@@ -139,3 +142,14 @@ roslaunch vrx_navigation lidar_node.launch
 ```
 
 Now you should be able to set a 2d goal pose through rviz and the wam_v will attempt to follow that path.
+
+## Design notes
+
+### tf tree
+- world-stationary frames: map
+- robot centre: base_link
+
+### navigation
+- MOST DIRECT: post message of type vrx_msgs WaypointRoute to /waypoints_cmd
+- WITH VISUALISATION: pass message to wamv/waypoints (path to waypoints) and it will also convert to nav markers for RVIZ.
+- /request_waypoints is pinged when no waypoints queued 

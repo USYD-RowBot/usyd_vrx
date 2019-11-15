@@ -23,11 +23,9 @@ class Node():
             #print("PERCEPTION",object)
             if object.best_guess != "buoy" and object.confidences[0] > 0.5:
                 print(object.best_guess)
-                print(self.current_objects)
+                #print(self.current_objects)
                 if object.frame_id not in self.current_objects:
                     #Publish object
-                    #print("NNEEEEEEEWWWWWWWWW")
-                    #print(object)
                     self.publish(object)
                     self.current_objects[object.frame_id] = object.best_guess
                     print(object)
