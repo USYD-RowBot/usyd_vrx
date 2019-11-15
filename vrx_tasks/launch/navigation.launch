@@ -1,16 +1,16 @@
 <launch>
     <!-- include the official gazebo file -->
-    <arg name="thrust_config" default="T"/>
 
-    <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+    <include file="$(find vrx_tasks)/launch/missioncontrol.launch">
         <arg name="world_name" value="navigation_task"/>
-        <arg name="gui" value="true"/>
     </include>
-
-    <include file="$(find vrx_tasks)/launch/missioncontrol.launch"/>
 
     <include file="$(find vrx_navigation)/launch/lidar_node.launch">
     </include>
+
+    <!--include file="$(find vrx_vision)/launch/object_server.launch">
+        <arg name="use_camera" value="true"/>
+    </include-->
 
 
 </launch>
