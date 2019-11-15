@@ -1,0 +1,14 @@
+excluded_buoys: 
+  - ""
+
+buoy_names:
+  - "surmark_950410" # red, conical
+  - "surmark_46104"  # white, tophat
+  - "surmark_950400" # green, tophat
+  - "yellow_totem"
+  - "black_totem"
+  - "blue_totem"
+  - "green_totem"
+  - "red_totem"
+  - "polyform"  # black sphere
+  - "scan_buoy" # code sequence flashing buoy

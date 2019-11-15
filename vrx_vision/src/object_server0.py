@@ -36,9 +36,11 @@ MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
 if __name__ == "__main__":
     rospy.init_node("object_server")
+    exclusion_list = rospy.get_param("~excluded_buoys")
+
     tf_broadcaster = tf.TransformBroadcaster()
     tf_listener = tf.TransformListener()
-    classifier = BuoyClassifier()
+    classifier = BuoyClassifier(exclusion_list)
     bridge = CvBridge()
     p_pub = rospy.Publisher("/vrx/perception/landmark", GeoPoseStamped, queue_size="10")
 

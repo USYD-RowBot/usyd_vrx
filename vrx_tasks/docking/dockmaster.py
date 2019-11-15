@@ -5,14 +5,14 @@
 import rospy
 import actionlib
 import tf
-from tf.transformations import quaternion_from_euler
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import numpy as np
 import math
 from copy import deepcopy
 
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, String
 from vrx_msgs.msg import *
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Quaternion
 from nav_msgs.msg import Odometry
 from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 from sensor_msgs.msg import Image
@@ -28,20 +28,23 @@ class DockMaster():
     self.executePlan()
 
   def initMission(self):
-    self.do_scan = False  # Scan the sequence on the buoy?
-    self.n_onspot_wps = 1 # Number of waypoints constituting spin on spot
-    self.n_circle_wps = 3 # Number of waypoints constituting circling an object
+    self.do_scan = False   # Scan the sequence on the buoy?
+    self.n_onspot_wps = 4  # Number of waypoints constituting spin on spot
+    self.n_circle_wps = 5  # Number of waypoints constituting circling an object
     self.general_speed = 2 # Circling speed
     self.scan_radius  = 10 # Radius at which to circle scan buoy
     self.dock_radius  = 20 # Radius at which to circle dock
     self.align_dist   = 10 #  Distance from center of dock to align position
-    self.bay_dist     = 3 # Distance from center of dock to center of bay
+    self.bay_dist     = 3  # Distance from center of dock to center of bay
 
     self.tf_listener = tf.TransformListener()
     self.route_pub = rospy.Publisher("/waypoints_cmd", WaypointRoute, queue_size=1, latch=True)
     #rospy.get_param("~hold_duration")
 
-    ready = False
+    # Wait for any required services to be active
+    #rospy.wait_for_service('scan_buoy')
+
+    ready = False # Wait until competition is in Ready state.
     while not ready:
       task_msg = rospy.wait_for_message("/vrx/task/info", Task)
       if task_msg.state == "ready":
@@ -55,8 +58,13 @@ class DockMaster():
     #self.scan_code()
 
     self.spinOnSpot(1)
-    self.circleObject("dock")
-    #self.alignWithDock()
+    #self.circleObject("dock")
+
+    placard_symbol = self.getRequestedPlacardSymbol()
+    self.logDock(placard_symbol)
+    
+    self.alignWithDock()
+
     #self.performDock()
 
   def waitForWaypointRequest(self):
@@ -76,6 +84,10 @@ class DockMaster():
     wp.station_duration = duration
     return wp
 
+  def quatToYaw(self, x, y, z, w):
+    euler = euler_from_quaternion([x, y, z, w])
+    return euler[2]
+
   def spinOnSpot(self, n_times):
     self.logDock("Spinning on the spot %d times."%n_times)
 
@@ -87,10 +99,14 @@ class DockMaster():
     boat_pose.position.x = odom_msg.pose.pose.position.x
     boat_pose.position.y = odom_msg.pose.pose.position.y
 
+    # Get current boat angle
+    boat_yaw = self.quatToYaw(odom_msg.pose.pose.orientation.x, odom_msg.pose.pose.orientation.y,
+                              odom_msg.pose.pose.orientation.z, odom_msg.pose.pose.orientation.w)
+
     for _ in range(n_times): # How many revolutions
       for i in range(self.n_onspot_wps): # How many angular divisions
 
-        angle = (float(i+1)/self.n_onspot_wps)*2*np.pi # Set angle
+        angle = boat_yaw + (float(i+1)/self.n_onspot_wps)*2*np.pi # Set angle
         self.setPoseQuat(boat_pose, angle)
 
         spin_wp = self.makeWaypoint(boat_pose) # Create wp message
@@ -108,8 +124,11 @@ class DockMaster():
     # TODO find placard symbol!
     return True
 
+  def getRequestedPlacardSymbol(self):
+    self.logDock("Waiting for placard symbol message.")
+    return (rospy.wait_for_message('/vrx/scan_dock/placard_symbol', String)).data
+
   def findFrontOfScanBuoy(self):
-    rospy.wait_for_service('scan_buoy')
     image_msg = rospy.wait_for_message( # Get image from middle camera
       'sensors/cameras/middle_camera/image_raw', Image)
     try:
@@ -162,7 +181,7 @@ class DockMaster():
     init_wp = self.makeWaypoint(init_pose) # Create waypoint from above data
     circle_wps.append(init_wp)
 
-    for i in range(self.n_circle_wps-1):
+    for i in range(self.n_circle_wps):
       wp_pose = Pose() # Set first circling waypoint pose
       rot = (i+1)*(2*np.pi/self.n_circle_wps)
 
@@ -191,12 +210,13 @@ class DockMaster():
     while not identify_function() and not rospy.is_shutdown:
       r.sleep()
 
+    self.waitForWaypointRequest() # TODO remove this once identify_functions are written
+
   def alignWithDock(self):
     self.logDock("Aligning with the dock.")
     dock_pos, dock_quat = self.getDockPose()
 
-    euler = tf.transformations.euler_from_quaternion(dock_quat)
-    dock_yaw = euler[2]
+    dock_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
 
     align_pose = Pose()
     align_pose.position.x = dock_pos[0] + self.align_dist*math.cos(dock_yaw)
@@ -210,7 +230,7 @@ class DockMaster():
     align_wp = self.makeWaypoint(align_pose)
 
     align_wps = WaypointRoute()
-    align_wps.waypoints = align_wp
+    align_wps.waypoints = [align_wp]
     align_wps.speed = self.general_speed
 
     self.route_pub.publish(align_wps)
@@ -226,14 +246,14 @@ class DockMaster():
 
     if dock_frame_id is None: # Couldn't find dock
       self.logDock("Dock not found.")
-      return None
+      return None, None
 
     try:
       tf_pos, tf_rot = self.tf_listener.lookupTransform('/map', dock_frame_id, rospy.Time(0))
       return tf_pos, tf_rot
     except tf.LookupException as e:
       self.logDock(e)
-      return None
+      return None, None
 
   def performDock(self):
     self.logDock("Starting docking procedure.")
@@ -243,8 +263,7 @@ class DockMaster():
 
     dock_pos, dock_quat = self.getDockPose()
 
-    euler = tf.transformations.euler_from_quaternion(dock_quat)
-    dock_yaw = euler[2]
+    dock_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
 
     bay_pose = Pose()
     bay_pose.position.x = dock_pos[0] + self.bay_dist*math.cos(dock_yaw)
