@@ -153,3 +153,6 @@ Now you should be able to set a 2d goal pose through rviz and the wam_v will att
 - MOST DIRECT: post message of type vrx_msgs WaypointRoute to /waypoints_cmd
 - WITH VISUALISATION: pass message to wamv/waypoints (path to waypoints) and it will also convert to nav markers for RVIZ.
 - /request_waypoints is pinged when no waypoints queued 
+
+### localising
+- the location of the bot is wamv/odom not wamv/base_link.

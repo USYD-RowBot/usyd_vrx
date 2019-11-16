@@ -17,12 +17,13 @@ def verbosePrint(data):
     if True:
         print(data)
 
+
 class navigationAI:
     def __init__(self):
         print("NAV AI STARTED")
         params = {
             "objTopic": "/wamv/objects",
-            "outTopic": "/wamv/waypoints",
+            "outTopic": "/waypoints_cmd",
             "speed": 5,
             "movementTopic": "/request_waypoints"
         }
@@ -37,6 +38,7 @@ class navigationAI:
             params['outTopic'], WaypointRoute, queue_size=1)
         rospy.Subscriber(params['movementTopic'], Empty, self.motionCB)
         self.CURIO_DIST = 5
+        self.WAITTIME = 20
 
     def objectCB(self, data):
         verbosePrint("object callback recieved: {}".format(len(data.objects)))
@@ -59,6 +61,8 @@ class navigationAI:
             for i in data.objects:
                 if not((i.frame_id in self.addressedState) and (self.addressedState[i.frame_id] == "navigated")):
                     if i.best_guess in closest_ranges:
+                        self.tf_listener.waitForTransform(
+                            i.frame_id, "base_link", rospy.Time(0), rospy.Duration(self.WAITTIME))
                         (trans, rot) = self.tf_listener.lookupTransform(
                             i.frame_id, "base_link", rospy.Time(0))
                         dist = math.sqrt(trans[0]*trans[0]+trans[1]*trans[1])
@@ -72,6 +76,10 @@ class navigationAI:
                 closest_left = closest_frames["surmark46104"]
             if (not closest_left is None) and (not closest_frames["surmark950410"] is None):
                 course = WaypointRoute()
+                self.tf_listener.waitForTransform(
+                    closest_left, "map", rospy.Time(0), rospy.Duration(self.WAITTIME))
+                self.tf_listener.waitForTransform(
+                    closest_frames["surmark950410"], "map", rospy.Time(0), rospy.Duration(self.WAITTIME))
                 (leftPos, rot) = self.tf_listener.lookupTransform(
                     closest_left, "map", rospy.Time(0))
                 (rightPos, rot) = self.tf_listener.lookupTransform(
@@ -83,7 +91,8 @@ class navigationAI:
                 self.pub.publish(course)
                 self.state = "moving"
                 self.addressedState[closest_left] = "navigated"
-                print("moving between {} and {}".format(closest_left,closest_frames["surmark950410"]))
+                print("moving between {} and {}".format(
+                    closest_left, closest_frames["surmark950410"]))
             else:
                 verbosePrint("marker find failed, curious mode")
                 # Curiosity
@@ -92,6 +101,8 @@ class navigationAI:
                 minItem = None
                 for i in data.objects:
                     if (i.best_guess == "buoy"):
+                        self.tf_listener.waitForTransform(
+                            i.frame_id, "base_link", rospy.Time(0),rospy.Duration(self.WAITTIME))
                         (trans, rot) = self.tf_listener.lookupTransform(
                             i.frame_id, "base_link", rospy.Time(0))
                         dist = math.sqrt(trans[0]*trans[0]+trans[1]*trans[1])
@@ -101,9 +112,12 @@ class navigationAI:
                 if (not minItem is None):
                     print("curiously inspecting {}".format(minItem))
                     course = WaypointRoute()
-
+                    self.tf_listener.waitForTransform(
+                        minItem, "base_link", rospy.Time(0), rospy.Duration(self.WAITTIME))
                     (relPos, rot) = self.tf_listener.lookupTransform(
                         minItem, "base_link", rospy.Time(0))
+                    self.tf_listener.waitForTransform(
+                        "base_link", "map", rospy.Time(0), rospy.Duration(self.WAITTIME))
                     (basePos, rot) = self.tf_listener.lookupTransform(
                         "base_link", "map", rospy.Time(0))
 

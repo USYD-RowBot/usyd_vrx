@@ -19,7 +19,7 @@ from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 from objhelper.qhull_2d import *
 from objhelper.min_bounding_rect import *
 from objhelper.buoy_classifier import BuoyClassifier
-
+import threading
 
 THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
 DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
@@ -212,7 +212,7 @@ class Obstacle():
     def broadcast(self):
         """Broadcast the object via tf"""
         #self.object.pose.orientation=self.rot
-
+        #print("broadcasting {}".format(self.object.frame_id))
         tf_broadcaster.sendTransform(
         (self.x,self.y,0),
         self.rot,
@@ -432,12 +432,16 @@ if __name__ == "__main__":
 
     count =0
     time_last = rospy.get_time()
+    bgclassify=Thread(None,object_server.classify_objects)
+    bgclassify.start()
     while not rospy.is_shutdown():
         # if count == 10:
         #     object_server.process_map();
         #     object_server.cleanup()
         #     count = 0
-        object_server.classify_objects()
+        if (not bgclassify.is_alive()):
+            bgclassify=Thread(None,object_server.classify_objects)
+            bgclassify.start()
         object_server.broadcast_objects()
         count = count+1
         rate.sleep()
