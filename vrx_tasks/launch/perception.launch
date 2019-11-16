@@ -4,6 +4,7 @@
   <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
       <arg name="world_name" value="perception_task"/>
       <arg name="gui" value="true"/>
+      <arg name="rviz" value="true"/>
   </include>
 
   <include file="$(find vrx_navigation)/launch/lidar_node0.launch">

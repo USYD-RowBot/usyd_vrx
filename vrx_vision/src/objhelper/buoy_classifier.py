@@ -27,9 +27,9 @@ class BuoyClassifier():
 
         self.template_colours = [
             [(169, 71, 65)],                                                   # Conical
-            [(222, 222, 222), (106, 183, 150)],                                # Tophat: (white, green)
+            [(255, 255, 255), (106, 183, 150)],                                # Tophat: (white, green)
             [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
-            [(0, 0, 0)],                                                       # Sphere
+            [(1, 1, 1)],                                                       # Sphere
             [(20, 20, 20)]                                                     # Scan buoy
         ]
 
@@ -66,6 +66,9 @@ class BuoyClassifier():
             del self.template_colours[remove_i[k]]
             del self.template_filename_list[remove_i[k]]
 
+        #### CLASS VARS #####
+        self.centre_colour = None
+
         #print(self.template_labels)
         #print(self.template_colours)
         #print(self.template_filename_list)
@@ -94,84 +97,92 @@ class BuoyClassifier():
         return res2
 
     def centreColour(self, img):
-        '''# Change to HSV colour space
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) 
+
+        #Resize image 
+        scale_factor = 0.5
+        small_img    = cv2.resize(img, (0,0), fx=scale_factor, fy=scale_factor)
+
+        # Change to HSV colour space
+        small_hsv = cv2.cvtColor(small_img, cv2.COLOR_BGR2HSV) 
 
         # Threshold the image to remove unsaturated parts (want to keep the light)
-        lower_colour = np.array([0, 100, 60]) # 0, 140, 60
-        upper_colour = np.array([360, 360, 180])
-        mask = cv2.inRange(hsv, lower_colour, upper_colour) 
+        lower_colour = np.array([0,   150,   0]) # 0   0   100
+        upper_colour = np.array([179, 255, 120]) # 179 255 255
+        base_mask    = cv2.inRange(small_hsv, lower_colour, upper_colour) 
+        lower_colour = np.array([0,   0,    0])
+        upper_colour = np.array([179, 100, 30])
+        black_mask   = cv2.inRange(small_hsv, lower_colour, upper_colour) 
+        main_mask = cv2.bitwise_or(base_mask, black_mask)
 
-        #invert image for blob detection 
-        inverted_img = cv2.bitwise_not(mask)
+        lower_colour = np.array([0, 0, 0]) # hue 92 - 148 is blue
+        upper_colour = np.array([90, 255, 255]) 
+        anti_blue1 = cv2.inRange(small_hsv, lower_colour, upper_colour)
+        lower_colour = np.array([150, 0, 0])   
+        upper_colour = np.array([179, 255, 255])
+        anti_blue2 = cv2.inRange(small_hsv, lower_colour, upper_colour) 
+        anti_blue = cv2.bitwise_or(anti_blue1, anti_blue2) 
 
-        blob_min_area=3
-        blob_min_int=.5
-        blob_max_int=.95
-        blob_th_step=10
+        combined_mask = cv2.bitwise_or(anti_blue, main_mask)
+        inverted_img  = cv2.bitwise_not(combined_mask)
 
-        # apply a gaussian blur over the image to create a more circular shape
-        # for blob detection 
-        blurred_img = cv2.blur(inverted_img,(150, 100))
-        _,rounded_img = cv2.threshold(blurred_img,127,255,cv2.THRESH_BINARY)
-
-        #resize images 
-        small_img_binary = cv2.resize(rounded_img, (0,0), fx=0.4, fy=0.4)
-        small_img = cv2.resize(img, (0,0), fx=0.4, fy=0.4)
+        # apply a gaussian blur over the image to create a more bulbous shape for blob detection 
+        #blurred_img = cv2.blur(mask,(64, 16))
+        #_,rounded_img = cv2.threshold(blurred_img,254,255,cv2.THRESH_BINARY)
+        
+        border_w = 2
+        bordered_img = cv2.copyMakeBorder(inverted_img, border_w, border_w, border_w, border_w, # Add white border
+        cv2.BORDER_CONSTANT, value=(255, 255, 255))
 
         params = cv2.SimpleBlobDetector_Params()
 
-        # Change thresholds
-        params.minThreshold = 10
-        params.maxThreshold = 200
+        #params.minThreshold = 10
+        #params.maxThreshold = 200
 
-        # Filter by Area.
         params.filterByArea = True
-        params.minArea = 10
+        params.minArea = 20
 
-        # Filter by Circularity
-        params.filterByCircularity = True
-        params.minCircularity = 0.1
+        #params.filterByCircularity = True
+        #params.minCircularity = 0.1
 
-        # Filter by Convexity
-        params.filterByConvexity = True
-        params.minConvexity = 0.1
+        params.filterByConvexity = False
+        #params.minConvexity = 0.1
 
-        # Filter by Inertia
-        params.filterByInertia = True
-        params.minInertiaRatio = 0.3
+        params.filterByInertia = False
+        #params.minInertiaRatio = 0.3
 
-        # Set up the detector with default parameters.
-        detector = cv2.SimpleBlobDetector_create()
-
-        # Detect blobs.
-        keypoints = detector.detect(small_img_binary)
-
-        # Draw detected blobs as red circles.
-        #cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle
-        #corresponds to the size of blob
-        im_with_keypoints = cv2.drawKeypoints(small_img_binary, keypoints,
+        detector = cv2.SimpleBlobDetector_create(params)
+        keypoints = detector.detect(bordered_img)
+        im_with_keypoints = cv2.drawKeypoints(bordered_img, keypoints,
                     np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
         # Show keypoints
-        cv2.imshow("Keypoints", im_with_keypoints)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        #for i in range(len(keypoints)):
-        x = keypoints[0].pt[0] # i is the index of the blob you want to get the position
-        y = keypoints[0].pt[1]
-        centre = small_img[int(x), int(y)] # only take the first blob centre, there may be others 
-        return tuple(centre)'''
+        #cv2.imshow("Keypoints", im_with_keypoints)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
 
-        rows, columns, _ = np.shape(img)
-        centre = img[int(rows/2), int(columns/2)]
+        if len(keypoints) == 0: # No blob found, assume this is ocean
+            '''lower_colour = np.array([0, 127, 0]) # hue 92 - 148 is blue
+            upper_colour = np.array([92, 255, 255]) 
+            anti_blue1 = cv2.inRange(hsv, lower_colour, upper_colour)             
+            lower_colour = np.array([148, 127, 0])   
+            upper_colour = np.array([179, 255, 255])
+            anti_blue2 = cv2.inRange(hsv, lower_colour, upper_colour) 
+            anti_blue = cv2.bitwise_or(anti_blue1, anti_blue2)'''
+            return None
+
+        x = keypoints[0].pt[0] # Get centre coords
+        y = keypoints[0].pt[1]
+
+        #scale_factor_inv = 1.0/scale_factor
+        #centre = img[int(np.floor(scale_factor_inv*(y-border_w))), int(np.floor(scale_factor_inv*(x-border_w)))]
+        centre = small_img[int(y-border_w), int(x-border_w)]
         return tuple(centre)
 
     def getObjectMask(self, img):
         # Separate buoy cluster and make white
-        centre_colour      = self.centreColour(img)
-        centre_colour_low  = np.subtract(centre_colour, (1, 1, 1))
-        centre_colour_high = np.add(centre_colour, (1, 1, 1))
+        thres = 5
+        centre_colour_low  = np.subtract(self.centre_colour, (thres, thres, thres))
+        centre_colour_high = np.add(self.centre_colour,      (thres, thres, thres))
         object_mask = cv2.inRange(img, centre_colour_low, centre_colour_high)
         return object_mask
 
@@ -196,6 +207,10 @@ class BuoyClassifier():
         # Crop image to buoy
         cont_return = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
+        if len(contours) == 0:
+            print("Couldn't find contours for image mask. Mask might not include a buoy.")
+            return None, None
 
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
@@ -240,15 +255,23 @@ class BuoyClassifier():
 
     def normalise(self, colour):
         ''' Normalises RGB colour. '''
-
         colour_sum = sum(colour)
-        if colour_sum > 0:
-            normalised_colour = (int(255*colour[0]/colour_sum),
-                int(255*colour[1]/colour_sum), int(255*colour[2]/colour_sum))
-        else:
-            normalised_colour = colour
+        normalised_colour = (int(255*colour[0]/colour_sum),
+            int(255*colour[1]/colour_sum), int(255*colour[2]/colour_sum))
 
-        return normalised_colour
+        gray_tolerance = 21 # Check if this is a grayscale colour
+        colour_average = int(float(colour_sum)/3)
+        sum_gray_error = 0
+        for component in colour:
+            sum_gray_error += np.absolute(component - colour_average)
+
+        if sum_gray_error < gray_tolerance: # We have a grayscale
+            if colour_sum < 150: # < (50, 50, 50) black
+                return (0, 0, 0)
+            else:                # > (50, 50, 50) white
+                return (255, 255, 255)
+        else:
+            return normalised_colour # Forget grayscale, just return normalised
 
     def colourConfidenceRGB(self, colour1, colour2):
         ''' Calculates Euclidean distance between two RGB colours. Returns distance as
@@ -320,9 +343,9 @@ class BuoyClassifier():
 
         suffixes   = ["_a3", "_a5", "_a7"]
         #radii     = [0.238, 0.370, 0.550] # Polyform radii in metres
-        thresholds = [0.304, 0.460]
+        thresholds = [0.280, 0.440]        # Original [0.304, 0.460]
 
-        theta  = np.arctan((float(obj_width)/2)/self.focal_length)
+        theta = np.arctan((float(obj_width)/2)/self.focal_length)
         polyform_radius = float(distance)*np.sin(theta)
 
         return_label = "polyform"
@@ -336,24 +359,29 @@ class BuoyClassifier():
 
         return return_label
 
-
     def classify(self, img, distance):
 
-        clustered_img          = self.kMeans(img)
-        object_mask            = self.getObjectMask(clustered_img)
-        cropped_img, obj_width = self.rotateCropScale(object_mask)
-        mirrored_img           = self.mirrorCombine(cropped_img)
+        clustered_img = self.kMeans(img)
+        self.centre_colour = self.centreColour(clustered_img)
+        
+        if self.centre_colour is not None:
+            object_mask            = self.getObjectMask(clustered_img)
 
-        # Classify the buoy
-        label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centreColour(img)))
+            cropped_img, obj_width = self.rotateCropScale(object_mask)
 
-        # If polyform, narrow down size
-        if label == "polyform":
-            label = self.getPolyformType(obj_width, distance)
+            if cropped_img is not None:
+                mirrored_img = self.mirrorCombine(cropped_img)
 
-        print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
+                # Classify the buoy
+                label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centre_colour))
 
-        #cv2.imshow('Shape',mirrored_img)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
-        return label, conf_shape*conf_colour
+                # If polyform, narrow down size
+                if label == "polyform":
+                    label = self.getPolyformType(obj_width, distance)
+
+                print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
+                return label, conf_shape*conf_colour
+            else:
+                return "", 0.0
+        else:
+            return "", 0.0
