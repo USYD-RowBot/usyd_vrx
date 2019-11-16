@@ -7,11 +7,11 @@
          <remap from="cloud_in" to="sensors/lidars/lidar_wamv/points"/>
          <remap from="scan" to="sensors/lidars/lidar/scan"/>
          <param name="range_min" value="3"/>
+         <param name="range_max" value="40"/>
+         <param name="angle_min" value="-1.0"/>
+         <param name="angle_max" value="1.0"/>
          <!--param name="min_height" value="-1.5"/>
          <param name="angle_increment" value = "0.00360067925"/>
-         <param name="range_max" value="100"/>
-         <param name="angle_min" value="-1.5"/>
-         <param name="angle_max" value="1.5"/>
          <param name="use_inf" value="false"/-->
 
          <rosparam>min_height: -3

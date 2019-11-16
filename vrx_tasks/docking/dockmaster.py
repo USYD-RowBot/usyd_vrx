@@ -58,7 +58,7 @@ class DockMaster():
     #self.scan_code()
 
     self.spinOnSpot(1)
-    #self.circleObject("dock")
+    self.circleObject("dock")
 
     placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock(placard_symbol)
