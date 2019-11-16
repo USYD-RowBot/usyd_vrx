@@ -6,25 +6,24 @@
       <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
          <remap from="cloud_in" to="sensors/lidars/lidar_wamv/points"/>
          <remap from="scan" to="sensors/lidars/lidar/scan"/>
+         <param name="range_min" value="3"/>
          <!--param name="min_height" value="-1.5"/>
          <param name="angle_increment" value = "0.00360067925"/>
          <param name="range_max" value="100"/>
-         <param name="range_min" value="3"/>
          <param name="angle_min" value="-1.5"/>
          <param name="angle_max" value="1.5"/>
          <param name="use_inf" value="false"/-->
 
-
          <rosparam>min_height: -3
 angle_increment: 0.00872664625
 range_max: 100.0
-range_min: 2
-angle_min: -1.5
-angle_max: 1.5
+range_min: 2.5
+angle_min: -1.2
+angle_max: 1.2
 use_inf: false </rosparam>
 
        </node>
-   <node pkg="vrx_navigation" type="mapping" name="mapping" output="screen">
+   <node pkg="vrx_navigation" type="mapping" name="mapping" output="screen" launch-prefix="gdb -ex run --args">
      <param name="~width" value="1024"/>
      <param name="~resolution" value="0.4"/>
      <param name="~offset_x" value="+0.0"/>

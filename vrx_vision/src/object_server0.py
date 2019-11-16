@@ -36,9 +36,11 @@ MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
 if __name__ == "__main__":
     rospy.init_node("object_server")
+    exclusion_list = rospy.get_param("~excluded_buoys")
+
     tf_broadcaster = tf.TransformBroadcaster()
     tf_listener = tf.TransformListener()
-    classifier = BuoyClassifier()
+    classifier = BuoyClassifier(exclusion_list, 1.3962634, 1280)
     bridge = CvBridge()
     p_pub = rospy.Publisher("/vrx/perception/landmark", GeoPoseStamped, queue_size="10")
 
@@ -202,9 +204,20 @@ class Obstacle():
             p_pub.publish(message)
             print("PUBLISHED OBJECT")
         except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            pass
+            return
 
-        
+        inFormat = pyproj.Proj("+init=EPSG:4326")
+        zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
+        lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
+
+        message = GeoPoseStamped()
+        message.pose.position.latitude = lat
+        message.pose.position.longitude = lon
+
+        message.header.frame_id = type
+
+        p_pub.publish(message)
+        print("PUBLISHED OBJECT")
 
 
 
@@ -238,37 +251,23 @@ class ObjectServer():
         self.objects = []
         self.map = OccupancyGrid()
         self.cumulative_count=0
-
         self.cameras = {}
-
-
-
-
 
     def callback(self,my_map):
         """Callback when a map is called."""
         #print("Recieved Map")
         self.map = my_map
 
-
     def cameraInit(self):
         self.cameras["left"]=Camera("left","wamv/left_camera_link")
         self.cameras["middle"]=Camera("middle","wamv/middle_camera_link")
         self.cameras["right"]=Camera("right","wamv/right_camera_link")
-
-
-
 
     def cameraCallback(self,image,type):
         """Call back when image is recieved"""
         cv_image = bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
 
         self.cameras[type].image = cv_image
-
-
-
-
-
 
     def process_map(self):
         #print("Processing map");
@@ -359,6 +358,7 @@ class ObjectServer():
                 #print(max_dist,x,y,frame_id,frame_id)
                 self.add_object(clusters[cluster],max_dist,x,y,frame_id)
                 #Append threw new object to the servers object list.
+
     def add_object(self,points,rad,x,y,frame_id):
         my_obj = Obstacle(self,frame_id,self.cameras)
         my_obj.x = x
@@ -370,7 +370,6 @@ class ObjectServer():
         msg_obj.frame_id = frame_id
         my_obj.object = msg_obj
         self.objects.append(my_obj)
-
 
     def classify_objects(self):
         """Classify the objects found so far using appropiate cameras."""
@@ -384,7 +383,6 @@ class ObjectServer():
         for i in self.objects:
             i.classify()
         #rospy.loginfo("Classifyed clusters")
-
 
     def broadcast_objects(self):
         """Broadcast the objects found"""
@@ -425,7 +423,6 @@ if __name__ == "__main__":
     middle = rospy.Subscriber("sensors/cameras/middle_camera/image_raw",Image,object_server.cameraCallback,"middle")
     left = rospy.Subscriber("sensors/cameras/right_camera/image_raw",Image,object_server.cameraCallback,"right")
 
-
     rospy.sleep(1)
     thread = Thread(target=object_server.thread_func)
     thread.start()
@@ -447,4 +444,5 @@ if __name__ == "__main__":
 
             print("Hz = " + str(1/dt))
         time_last = rospy.get_time()
+
     thread.join()

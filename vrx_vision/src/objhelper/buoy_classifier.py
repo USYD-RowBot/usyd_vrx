@@ -4,6 +4,75 @@ import rospkg
 
 class BuoyClassifier():
 
+    def __init__(self, exclusion_list, hfov, cam_x_px):
+        '''
+            exclusion list: list of strings detailing which buoys should be removed from search list
+            hfov: camera horizontal field of view
+            cam_x_px: x resolution of camera
+        '''
+
+        ##### CAMERA PARAMS #####
+        self.focal_length = (float(cam_x_px)/2)/np.tan(float(hfov)/2)
+
+        ##### IMAGE TEMPLATE STUFF #####
+        rospack = rospkg.RosPack()
+        pre = rospack.get_path('vrx_vision')+"/template_images/"
+
+        self.template_filename_list = [
+            pre+"template_conical.png",
+            pre+"template_tophat.png",
+            pre+"template_totem.png",
+            pre+"template_sphere.png",
+            pre+"template_scan.png"]
+
+        self.template_colours = [
+            [(169, 71, 65)],                                                   # Conical
+            [(255, 255, 255), (106, 183, 150)],                                # Tophat: (white, green)
+            [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
+            [(1, 1, 1)],                                                       # Sphere
+            [(20, 20, 20)]                                                     # Scan buoy
+        ]
+
+        self.template_labels = [
+            ["surmark_950410"],                                                        # Conical
+            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
+            ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
+            ["polyform"],                                                              # Sphere TODO estimate size
+            ["scan_buoy"]                                                              # Scan buoy
+        ]
+
+        ##### REMOVE EXCLUDED BUOYS #####
+        template_list_length = len(self.template_labels)
+        remove_i = []
+
+        for i in range(template_list_length):
+            category_length = len(self.template_labels[i])
+            remove_j = []
+
+            for j in range(category_length):
+                for excluded_buoy in exclusion_list:
+                    if self.template_labels[i][j] == excluded_buoy:
+                        remove_j.append(j) # Mark buoy for deletion
+
+            if len(remove_j) == category_length:
+                remove_i.append(i) # Mark category for deletion
+            else:
+                for k in range(len(remove_j)-1, -1, -1):
+                    del self.template_labels[i][remove_j[k]] # Delete particular buoy
+                    del self.template_colours[i][remove_j[k]]
+
+        for k in range(len(remove_i)-1, -1, -1): # Delete whole category
+            del self.template_labels[remove_i[k]]
+            del self.template_colours[remove_i[k]]
+            del self.template_filename_list[remove_i[k]]
+
+        #### CLASS VARS #####
+        self.centre_colour = None
+
+        #print(self.template_labels)
+        #print(self.template_colours)
+        #print(self.template_filename_list)
+
     def kMeans(self, img):
 
         #img = cv2.resize(img, (500, 500))
@@ -28,15 +97,93 @@ class BuoyClassifier():
         return res2
 
     def centreColour(self, img):
-        rows, columns, _ = np.shape(img)
-        centre = img[int(rows/2), int(columns/2)]
-        return tuple(centre)
+
+        #Resize image
+        scale_factor = 0.5
+        small_img    = cv2.resize(img, (0,0), fx=scale_factor, fy=scale_factor)
+
+        # Change to HSV colour space
+        small_hsv = cv2.cvtColor(small_img, cv2.COLOR_BGR2HSV)
+
+        # Threshold the image to remove unsaturated parts (want to keep the light)
+        lower_colour = np.array([0,   150,   0]) # 0   0   100
+        upper_colour = np.array([179, 255, 255]) # 179 255 255
+        base_mask    = cv2.inRange(small_hsv, lower_colour, upper_colour)
+        lower_colour = np.array([0,   0,    0])
+        upper_colour = np.array([179, 100, 30])
+        black_mask   = cv2.inRange(small_hsv, lower_colour, upper_colour)
+        main_mask = cv2.bitwise_or(base_mask, black_mask)
+
+        lower_colour = np.array([0, 0, 0]) # hue 92 - 148 is blue
+        upper_colour = np.array([90, 255, 255])
+        anti_blue1 = cv2.inRange(small_hsv, lower_colour, upper_colour)
+        lower_colour = np.array([150, 0, 0])
+        upper_colour = np.array([179, 255, 255])
+        anti_blue2 = cv2.inRange(small_hsv, lower_colour, upper_colour)
+        anti_blue = cv2.bitwise_or(anti_blue1, anti_blue2)
+
+        combined_mask = cv2.bitwise_or(anti_blue, main_mask)
+        inverted_img  = cv2.bitwise_not(combined_mask)
+
+        # apply a gaussian blur over the image to create a more bulbous shape for blob detection
+        #blurred_img = cv2.blur(mask,(64, 16))
+        #_,rounded_img = cv2.threshold(blurred_img,254,255,cv2.THRESH_BINARY)
+
+        border_w = 2
+        bordered_img = cv2.copyMakeBorder(inverted_img, border_w, border_w, border_w, border_w, # Add white border
+        cv2.BORDER_CONSTANT, value=(255, 255, 255))
+
+        params = cv2.SimpleBlobDetector_Params()
+
+        #params.minThreshold = 10
+        #params.maxThreshold = 200
+
+        params.filterByArea = True
+        params.minArea = 20
+
+        #params.filterByCircularity = True
+        #params.minCircularity = 0.1
+
+        params.filterByConvexity = False
+        #params.minConvexity = 0.1
+
+        params.filterByInertia = False
+        #params.minInertiaRatio = 0.3
+
+        detector = cv2.SimpleBlobDetector_create(params)
+        keypoints = detector.detect(bordered_img)
+        im_with_keypoints = cv2.drawKeypoints(bordered_img, keypoints,
+                    np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+        # Show keypoints
+        #cv2.imshow("Keypoints", im_with_keypoints)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
+        debug = base_mask
+        if len(keypoints) == 0: # No blob found, assume this is ocean
+            '''lower_colour = np.array([0, 127, 0]) # hue 92 - 148 is blue
+            upper_colour = np.array([92, 255, 255])
+            anti_blue1 = cv2.inRange(hsv, lower_colour, upper_colour)
+            lower_colour = np.array([148, 127, 0])
+            upper_colour = np.array([179, 255, 255])
+            anti_blue2 = cv2.inRange(hsv, lower_colour, upper_colour)
+            anti_blue = cv2.bitwise_or(anti_blue1, anti_blue2)'''
+            return None,debug
+
+        x = keypoints[0].pt[0] # Get centre coords
+        y = keypoints[0].pt[1]
+
+        #scale_factor_inv = 1.0/scale_factor
+        #centre = img[int(np.floor(scale_factor_inv*(y-border_w))), int(np.floor(scale_factor_inv*(x-border_w)))]
+        centre = small_img[int(y-border_w), int(x-border_w)]
+
+        return tuple(centre),debug
 
     def getObjectMask(self, img):
         # Separate buoy cluster and make white
-        centre_colour      = self.centreColour(img)
-        centre_colour_low  = np.subtract(centre_colour, (1, 1, 1))
-        centre_colour_high = np.add(centre_colour, (1, 1, 1))
+        thres = 5
+        centre_colour_low  = np.subtract(self.centre_colour, (thres, thres, thres))
+        centre_colour_high = np.add(self.centre_colour,      (thres, thres, thres))
         object_mask = cv2.inRange(img, centre_colour_low, centre_colour_high)
         return object_mask
 
@@ -59,7 +206,13 @@ class BuoyClassifier():
 
     def rotateCropScale(self, img):
         # Crop image to buoy
-        _, contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
+        if len(contours) == 0:
+            print("Couldn't find contours for image mask. Mask might not include a buoy.")
+            return None, None
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -74,10 +227,14 @@ class BuoyClassifier():
         # Rotate image to align with major axis of buoy
         rot_mat = cv2.getRotationMatrix2D(center, np.degrees(-theta), 1.0)
         largest_dim  = max(cropped_img.shape)
-        rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim, largest_dim))
+        rotated_img = cv2.warpAffine(cropped_img, rot_mat, (largest_dim,
+                 largest_dim))
 
         # Crop image again, since rotation changes positioning
-        _, contours, _ = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cont_return = cv2.findContours(rotated_img, cv2.RETR_EXTERNAL,
+                 cv2.CHAIN_APPROX_SIMPLE)
+        contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
+
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
         x, y, w, h = cv2.boundingRect(best_cnt)
         cropped_img = rotated_img[y:y+h, x:x+w] # Crop rectangle around buoy
@@ -85,7 +242,7 @@ class BuoyClassifier():
         # Scale image to constant size
         width = 100
         scaled_img = cv2.resize(cropped_img, (width, width))
-        return scaled_img
+        return scaled_img, w
 
     def mirrorCombine(self, img):
         flipped_img = cv2.flip(img, 1)
@@ -99,15 +256,23 @@ class BuoyClassifier():
 
     def normalise(self, colour):
         ''' Normalises RGB colour. '''
-
         colour_sum = sum(colour)
-        if colour_sum > 0:
-            normalised_colour = (int(255*colour[0]/colour_sum),
-                int(255*colour[1]/colour_sum), int(255*colour[2]/colour_sum))
-        else:
-            normalised_colour = colour
+        normalised_colour = (int(255*colour[0]/colour_sum),
+            int(255*colour[1]/colour_sum), int(255*colour[2]/colour_sum))
 
-        return normalised_colour
+        gray_tolerance = 21 # Check if this is a grayscale colour
+        colour_average = int(float(colour_sum)/3)
+        sum_gray_error = 0
+        for component in colour:
+            sum_gray_error += np.absolute(component - colour_average)
+
+        if sum_gray_error < gray_tolerance: # We have a grayscale
+            if colour_sum < 150: # < (50, 50, 50) black
+                return (0, 0, 0)
+            else:                # > (50, 50, 50) white
+                return (255, 255, 255)
+        else:
+            return normalised_colour # Forget grayscale, just return normalised
 
     def colourConfidenceRGB(self, colour1, colour2):
         ''' Calculates Euclidean distance between two RGB colours. Returns distance as
@@ -148,66 +313,77 @@ class BuoyClassifier():
         ''' Compares input img with template library and returns string name
             of highest confidence match type, along with confidence. Colour is used to
             determine exact buoy model.
-
             return (string, float, float): (label, conf_label, conf_colour), where
                 confidences are from 0 to 1.
         '''
 
-        rospack = rospkg.RosPack()
-        pre = rospack.get_path('vrx_vision')+"/template_images/"
-
-        template_filename_list = [
-            pre+"template_conical.png", pre+"template_tophat.png", pre+"template_totem.png", pre+"template_sphere.png"]
-
-        # (106, 183, 150)
-        template_colours = [
-            [(169, 71, 65)],                                                   # Conical
-            [(222, 222, 222), (106, 183, 150)],                                # Tophat: (white, green)
-            [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
-            [(0, 0, 0)]                                                        # Sphere
-        ]
-
-        template_labels = [
-            ["surmark_950410"],                                                        # Conical
-            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
-            ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
-            ["polyform_a5"]                                                             # Sphere TODO estimate size
-        ]
-
         label_confidences  = []
         colour_confidences = []
 
-        for template_filename in template_filename_list: # Compare img with templates
+        for template_filename in self.template_filename_list: # Compare img with templates
             template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
             label_confidences.append(self.percentSimilar(template_img, img))
 
             #cv2.imshow('K-Means Clustering', template_img)
             #cv2.waitKey(0)
-        #print(label_confidences)
+        print(label_confidences)
         conf_shape       = max(label_confidences) # Get highest confidence label and index
         best_shape_index = np.argmax(label_confidences)
 
-        for template_colour in template_colours[best_shape_index]: # Compare colour with templates
+        for template_colour in self.template_colours[best_shape_index]: # Compare colour with templates
             colour_confidences.append(self.colourConfidenceRGB(template_colour, colour))
 
         conf_colour       = max(colour_confidences) # Get highest confidence colour and index
         best_colour_index = np.argmax(colour_confidences)
 
-        label = template_labels[best_shape_index][best_colour_index] # Get best label
+        label = self.template_labels[best_shape_index][best_colour_index] # Get best label
         return label, conf_shape, conf_colour
+
+    def getPolyformType(self, obj_width, distance):
+
+        suffixes   = ["_a3", "_a5", "_a7"]
+        #radii     = [0.238, 0.370, 0.550] # Polyform radii in metres
+        thresholds = [0.280, 0.440]        # Original [0.304, 0.460]
+
+        theta = np.arctan((float(obj_width)/2)/self.focal_length)
+        polyform_radius = float(distance)*np.sin(theta)
+
+        return_label = "polyform"
+
+        if polyform_radius < thresholds[0]:   # a3
+            return_label += suffixes[0]
+        elif polyform_radius < thresholds[1]: # a5
+            return_label += suffixes[1]
+        else:                                 # a7
+            return_label += suffixes[2]
+
+        return return_label
 
     def classify(self, img, distance):
 
         clustered_img = self.kMeans(img)
-        object_mask   = self.getObjectMask(clustered_img)
-        cropped_img   = self.rotateCropScale(object_mask)
-        mirrored_img  = self.mirrorCombine(cropped_img)
+        self.centre_colour, debug = self.centreColour(clustered_img)
 
-        # Classify the buoy
-        label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centreColour(img)))
-        #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s" % (label, conf_shape, conf_colour))
+        if self.centre_colour is not None:
+            object_mask            = self.getObjectMask(clustered_img)
 
-        #cv2.imshow('Shape',mirrored_img)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
-        return label, conf_shape*conf_colour
+            cropped_img, obj_width = self.rotateCropScale(object_mask)
+
+            if cropped_img is not None:
+                mirrored_img = self.mirrorCombine(cropped_img)
+
+                # Classify the buoy
+                label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centre_colour))
+
+                # If polyform, narrow down size
+                if label == "polyform":
+                    label = self.getPolyformType(obj_width, distance)
+
+                print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
+                return label, conf_shape*conf_colour, clustered_img
+            else:
+                print("No cropped image returned")
+                return "", 0.0, clustered_img
+        else:
+            print("No centre colour return:")
+            return "", 0.0, clustered_img

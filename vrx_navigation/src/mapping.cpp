@@ -97,6 +97,15 @@ public:
     }
 
   }
+
+  int clampMax(int num, int max)
+  {
+    if (num > max)
+      return max;
+    else
+      return num;
+  }
+
   void generateMap(){
       //Given laserscans and map, attempt to generate the map.
       //TODO Check if first scan is has been recieved.
@@ -122,6 +131,7 @@ public:
     //Amount of points that need to be calculated.
     int c = int((angle_max - angle_min)/angle_increment);
 
+    int index_max = map.info.width*map.info.width - 1;
 
     ROS_DEBUG("Running %d scan points", c);
     //Iterate through each point.
@@ -144,11 +154,11 @@ public:
       //Determing detected occpued space from scan relative to current position.
       int x = int(odom_x + (range/resolution)*cos(angle));
       int y = int(odom_y + (range/resolution)*sin(angle));
-      int index = y*width + x;
-      int index2 = odom_y*width + odom_x;
+      int index  = clampMax(y*width + x, index_max);
+      int index2 = clampMax(odom_y*width + odom_x, index_max);
 
-
-      if (range < range_max && range > range_min){
+      if (range < range_max && range > range_min)
+      {
         ROS_DEBUG("RANGE: %f angle: %f", range,angle);
 
 
@@ -165,8 +175,9 @@ public:
         for (int j = int(range/resolution); j>0;j--){
           int x = int(odom_x + float(j)*cos(angle));
           int y = int(odom_y + float(j)*sin(angle));
-          int index = y*width + x;
-          if (map.data[index] > decrement_value){
+          int index = clampMax(y*width + x, index_max);
+          if (map.data[index] > decrement_value)
+          {
             if ((float(j)*resolution) <= 12 && (float(j)*resolution) >= 5){
               map.data[index] = map.data[index]-decrement_value;
             }
@@ -177,14 +188,14 @@ public:
         }
       }
       else{
-        float clear_range = 20;
+        float clear_range = 30;
 
         for (int j = int(clear_range/resolution); j>0;j--){
           int x = int(odom_x + float(j)*cos(angle));
           int y = int(odom_y + float(j)*sin(angle));
-          int index = y*width + x;
-          if (map.data[index] > decrement_value){
-
+          int index = clampMax(y*width + x, index_max);
+          if (map.data[index] > decrement_value)
+          {
             //If distance is < clear range and > 5
             if ((float(j)*resolution) <= clear_range && (float(j)*resolution) >= 5){
               map.data[index] = map.data[index]-decrement_value;
