@@ -49,14 +49,14 @@ class navigationAI:
             verbosePrint("still,proceeding")
             # Find closest unnavigated red and green
             closest_ranges = {
-                "surmark46104": 1000,
-                "surmark950400": 1000,
-                "surmark950410": 1000
+                "surmark_46104": 1000,
+                "surmark_950400": 1000,
+                "surmark_950410": 1000
             }
             closest_frames = {
-                "surmark46104": None,
-                "surmark950400": None,
-                "surmark950410": None
+                "surmark_46104": None,
+                "surmark_950400": None,
+                "surmark_950410": None
             }
             for i in data.objects:
                 if not((i.frame_id in self.addressedState) and (self.addressedState[i.frame_id] == "navigated")):
@@ -70,20 +70,20 @@ class navigationAI:
                             closest_ranges[i.best_guess] = dist
                             closest_frames[i.best_guess] = i.frame_id
             closest_left = None
-            if (closest_ranges["surmark950400"] < closest_ranges["surmark46104"]):
-                closest_left = closest_frames["surmark950400"]
+            if (closest_ranges["surmark_950400"] < closest_ranges["surmark_46104"]):
+                closest_left = closest_frames["surmark_950400"]
             else:
-                closest_left = closest_frames["surmark46104"]
-            if (not closest_left is None) and (not closest_frames["surmark950410"] is None):
+                closest_left = closest_frames["surmark_46104"]
+            if (not closest_left is None) and (not closest_frames["surmark_950410"] is None):
                 course = WaypointRoute()
                 self.tf_listener.waitForTransform(
                     closest_left, "map", rospy.Time(0), rospy.Duration(self.WAITTIME))
                 self.tf_listener.waitForTransform(
-                    closest_frames["surmark950410"], "map", rospy.Time(0), rospy.Duration(self.WAITTIME))
+                    closest_frames["surmark_950410"], "map", rospy.Time(0), rospy.Duration(self.WAITTIME))
                 (leftPos, rot) = self.tf_listener.lookupTransform(
                     closest_left, "map", rospy.Time(0))
                 (rightPos, rot) = self.tf_listener.lookupTransform(
-                    closest_frames["surmark950410"], "map", rospy.Time(0))
+                    closest_frames["surmark_950410"], "map", rospy.Time(0))
                 midpoint = Waypoint()
                 midpoint.pose.position.x = (leftPos[0]+rightPos[0])/2
                 midpoint.pose.position.y = (leftPos[1]+rightPos[1])/2
@@ -92,7 +92,7 @@ class navigationAI:
                 self.state = "moving"
                 self.addressedState[closest_left] = "navigated"
                 print("moving between {} and {}".format(
-                    closest_left, closest_frames["surmark950410"]))
+                    closest_left, closest_frames["surmark_950410"]))
             else:
                 verbosePrint("marker find failed, curious mode")
                 # Curiosity

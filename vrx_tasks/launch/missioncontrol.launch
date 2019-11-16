@@ -23,8 +23,8 @@
     <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
 
 
-    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
-    </node>
+    <!--node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+</node-->
 
 
     <!-- Vision translation -->

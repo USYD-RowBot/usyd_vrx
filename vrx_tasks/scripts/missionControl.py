@@ -2,14 +2,15 @@
 
 # Checks info messages to determine what needs to be done.
 
-from components import geoPathToPath, geoPoseToPose, poseToCourse, navigationAI
+from components import geoPathToPath, geoPoseToPose, poseToCourse
+from components.navigation_task import NavigationTask
 import rospy
 from vrx_msgs.msg import Task
 params = {
     "taskTopic": "/vrx/task/info",
 }
 
-rospy.init_node("missionControl.py",anonymous=True)
+rospy.init_node("missionControl")
 
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
@@ -29,7 +30,10 @@ def cb(data):
         elif data.name=="perception":
             pass
         elif data.name=="navigation_course":
-            navigationAI.navigationAI()
+            print("DOING NAVIGATION")
+            nav_task = NavigationTask()
+            nav_task.startNavigation()
+
             pass
         elif data.name=="scan":
             pass
