@@ -160,12 +160,12 @@ class Obstacle():
                         crop_img = camera.image[(buoy_pixel_y1):(buoy_pixel_y2), (buoy_pixel_x1):(buoy_pixel_x2)]
                         #SEND FOR CLASSIFICATION
                         #image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
-                        if camera.name == "middle" :
-                            cv2.imshow("middle_cropped", crop_img)
-                            cv2.waitKey(1)
-                            self.image = crop_img
-                            self.image_dist = dist
-                            self.image_classified = False;
+                        #if camera.name == "middle" :
+                            #cv2.imshow("middle_cropped", crop_img)
+                            #cv2.waitKey(1)
+                        self.image = crop_img
+                        self.image_dist = dist
+                        self.image_classified = False;
 
                             #type, confidence = classifier.classify(crop_img, dist)
                         #confidence = res.confidence
@@ -199,18 +199,21 @@ class Obstacle():
             return
 
         try:
-            type, confidence = classifier.classify(self.image, self.image_dist)
-        except:
+            type, confidence,debug = classifier.classify(self.image, self.image_dist)
+        except Exception as e:
             print("ERROR CLASSIIYING");
-            print(self.image.shape)
+            print(e)
             return
             #cv2.imshow("Error", self.image)
             #cv2.waitKey(1)
+
         self.image_classified = True
         if len(self.object.confidences) == 0 or confidence > self.object.confidences[0]:
             self.object.types = [type]
             self.object.best_guess = type
             self.object.confidences = [confidence]
+            self.debug_image = debug
+
         else:
             pass
 
@@ -405,8 +408,8 @@ class ObjectServer():
         images = []
         for i in self.objects:
             i.classify_image()
-            if i.image is not None:
-                i2 = i.image.copy()
+            if i.debug_image is not None:
+                i2 = i.debug_image.copy()
                 i2 = cv2.resize(i2,(200,200))
                 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -420,6 +423,7 @@ class ObjectServer():
                 else:
                     text = i.object.best_guess
                 text = text + " " + str(i.object.confidences[0])
+                #i2 = cv2.cvtColor(i2,cv2.COLOR_GRAY2RGB)
                 cv2.putText(i2,text,(0,20), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
                 images.append(i2)
         montages = build_montages(images,(200,200),(7,3))

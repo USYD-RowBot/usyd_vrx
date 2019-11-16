@@ -107,7 +107,7 @@ class BuoyClassifier():
 
         # Threshold the image to remove unsaturated parts (want to keep the light)
         lower_colour = np.array([0,   150,   0]) # 0   0   100
-        upper_colour = np.array([179, 255, 120]) # 179 255 255
+        upper_colour = np.array([179, 255, 255]) # 179 255 255
         base_mask    = cv2.inRange(small_hsv, lower_colour, upper_colour)
         lower_colour = np.array([0,   0,    0])
         upper_colour = np.array([179, 100, 30])
@@ -159,7 +159,7 @@ class BuoyClassifier():
         #cv2.imshow("Keypoints", im_with_keypoints)
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
-
+        debug = base_mask
         if len(keypoints) == 0: # No blob found, assume this is ocean
             '''lower_colour = np.array([0, 127, 0]) # hue 92 - 148 is blue
             upper_colour = np.array([92, 255, 255])
@@ -168,7 +168,7 @@ class BuoyClassifier():
             upper_colour = np.array([179, 255, 255])
             anti_blue2 = cv2.inRange(hsv, lower_colour, upper_colour)
             anti_blue = cv2.bitwise_or(anti_blue1, anti_blue2)'''
-            return None
+            return None,debug
 
         x = keypoints[0].pt[0] # Get centre coords
         y = keypoints[0].pt[1]
@@ -176,7 +176,8 @@ class BuoyClassifier():
         #scale_factor_inv = 1.0/scale_factor
         #centre = img[int(np.floor(scale_factor_inv*(y-border_w))), int(np.floor(scale_factor_inv*(x-border_w)))]
         centre = small_img[int(y-border_w), int(x-border_w)]
-        return tuple(centre)
+
+        return tuple(centre),debug
 
     def getObjectMask(self, img):
         # Separate buoy cluster and make white
@@ -312,7 +313,6 @@ class BuoyClassifier():
         ''' Compares input img with template library and returns string name
             of highest confidence match type, along with confidence. Colour is used to
             determine exact buoy model.
-
             return (string, float, float): (label, conf_label, conf_colour), where
                 confidences are from 0 to 1.
         '''
@@ -362,7 +362,7 @@ class BuoyClassifier():
     def classify(self, img, distance):
 
         clustered_img = self.kMeans(img)
-        self.centre_colour = self.centreColour(clustered_img)
+        self.centre_colour, debug = self.centreColour(clustered_img)
 
         if self.centre_colour is not None:
             object_mask            = self.getObjectMask(clustered_img)
@@ -380,8 +380,10 @@ class BuoyClassifier():
                     label = self.getPolyformType(obj_width, distance)
 
                 print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
-                return label, conf_shape*conf_colour
+                return label, conf_shape*conf_colour, clustered_img
             else:
-                return "", 0.0
+                print("No cropped image returned")
+                return "", 0.0, clustered_img
         else:
-            return "", 0.0
+            print("No centre colour return:")
+            return "", 0.0, clustered_img
