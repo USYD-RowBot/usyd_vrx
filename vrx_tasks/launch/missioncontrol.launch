@@ -26,28 +26,6 @@
     <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
     </node>
 
-    <!-- station_keeping -->
-    <!-- Translate from geo pose to normal pose -->
-    <node pkg="vrx_tasks" type="geoPoseToPose.py" name="gpstranslate" output="screen">
-        <param name="~inTopic" value="vrx/station_keeping/goal"></param>
-        <param name="~outTopic" value="internal/poses"></param>
-    </node>
-    <!-- Translate from normal course to vrx pose -->
-    <node pkg="vrx_tasks" type="poseToCourse.py" name="pathCtranslate" output="screen">
-        <param name="~inTopic" value="internal/poses"></param>
-    </node>
-
-    <!-- wayfinding -->
-    <!-- Translate from geo path to normal path -->
-    <node pkg="vrx_tasks" type="geoPathToPath.py" name="gpctranslate" output="screen">
-        <param name="~inTopic" value="vrx/wayfinding/waypoints"></param>
-        <param name="~outTopic" value="internal/waypoints"></param>
-    </node>
-    <!-- Translate from normal path to vrx path -->
-    <node pkg="vrx_tasks" type="pathToRoute.py" name="pathRtranslate" output="screen">
-        <param name="~inTopic" value="internal/waypoints"></param>
-    </node>
-
 
     <!-- Vision translation -->
 
