@@ -25,7 +25,7 @@ class BuoyClassifier():
             pre+"template_sphere.png",
             pre+"template_scan.png"]
 
-        self.template_colours = [
+        self.template_colours = [ # RGB colours
             [(169, 71, 65)],                                                   # Conical
             [(255, 255, 255), (106, 183, 150)],                                # Tophat: (white, green)
             [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)

@@ -57,13 +57,13 @@ class DockMaster():
     #self.circleObject("scan_buoy")
     #self.scan_code()
 
-    self.spinOnSpot(1)
+    '''self.spinOnSpot(1)
     self.circleObject("dock")
 
     placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock(placard_symbol)
     
-    self.alignWithDock()
+    self.alignWithDock()'''
 
     #self.performDock()
 
