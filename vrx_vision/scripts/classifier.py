@@ -2,10 +2,12 @@ import numpy as np
 import cv2
 import rospkg
 
-class Classifier():
+class Classifier(object):
 
-    def __init__():
-        pass
+    def __init__(self):
+        self.template_filename_list = []
+        self.template_labels = []
+        self.template_colours = []
 
     def bgr2rgb(self, colour):
         ''' Converts colour from BGR to RGB. '''

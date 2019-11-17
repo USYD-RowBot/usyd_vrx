@@ -11,45 +11,18 @@ from placard_classifier import PlacardClassifier
 def handleImage(req):
 
     bridge = CvBridge()
-    cv_image = bridge.imgmsg_to_cv2(req.image, desired_encoding="bgr8")
+    cv_img = bridge.imgmsg_to_cv2(req.image, desired_encoding="bgr8")
 
-    print("Classifying placard")
-    classifier = PlacardClassifier()
-    label = classifier.classifyPlacard(cv_image)
+    #print("Classifying placard")
+    classifier        = PlacardClassifier()
+    label, confidence = classifier.classifyPlacard(cv_img)
 
-    #cv2.imshow("service receiver", cv_image)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    return ClassifyBuoyResponse(label, confidence, True)
 
-    #Return with your results
-    print(label)
-    return ClassifyBuoyResponse(label, 1.0, True)
-
-def scanBuoyServer():
+def classifyPlacardServer():
     rospy.init_node('classify_placard')
-    #s = rospy.Service('wamv/classify_placard', ClassifyBuoy, handleImage)
-    test()
-    #rospy.spin()
-
-def test():
-    rospack = rospkg.RosPack()
-
-    names = ["blue_circle",  "blue_cross",  "blue_triangle",
-            "green_circle", "green_cross", "green_triangle",
-              "red_circle",   "red_cross",   "red_triangle"]
-
-    for name in names:
-        img = cv2.imread(rospack.get_path('vrx_vision')+'/images/placards/' + name + '.png',cv2.IMREAD_COLOR)
-
-        #cv2.imshow('img', img)
-        #cv2.waitKey(0)
-
-        bridge = CvBridge()
-        img_msg = bridge.cv2_to_imgmsg(img, encoding="bgr8")
-
-        classifier = PlacardClassifier()
-        label = classifier.classifyPlacard(img)
-
+    srv = rospy.Service('wamv/classify_placard', ClassifyBuoy, handleImage)
+    rospy.spin()
 
 if __name__ == "__main__":
-    scanBuoyServer()
+    classifyPlacardServer()
