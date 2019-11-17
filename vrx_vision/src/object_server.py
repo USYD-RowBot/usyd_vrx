@@ -378,8 +378,8 @@ class ObjectServer():
             for camera in self.cameras.values() :
                 camera.debug_image = camera.image.copy()
 
-            cv2.imshow("middle", self.cameras["middle"].debug_image)
-            cv2.waitKey(1)
+            #cv2.imshow("middle", self.cameras["middle"].debug_image)
+            #cv2.waitKey(1)
 
         for i in self.objects:
             i.classify()
@@ -430,8 +430,8 @@ class ObjectServer():
                 cv2.putText(i2,text,(0,20), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
                 images.append(i2)
         montages = build_montages(images,(200,200),(7,3))
-        cv2.imshow("Buoys",montages[0])
-        cv2.waitKey(1)
+        #cv2.imshow("Buoys",montages[0])
+        #cv2.waitKey(1)
 
 
     def thread_func(self):
