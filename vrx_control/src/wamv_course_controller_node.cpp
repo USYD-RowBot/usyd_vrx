@@ -2,14 +2,9 @@
 #include "CourseController.hpp"
 
 bool hbeat_received_;
-bool continuous_hb_received_; // for logging purposes
 
 void hbeatCb(const vrx_msgs::Course::ConstPtr& msg)
 {
-  if (continuous_hb_received_==false){
-    ROS_INFO("CourseController: Heartbeat recieved, thrusters re-enabled.");
-    continuous_hb_received_=true;
-  }
   hbeat_received_ = true;
 }
 
@@ -26,7 +21,6 @@ int main(int argc, char **argv)
 
   // Set up heartbeat timer
   hbeat_received_ = false;
-  ROS_INFO("CourseController: Startup: waiting for heartbeat...");
   ros::Subscriber sub_hbeat = nh.subscribe("/course_cmd", 1, hbeatCb);
   double hbeat_target_time = ros::Time::now().toSec() + heartbeat_duration;  
 
@@ -37,15 +31,12 @@ int main(int argc, char **argv)
     {
       if (hbeat_received_ == true)
       {
-        hbeat_received_ = false;        
+        hbeat_received_ = false; 
         course_controller.enableThrusters(true); // Tell vessel to continue
       }
       else
       {
-        if (continuous_hb_received_==true){
-          ROS_INFO("CourseController: Heartbeat lost - Thrusters disabled.");
-          continuous_hb_received_=false;
-        }
+        ROS_INFO("CourseController: Thrusters disabled. Waiting for heartbeat.");     
         course_controller.enableThrusters(false); // Tell vessel to stop
       }
 

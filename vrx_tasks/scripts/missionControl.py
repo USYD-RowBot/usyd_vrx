@@ -2,45 +2,37 @@
 
 # Checks info messages to determine what needs to be done.
 
-from components import geoPathToPath, geoPoseToPose, poseToCourse
-from components.navigation_task import NavigationTask
 import rospy
-from vrx_msgs.msg import Task
+from vrx_gazebo.msg import Task
 params = {
-    "taskTopic": "/vrx/task/info",
+    "taskTopic": "/waypoints",
 }
 
-rospy.init_node("missionControl")
+rospy.init_node("missionControl.py",anonymous=True)
 
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
-initialised=False
-def cb(data):
-    global initialised
-    if (not initialised):
-        if data.name=="station_keeping":
-            ## geo pose to pose
-            geoPoseToPose.geoPoseToPoseConverter()
-            ## pose to course
-            poseToCourse.poseToCourseConverter()
-            pass
-        elif data.name=="wayfinding":
-            geoPathToPath.geoPathToPathConverter()
-            pass
-        elif data.name=="perception":
-            pass
-        elif data.name=="navigation_course":
-            print("DOING NAVIGATION")
-            nav_task = NavigationTask()
-            nav_task.startNavigation()
 
-            pass
-        elif data.name=="scan":
-            pass
-        elif data.name=="scan_and_dock":
-            pass
-        initialised=True
+def cb(data):
+    if data.name=="something":
         # do something
 
-rospy.Subscriber(params['taskTopic'], Task,cb)
+pub = rospy.Subscriber(params['taskTopic'], Task,cb);
+
+def cb(data):
+    print("RECEIVED WAYPOINT MESSAGE")
+    global pub
+    global listener
+    route = WaypointRoute()
+    waypoints = []
+    for dps in data.poses:
+        wp=Waypoint()
+        wp.pose=dps.pose # it starts as a posestamped so extract the pose
+        wp.nav_type=wp.NAV_STATION
+        waypoints.append(wp)
+    route.waypoints=waypoints
+    route.speed=params["speed"]
+    pub.publish(route)
+
+sub = rospy.Subscriber(params['inTopic'], Path, cb)
 rospy.spin()

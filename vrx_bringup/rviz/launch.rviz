@@ -324,14 +324,6 @@ Visualization Manager:
       Marker Topic: /wamv/visualization_marker
       Name: Marker
       Namespaces:
-        basic text: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /nav_marker
-      Name: Marker
-      Namespaces:
         {}
       Queue Size: 100
       Value: true
@@ -363,7 +355,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 45.867191314697266
+      Distance: 149.1958465576172
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -378,10 +370,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9403979182243347
+      Pitch: 0.6153983473777771
       Target Frame: wamv/base_link
       Value: ThirdPersonFollower (rviz)
-      Yaw: 6.250401020050049
+      Yaw: 3.2453994750976562
     Saved: ~
 Window Geometry:
   Displays:

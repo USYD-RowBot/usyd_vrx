@@ -190,7 +190,7 @@ public:
         }
       }
       else{
-        float clear_range = 30;
+        float clear_range = 20;
 
         for (int j = int(clear_range/resolution); j>0;j--){
           int x = int(odom_x + float(j)*cos(angle));
