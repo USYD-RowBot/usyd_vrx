@@ -2,6 +2,7 @@ import rospy
 from vrx_msgs.msg import ObjectArray, Object, Waypoint, WaypointRoute
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose, Quaternion
+from visualization_msgs.msg import Marker
 import math
 import tf
 
@@ -41,6 +42,7 @@ class NavigationTask:
         self.object_sub = rospy.Subscriber("wamv/objects/", ObjectArray, self.objectsCb)
         self.odom_sub = rospy.Subscriber("wamv/odom/", Odometry, self.odomCb)
         self.waypoint_pub = rospy.Publisher("waypoints_cmd", WaypointRoute,queue_size = 10)
+        self.marker_pub = rospy.Publisher("nav_marker", Marker, queue_size=10)
         self.object_list = None
         self.used_objects = []
         self.unused_objects = None
@@ -67,6 +69,7 @@ class NavigationTask:
         rospy.loginfo("Found Red and white buoys ID %s and ID %s", red.frame_id, white.frame_id )
         #Navigate to the gate in between
         target = self.getGatePose(white,red)
+        self.publishMarker(target)
         self.navigateTo(target)
 
         self.used_objects.append(red)
@@ -87,6 +90,7 @@ class NavigationTask:
                 rospy.loginfo("Found Red and green buoys ID %s and ID %s", red.frame_id, green.frame_id )
                 #Navigate to the gate in between
                 target = self.getGatePose(green,red)
+                self.publishMarker(target)
                 self.navigateTo(target)
                 self.used_objects.append(red)
                 self.used_objects.append(green)
@@ -106,6 +110,7 @@ class NavigationTask:
         rospy.loginfo("Found Red and blue buoys ID %s and ID %s", red.frame_id, blue.frame_id )
         #Navigate to the gate in between
         target = self.getGatePose(blue,red)
+        self.publishMarker(target)
         self.navigateTo(target)
         self.used_objects.append(red)
         self.used_objects.append(blue)
@@ -121,6 +126,10 @@ class NavigationTask:
         waypoint_msg = WaypointRoute()
         waypoint_msg.speed = 2
         ##For Now, waypoints are 2 waypoints. At nav waypoint then a nav station
+        loc0 = Waypoint()
+        loc0.pose = self.current_pose
+        loc0.nav_type = Waypoint.NAV_STATION
+        loc0.station_duration = 2
         loc1 = Waypoint()
         loc1.pose = target
         loc1.nav_type = Waypoint.NAV_WAYPOINT
@@ -128,16 +137,12 @@ class NavigationTask:
         loc2.pose = target
         loc2.nav_type = Waypoint.NAV_STATION
         loc2.station_duration = -5
-
-
-        waypoint_msg.waypoints=[loc2]
+        waypoint_msg.waypoints=[loc0,loc1,loc2]
         self.waypoint_pub.publish(waypoint_msg)
 
         rate = rospy.Rate(20)
         while not self.inRange(target):
             rate.sleep()
-
-
         rospy.loginfo("Arrived at target")
         rospy.sleep(3)
         return
@@ -203,9 +208,33 @@ class NavigationTask:
                 if i.frame_id == id:
                     #If there is a match, remove the obect
                     rospy.loginfo("Found used object %s",object.frame_id)
-                    self.unused_objects.remove(object)
-                    break
+                    try:
+                        self.unused_objects.remove(object)
+                        break
+                    except:
+                        continue
+
         return
+
+
+    def publishMarker(self, pose):
+        marker = Marker()
+        marker.header.frame_id = "map"
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = "nav_task"
+        marker.id = 1
+        marker.type = Marker.ARROW
+        marker.action=Marker.ADD
+        marker.pose = pose
+        marker.scale.x = 2.0
+        marker.scale.y = 2.0
+        marker.scale.z = 2.0
+        marker.color.r = 0.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+        marker.lifetime = rospy.Duration(0)
+        self.marker_pub.publish(marker)
 
     def findClosest(self,object_list, type="object"):
 

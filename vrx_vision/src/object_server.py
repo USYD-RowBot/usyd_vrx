@@ -32,7 +32,7 @@ print("EXPIRY_TIME: " + str(EXPIRY_TIME))
 
 MARGIN_X = 200
 MARGIN_Y = 150
-USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
+USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
 if __name__ == "__main__":
     rospy.init_node("object_server")
     exclusion_list = rospy.get_param("~excluded_buoys", ["yellow_totem", "black_totem", "green_totem", "red_totem"])
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     print("USING THE CAMERA: " + str(USE_CAMERA))
     MARGIN_X = 200
     MARGIN_Y = 150
-    USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
+    USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
 
 
 
