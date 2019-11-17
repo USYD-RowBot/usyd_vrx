@@ -6,6 +6,9 @@ from visualization_msgs.msg import Marker
 import math
 import tf
 
+"""TODO: Make sure to handle cases going closer to get a better angle to classify the buoys
+When it start its far away from the task, so move it towards the task
+"""
 
 tf_listener = None
 
@@ -57,67 +60,101 @@ class NavigationTask:
         rospy.sleep(5)
 
         #Find first two buoys.
-        white = self.findClosest(self.unused_objects,type="white")
-        if white is None:
-            rospy.loginfo("No White Buoy found")
-            return
-        red = self.findClosest(self.unused_objects,type="red")
-        if red is None:
-            rospy.loginfo("No Red Buoy found")
-            return
-
-        rospy.loginfo("Found Red and white buoys ID %s and ID %s", red.frame_id, white.frame_id )
-        #Navigate to the gate in between
-        target = self.getGatePose(white,red)
+        target = self.findGate("white","red")
         self.publishMarker(target)
+        if target is None:
+            return
         self.navigateTo(target)
 
-        self.used_objects.append(red)
-        self.used_objects.append(white)
-
-        self.updateUnused()
+        attempts = 0
+        rospy.sleep(5)
         while True:
-            green = self.findClosest(self.unused_objects,type="green")
-            red = self.findClosest(self.unused_objects,type="red")
-            if green is None:
-                rospy.loginfo("No green Buoy found")
-                break
-
-            elif red is None:
-                rospy.loginfo("No Red Buoy found")
-                break;
-            else:
-                rospy.loginfo("Found Red and green buoys ID %s and ID %s", red.frame_id, green.frame_id )
-                #Navigate to the gate in between
-                target = self.getGatePose(green,red)
+                target = self.findGate("green","red")
+                if target is None:
+                    rospy.sleep(5)
+                    rospy.loginfo("Found no target, waiting 5 seconds")
+                    attempts = attempts +1
+                    if attempts < 4:
+                        continue
+                    else:
+                        break
                 self.publishMarker(target)
+
                 self.navigateTo(target)
-                self.used_objects.append(red)
-                self.used_objects.append(green)
-                self.updateUnused()
 
+                rospy.sleep(5)
 
-
-        blue = self.findClosest(self.unused_objects,type="blue_totem")
-        if blue is None:
-            rospy.loginfo("No blue Buoy found")
+        target = self.findGate("blue_totem","red")
+        if target is None:
             return
-        red = self.findClosest(self.unused_objects,type="red")
-        if red is None:
-            rospy.loginfo("No Red Buoy found")
-            return;
-
-        rospy.loginfo("Found Red and blue buoys ID %s and ID %s", red.frame_id, blue.frame_id )
-        #Navigate to the gate in between
-        target = self.getGatePose(blue,red)
         self.publishMarker(target)
         self.navigateTo(target)
-        self.used_objects.append(red)
-        self.used_objects.append(blue)
-        self.updateUnused()
         rospy.loginfo("END of Program")
         return
 
+    def findGate(self,left_colour, right_colour):
+        left = self.findClosest(self.unused_objects,type=left_colour, conf_thresh = 0.4)
+        right = self.findClosest(self.unused_objects,type=right_colour, conf_thresh = 0.4)
+
+        if left and right:
+            # Get distance, verify it is within acceptable range
+            #Then navigate
+            dist = math.sqrt((left.pose.position.x-right.pose.position.x)**2 + (left.pose.position.y-right.pose.position.y)**2 )
+            if dist < 15 and dist > 5:
+                rospy.loginfo("Found %s and %s buoys ID %s and ID %s", left_colour , right_colour,left.frame_id, right.frame_id )
+                self.used_objects.append(left)
+                self.used_objects.append(right)
+                self.updateUnused()
+                #Navigate to the gate in between
+                return self.getGatePose(left,right)
+
+            else:
+                rospy.loginfo("Distance between found buoys is %f", dist)
+                try:
+                    (trans,rot) = tf_listener.lookupTransform("base_link",left.frame_id, rospy.Time(0))
+                    (trans2,rot) = tf_listener.lookupTransform("base_link",right.frame_id, rospy.Time(0))
+                except Exception as e:
+                    rospy.logwarn("Transform Lookup Error")
+                    print(e)
+                    return None
+
+                dist_left = math.sqrt(trans[0]**2 +trans[1]**2)
+                dist_right = math.sqrt(trans2[0]**2 +trans2[1]**2)
+                if dist_left <dist_right:
+                    left = None
+                else:
+                    right = None
+
+        if left is None and right:
+            #Try find the missing left object.
+            self.used_objects.append(right)
+            self.updateUnused()
+            rospy.loginfo("No %s Buoy found trying to find left", left_colour)
+
+            left = self.findClosest(self.unused_objects,type="nav")
+            if left is None:
+                return
+            self.used_objects.append(left)
+
+        elif right is None and left:
+            #Try find the missing right object.
+            self.used_objects.append(left)
+            self.updateUnused()
+            rospy.loginfo("No %s Buoy found trying to find right", right_colour)
+            right = self.findClosest(self.unused_objects,type="nav")
+            if right is None:
+                return
+
+            self.used_objects.append(right)
+
+        elif right is None and left is None:
+            rospy.loginfo("Cannot find %s buoy and %s buoy", left_colour, right_colour)
+            return
+
+        rospy.loginfo("Found %s and %s buoys ID %s and ID %s", left_colour , right_colour,left.frame_id, right.frame_id )
+        self.updateUnused()
+        #Navigate to the gate in between
+        return self.getGatePose(left,right)
 
     def navigateTo(self, target, wait=True, timeout=0):
         """ Navigate to the location, if wait is True: Wait until destination is reached, if not, """
@@ -157,10 +194,14 @@ class NavigationTask:
         target.position.y = (left_buoy.pose.position.y + right_buoy.pose.position.y) /2.0
         target.position.z = 0.0
 
-        yaw = 0.0
-        yaw = math.atan2(left_buoy.pose.position.y - right_buoy.pose.position.y, left_buoy.pose.position.x - right_buoy.pose.position.x)-1.507
-        rospy.loginfo("Got gate location x: %f, y: %f, yaw: %f",target.position.x ,target.position.y,yaw)
-        target.orientation = eulerToQuat([0,0,yaw])
+        # if they are the same type, the orientation is the same as the curret position orientation
+        if (left_buoy.best_guess == right_buoy.best_guess):
+            target.orientation = self.current_pose.orientation
+        else:
+            yaw = 0.0
+            yaw = math.atan2(left_buoy.pose.position.y - right_buoy.pose.position.y, left_buoy.pose.position.x - right_buoy.pose.position.x)-1.507
+            rospy.loginfo("Got gate location x: %f, y: %f, yaw: %f",target.position.x ,target.position.y,yaw)
+            target.orientation = eulerToQuat([0,0,yaw])
         #print(left_buoy,right_buoy, target)
         return target
 
@@ -204,7 +245,7 @@ class NavigationTask:
             id = object.frame_id
 
             for i in self.used_objects:
-                print("Checking unused: %s with used %s",id,i.frame_id)
+                #print("Checking unused: %s with used %s",id,i.frame_id)
                 if i.frame_id == id:
                     #If there is a match, remove the obect
                     rospy.loginfo("Found used object %s",object.frame_id)
@@ -236,7 +277,7 @@ class NavigationTask:
         marker.lifetime = rospy.Duration(0)
         self.marker_pub.publish(marker)
 
-    def findClosest(self,object_list, type="object"):
+    def findClosest(self,object_list, type="object",frame="base_link", conf_thresh = 0):
 
         if object_list is None:
             rospy.logwarn("Find Closest passed empty list")
@@ -252,6 +293,8 @@ class NavigationTask:
             accepted_objects = ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"]
         elif type == "polyform":
             accepted_objects= ["polyform_a3", "polyform_a5", "polyform_a7"]
+        elif type == "nav":
+            accepted_objects = ["surmark_46104", "surmark_950400","surmark_950410","blue_totem", "polyform_a7", "buoy"]
         elif type == "white":
             accepted_objects = ["surmark_46104"]
         elif type == "green":
@@ -263,9 +306,9 @@ class NavigationTask:
 
         for object in object_list:
             #Get distance of object
-            if object.best_guess in accepted_objects:
+            if object.best_guess in accepted_objects and object.confidences[0]>conf_thresh:
                 try:
-                    (trans,rot) = tf_listener.lookupTransform("base_link",object.frame_id, rospy.Time(0))
+                    (trans,rot) = tf_listener.lookupTransform(frame,object.frame_id, rospy.Time(0))
                 except Exception as e:
                     rospy.logwarn("Transform Lookup Error")
                     print(e)

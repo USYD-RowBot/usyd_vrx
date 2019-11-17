@@ -27,7 +27,7 @@ class BuoyClassifier():
 
         self.template_colours = [
             [(169, 71, 65)],                                                   # Conical
-            [(255, 255, 255), (106, 183, 150)],                                # Tophat: (white, green)
+            [(255, 255, 255), (118, 203, 166)],                                # Tophat: (white, green)
             [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
             [(1, 1, 1)],                                                       # Sphere
             [(20, 20, 20)]                                                     # Scan buoy
@@ -320,6 +320,7 @@ class BuoyClassifier():
         label_confidences  = []
         colour_confidences = []
 
+
         for template_filename in self.template_filename_list: # Compare img with templates
             template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
             label_confidences.append(self.percentSimilar(template_img, img))
@@ -327,7 +328,7 @@ class BuoyClassifier():
             #cv2.imshow('K-Means Clustering', template_img)
             #cv2.waitKey(0)
         print(label_confidences)
-        conf_shape       = max(label_confidences) # Get highest confidence label and index
+        """conf_shape       = max(label_confidences) # Get highest confidence label and index
         best_shape_index = np.argmax(label_confidences)
 
         for template_colour in self.template_colours[best_shape_index]: # Compare colour with templates
@@ -337,7 +338,24 @@ class BuoyClassifier():
         best_colour_index = np.argmax(colour_confidences)
 
         label = self.template_labels[best_shape_index][best_colour_index] # Get best label
-        return label, conf_shape, conf_colour
+        return label, conf_shape, conf_colour"""
+
+        max_conf = 0;
+        max_colour_conf = 0
+        max_label_conf = 0
+        label = ""
+        for conf_shape in label_confidences:
+            index = label_confidences.index(conf_shape)
+            for template_colour in self.template_colours[index]: # Compare colour with templates
+                total_conf = self.colourConfidenceRGB(template_colour, colour)*conf_shape
+                index2 = self.template_colours[index].index(template_colour)
+                if total_conf > max_conf:
+                    max_conf = total_conf
+                    max_colour_conf = self.colourConfidenceRGB(template_colour, colour)
+                    max_label_conf = conf_shape
+                    label = self.template_labels[index][index2]
+
+        return label,max_label_conf,max_colour_conf
 
     def getPolyformType(self, obj_width, distance):
 
@@ -379,8 +397,13 @@ class BuoyClassifier():
                 if label == "polyform":
                     label = self.getPolyformType(obj_width, distance)
 
+                if distance < 10:
+                    dist_scale= 1
+                else:
+                    dist_scale = 1 - ((distance-10)/60)
+
                 print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
-                return label, conf_shape*conf_colour, clustered_img
+                return label, conf_shape*conf_colour*dist_scale, clustered_img
             else:
                 print("No cropped image returned")
                 return "", 0.0, clustered_img
