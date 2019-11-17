@@ -60,7 +60,7 @@ class NavigationTask:
         rospy.sleep(5)
 
         #Find first two buoys.
-        target = self.findGate("white","red")
+        target = self.findGate("white","red" thresh=0.2)
         self.publishMarker(target)
         if target is None:
             return
@@ -92,9 +92,9 @@ class NavigationTask:
         rospy.loginfo("END of Program")
         return
 
-    def findGate(self,left_colour, right_colour):
-        left = self.findClosest(self.unused_objects,type=left_colour, conf_thresh = 0.2)
-        right = self.findClosest(self.unused_objects,type=right_colour, conf_thresh = 0.2)
+    def findGate(self,left_colour, right_colour,thresh=0.4):
+        left = self.findClosest(self.unused_objects,type=left_colour, conf_thresh = thresh)
+        right = self.findClosest(self.unused_objects,type=right_colour, conf_thresh = thresh)
 
         if left and right:
             # Get distance, verify it is within acceptable range
