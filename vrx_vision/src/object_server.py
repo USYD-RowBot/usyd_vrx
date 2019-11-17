@@ -32,7 +32,7 @@ print("EXPIRY_TIME: " + str(EXPIRY_TIME))
 
 MARGIN_X = 200
 MARGIN_Y = 150
-USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
+USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
 if __name__ == "__main__":
     rospy.init_node("object_server")
     exclusion_list = rospy.get_param("~excluded_buoys", ["yellow_totem", "black_totem", "green_totem", "red_totem"])
@@ -51,21 +51,7 @@ if __name__ == "__main__":
     print("USING THE CAMERA: " + str(USE_CAMERA))
     MARGIN_X = 200
     MARGIN_Y = 150
-    USE_CAMERA_RANGE = rospy.get_param('camera_range', 40)
-
-
-
-
-    # if(USE_CAMERA):
-    #     #print("Waiting to camera service")
-    #     try:
-    #         pass
-    #         #rospy.wait_for_service('classify_buoy',timeout =6)
-    #         #classifyBuoy = rospy.ServiceProxy('classify_buoy', ClassifyBuoy)
-    #     except:
-    #         print("No camera service under classify_buoy found, disabling camera usage")
-    #         USE_CAMERA = False
-
+    USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
 
 
 
@@ -103,6 +89,17 @@ class Obstacle():
 
         type = ""
         confidence = 0
+
+        try:
+            (trans, rot) = tf_listener.lookupTransform("map",self.object.frame_id, rospy.Time(0))
+            self.object.pose.position.x = trans[0]
+            self.object.pose.position.y = trans[1]
+            self.object.pose.position.z = trans[2]
+            self.object.pose.orientation.w = 1
+        except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+
         if self.radius < 2:
             type = "buoy"
             confidence = 0.2
@@ -117,6 +114,11 @@ class Obstacle():
                 self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle)
             else:
                 self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle+1.5707)
+
+            self.object.pose.orientation.x = self.rot[0]
+            self.object.pose.orientation.x = self.rot[1]
+            self.object.pose.orientation.x = self.rot[2]
+            self.object.pose.orientation.x = self.rot[3]
 
         elif self.radius >= 15:
             type = "land"
@@ -336,7 +338,8 @@ class ObjectServer():
             for my_obj in self.objects:
                 frame_id = my_obj.object.frame_id
                 current_frames.append(frame_id)
-                thresh_dist = 1
+                #Distance difference for it to be considered a new object
+                thresh_dist = 1.5
                 dist = math.sqrt((my_obj.x-x)**2 + (my_obj.y-y)**2)
                 if (dist<thresh_dist):
                     my_obj.x = x

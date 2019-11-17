@@ -19,7 +19,7 @@ from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 from objhelper.qhull_2d import *
 from objhelper.min_bounding_rect import *
 from objhelper.buoy_classifier import BuoyClassifier
-
+import threading
 
 THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
 DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
@@ -116,10 +116,10 @@ class Obstacle():
         else :
             type = "unknown"
             confidence = 0.1
-
+        #print(type)
         if USE_CAMERA == True and type=="buoy":
             for camera in self.cameras.values():
-
+                #print("ok im cameraing")
                 #print("FRAME ID", self.object.frame_id,camera.frame_id)
                 #if camera.name == "middle":
                 try:
@@ -149,10 +149,11 @@ class Obstacle():
                         #image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
                         if camera.name == "middle" :
                             #cv2.imshow("middle_cropped", crop_img)
-                            #cv2.waitKey(1)
+                            #cv2.waitKey(0)
                             type, confidence = classifier.classify(crop_img, dist)
                         #confidence = res.confidence
                         #cv2.imshow("middle_cropped", crop_img)
+                        #cv2.waitKey(0)                        
                         #cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
                         # cv2.line(copy_img,(int(buoy_pixel_x1),720),(int(buoy_pixel_x2),0),(0,0,255),1)
                         # cv2.line(copy_img,(0,buoy_pixel_y1),(1280,buoy_pixel_y2),(0,0,255),1)
@@ -224,7 +225,7 @@ class Obstacle():
     def broadcast(self):
         """Broadcast the object via tf"""
         #self.object.pose.orientation=self.rot
-
+        #print("broadcasting {}".format(self.object.frame_id))
         tf_broadcaster.sendTransform(
         (self.x,self.y,0),
         self.rot,
@@ -379,7 +380,7 @@ class ObjectServer():
 
             #cv2.imshow("middle", self.cameras["middle"].debug_image)
             #cv2.waitKey(1)
-
+        
         for i in self.objects:
             i.classify()
         #rospy.loginfo("Classifyed clusters")
@@ -429,12 +430,16 @@ if __name__ == "__main__":
 
     count =0
     time_last = rospy.get_time()
+    bgclassify=Thread(None,object_server.classify_objects)
+    bgclassify.start()
     while not rospy.is_shutdown():
         # if count == 10:
         #     object_server.process_map();
         #     object_server.cleanup()
         #     count = 0
-        object_server.classify_objects()
+        if (not bgclassify.is_alive()):
+            bgclassify=Thread(None,object_server.classify_objects)
+            bgclassify.start()
         object_server.broadcast_objects()
         count = count+1
         rate.sleep()
