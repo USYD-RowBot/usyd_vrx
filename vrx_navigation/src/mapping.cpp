@@ -102,6 +102,8 @@ public:
   {
     if (num > max)
       return max;
+    else if (num < 0)
+      return 0;
     else
       return num;
   }
