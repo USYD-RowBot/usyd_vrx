@@ -576,17 +576,6 @@
       <velocityGaussianNoise>0.0 0.0 0.0</velocityGaussianNoise>
     </plugin>
   </gazebo>
-  <gazebo>
-    <plugin filename="libgazebo_ros_p3d.so" name="p3d_plugin_p3d_wamv">
-      <bodyName>base_link</bodyName>
-      <frameName>map</frameName>
-      <updateRate>10.0</updateRate>
-      <topicName>wamv/sensors/position/p3d_wamv</topicName>
-      <xyzOffset>0 0 0</xyzOffset>
-      <rpyOffset>0 0 0</rpyOffset>
-      <gaussianNoise>0</gaussianNoise>
-    </plugin>
-  </gazebo>
   <!-- Monocular Camera -->
   <link name="left_camera_link">
     <visual name="left_camera_visual">

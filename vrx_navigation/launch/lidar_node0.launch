@@ -25,7 +25,7 @@ use_inf: false </rosparam>
 
        </node>
    <node pkg="vrx_navigation" type="mapping" name="mapping" output="screen">
-     <param name="~width" value="1024"/>
+     <param name="~width" value="2048"/>
      <param name="~resolution" value="0.2"/>
      <param name="~offset_x" value="60.0"/>
      <param name="~offset_y" value="30.0"/>
