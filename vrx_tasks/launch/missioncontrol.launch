@@ -22,10 +22,15 @@
     </include>
     <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
 
+    <include file="$(find vrx_navigation)/launch/lidar_node.launch">
+    </include>
 
-    <!--node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
-    </node-->
+    <include file="$(find vrx_vision)/launch/object_server.launch">
+        <arg name="use_camera" value="true"/>
+    </include>
 
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+    </node>
 
     <!-- Vision translation -->
 
