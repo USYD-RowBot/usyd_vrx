@@ -10,6 +10,7 @@ import rospy
 import tf
 import actionlib
 from cv_bridge import CvBridge, CvBridgeError
+from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from vrx_msgs.msg import *
@@ -85,6 +86,8 @@ class Docker:
       "/wamv/sensors/cameras/middle_camera/image_raw", Image, self.imageCb)
     self.sub_odom = rospy.Subscriber(
       "/odom", Odometry, self.odomCb)    
+
+    rospy.wait_for_service('wamv/classify_placard')
 
     self.server = actionlib.SimpleActionServer('docking', DockAction, self.execute, False)
     self.server.start()
@@ -175,39 +178,24 @@ class Docker:
   def reachedGoalPos(self, goal_pos):
     dist = np.sqrt((goal_pos[0]-self.vessel_pos[0])**2 + (goal_pos[1]-self.vessel_pos[1])**2)
     return dist < self.goal_tolerance_pos
-
-  def yawWithinTolerance(self):
-    return abs(self.dock_yaw - self.vessel_yaw) < self.goal_tolerance_ang
     
   def getStrafeYaw(self):
     yaw = 0
 
     if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
-      if abs(self.x_cam_error) > self.pix_threshold and self.yawWithinTolerance(): 
-        if self.x_cam_error > 0:        # Correct lateral position
-          yaw = self.dock_yaw - np.pi/2
-        else:
-          yaw = self.dock_yaw + np.pi/2
+      if abs(self.x_cam_error) > self.pix_threshold: 
+        yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
       else:
-        yaw = self.dock_yaw             # Move forwards
+        yaw = self.dock_yaw # Move forwards
 
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
-      if self.yawWithinTolerance():
-        if self.x_cam_error > 0:
-          yaw = self.dock_yaw - np.pi/2
-        else:
-          yaw = self.dock_yaw + np.pi/2
-      else:
-        yaw = (self.dock_yaw - np.pi) # TODO get rid of this case, ughhhh
+        yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
       
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
-      if abs(self.x_cam_error) > self.pix_threshold and self.yawWithinTolerance(): 
-        if self.x_cam_error > 0:        # Correct lateral position
-          yaw = self.dock_yaw - np.pi/2
-        else:
-          yaw = self.dock_yaw + np.pi/2
+      if abs(self.x_cam_error) > self.pix_threshold: 
+        yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
       else:
-        yaw = (self.dock_yaw - np.pi)   # Move forwards
+        yaw = (self.dock_yaw - np.pi) # Move backwards
 
     # Limit yaw from -PI to PI
     if (abs(yaw) > np.pi):
@@ -219,13 +207,25 @@ class Docker:
     # If we aren't in the standby state
     if self.dock_sm.getState() is not self.dock_sm.DockState.DOCK_STANDBY:
       
-      try: # Convert ROS image to CV image
+      self.calculatePlacardSymbolX(ros_img)
+      '''try: # Convert ROS image to CV image
         cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
       except CvBridgeError as e:
         rospy.logdebug(e)
         return
 
-      self.processImage(cv_img) # Pass converted image to processing algorithm
+      self.processImage(cv_img) # Pass converted image to processing algorithm'''
+
+  def calculatePlacardSymbolX(self, ros_img):
+    try:
+      classifyPlacard = rospy.ServiceProxy('wamv/classify_placard', ClassifyBuoy)
+      res = classifyPlacard(ros_img, 0)
+
+      #rospy.loginfo("cX is %d" % res.confidence)
+      self.x_cam_error = res.confidence - np.round(1280/2) + self.pix_offset
+
+    except rospy.ServiceException, e:
+      rospy.loginfo("Service call to /wamv/classify_placard failed: %s"%e)
 
   def odomCb(self, odom):
     # Store current vessel position in odom frame
@@ -238,7 +238,7 @@ class Docker:
     euler = tf.transformations.euler_from_quaternion(quaternion)
     self.vessel_yaw = euler[2]
 
-  def processImage(self, img):
+  '''def processImage(self, img):
 
     new_width = 300 # Scale image down so width is 300 pixels
     aspect = float(img.shape[0]) / float(img.shape[1])
@@ -273,7 +273,7 @@ class Docker:
     blob_img = cv2.drawKeypoints(bordered_img, keypoints, np.array([]), (0,0,255), 
       cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     cv2.imshow("detected blobs", blob_img)
-    cv2.waitKey(1)
+    cv2.waitKey(1)'''
     
 def signalHandler(sig, frame):
   cv2.destroyAllWindows()

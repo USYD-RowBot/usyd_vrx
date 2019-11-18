@@ -15,9 +15,9 @@ def handleImage(req):
 
     #print("Classifying placard")
     classifier        = PlacardClassifier()
-    label, confidence = classifier.classifyPlacard(cv_img)
+    label, cX         = classifier.classifyPlacard(cv_img)
 
-    return ClassifyBuoyResponse(label, confidence, True)
+    return ClassifyBuoyResponse(label, cX, True)
 
 def classifyPlacardServer():
     rospy.init_node('classify_placard')

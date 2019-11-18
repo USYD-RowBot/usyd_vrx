@@ -71,7 +71,7 @@ class Classifier(object):
             template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
             label_confidences.append(self.percentSimilar(template_img, img))
 
-        print(label_confidences)        
+        #print(label_confidences)        
         """conf_shape       = max(label_confidences) # Get highest confidence label and index
         best_shape_index = np.argmax(label_confidences)
 

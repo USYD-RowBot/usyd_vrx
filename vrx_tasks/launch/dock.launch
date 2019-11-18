@@ -3,7 +3,12 @@
   <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
       <arg name="world_name" value="dock"/>
       <arg name="gui" value="true"/>
+      <arg name="verbose" value="true"/>
   </include>
+
+  <!--include file="$(find vrx_bringup)/launch/rviz.launch"/-->
+
+  <include file="$(find vrx_bringup)/launch/localisation.launch"/>
 
   <include file="$(find vrx_navigation)/launch/lidar_node.launch">
   </include>
@@ -19,6 +24,8 @@
     <node pkg="vrx_tasks" name="dockmaster" type="dockmaster.py" output="screen">
       <remap from="/odom" to="odom"/>
     </node>
+
+    <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py"/>
   </group>
 
 </launch>

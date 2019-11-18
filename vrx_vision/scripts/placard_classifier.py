@@ -62,6 +62,12 @@ class PlacardClassifier(Classifier):
         cY = int(M["m01"] / M["m00"])
         return self.bgr2rgb(img[cY, cX, :])
 
+    def getCentre(self, img, cnt):
+        M = cv2.moments(cnt)          
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        return cX, cY
+
     def cropScale(self, img, cnt):
         x, y, w, h = cv2.boundingRect(cnt)
         cropped_img = img[y:y+h, x:x+w] # Crop rectangle around symbol
@@ -84,6 +90,9 @@ class PlacardClassifier(Classifier):
         label, conf_shape, conf_colour = self.classifyImage(scaled_img, centre_colour)
         #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
 
-        return label, conf_shape*conf_colour
+        cX, _ = self.getCentre(small_img, cnt)
+        cX    = int(cX/scale_factor)
+
+        return label, cX
 
         

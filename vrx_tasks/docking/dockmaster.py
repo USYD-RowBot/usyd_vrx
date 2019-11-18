@@ -33,9 +33,9 @@ class DockMaster():
     self.n_circle_wps = 5  # Number of waypoints constituting circling an object
     self.general_speed = 2 # Circling speed
     self.scan_radius  = 10 # Radius at which to circle scan buoy
-    self.dock_radius  = 20 # Radius at which to circle dock
-    self.align_dist   = 10 #  Distance from center of dock to align position
-    self.bay_dist     = 3  # Distance from center of dock to center of bay
+    self.dock_radius  = 15 # Radius at which to circle dock
+    self.align_dist   = 13 #  Distance from center of dock to align position
+    self.bay_dist     = 5  # Distance from center of dock to center of bay
 
     self.tf_listener = tf.TransformListener()
     self.route_pub = rospy.Publisher("/waypoints_cmd", WaypointRoute, queue_size=1, latch=True)
@@ -43,6 +43,7 @@ class DockMaster():
 
     # Wait for any required services to be active
     #rospy.wait_for_service('scan_buoy')
+    rospy.wait_for_service('wamv/classify_placard')
 
     ready = False # Wait until competition is in Ready state.
     while not ready:
@@ -57,15 +58,26 @@ class DockMaster():
     #self.circleObject("scan_buoy")
     #self.scan_code()
 
-    '''self.spinOnSpot(1)
-    self.circleObject("dock")
+    #self.spinOnSpot(1)
+    #self.circleObject("dock")
 
-    placard_symbol = self.getRequestedPlacardSymbol()
-    self.logDock(placard_symbol)
+    self.placard_symbol = self.getRequestedPlacardSymbol()
+    self.logDock("Requested placard symbol is %s."%self.placard_symbol)
     
-    self.alignWithDock()'''
+    correct_bay = None
+    for i in [0, 1]:
+      self.alignWithDock(i, duration=5.0)
 
-    #self.performDock()
+      if self.checkPlacard() == True:       # If correct placard
+        self.alignWithDock(i, duration=10.0) # Re-align
+        correct_bay = i
+        break
+
+      self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
+
+    self.logDock("Found correct bay. Ready to dock.")
+
+    self.performDock(correct_bay)
 
   def waitForWaypointRequest(self):
     rospy.wait_for_message("/request_waypoints", Empty)
@@ -87,6 +99,23 @@ class DockMaster():
   def quatToYaw(self, x, y, z, w):
     euler = euler_from_quaternion([x, y, z, w])
     return euler[2]
+
+  def checkPlacard(self):
+    ros_img = rospy.wait_for_message("/wamv/sensors/cameras/middle_camera/image_raw", Image)
+
+    try:
+      classifyPlacard = rospy.ServiceProxy('wamv/classify_placard', ClassifyBuoy)
+      res = classifyPlacard(ros_img, 0)
+      self.logDock("Placard classifier result: %s"%res.type)
+
+      if res.type == self.placard_symbol:
+        return True
+      else:
+        return False
+
+    except rospy.ServiceException, e:
+      self.logDock("Service call to /wamv/classify_placard failed: %s"%e)
+      return False
 
   def spinOnSpot(self, n_times):
     self.logDock("Spinning on the spot %d times."%n_times)
@@ -143,7 +172,7 @@ class DockMaster():
         self.logDock("Service call failed: %s"%e)
         return False # I dunno man
   
-  def circleObject(self, object_string):
+  def circleObject(self, object_string, revs=1.0, look_dock=True):
     ''' object_string (string): "dock", "any_dock", "scan_buoy"
     '''
     self.logDock("Circling the " + object_string + ".")
@@ -151,6 +180,12 @@ class DockMaster():
     radius = 0  # Assign these variables to either circle the dock or scan buoy
     object_pos = []
     identify_function = self.dumbFunction
+
+    nav_msg_type = 0 # Choose whether to look at dock while circling or just boat around
+    if look_dock == True:
+      nav_msg_type = Waypoint.NAV_STATION
+    else:
+      nav_msg_type = Waypoint.NAV_WAYPOINT
 
     if (object_string == "dock" or object_string == "any_dock"):
       object_pos, _ = self.getDockPose() # Dock centroid
@@ -178,12 +213,16 @@ class DockMaster():
 
     circle_wp_route = WaypointRoute() # Waypoint list
     circle_wps = []
-    init_wp = self.makeWaypoint(init_pose) # Create waypoint from above data
-    circle_wps.append(init_wp)
+    
+    #init_wp = self.makeWaypoint(init_pose, nav_type=nav_msg_type) # Create waypoint from above data
+    #circle_wps.append(init_wp)
 
-    for i in range(self.n_circle_wps):
+    rev_angle = revs*2*np.pi
+    n_wps = int(np.ceil(revs*self.n_circle_wps))
+
+    for i in range(n_wps):
       wp_pose = Pose() # Set first circling waypoint pose
-      rot = (i+1)*(2*np.pi/self.n_circle_wps)
+      rot = (i+1)*(rev_angle/n_wps)
 
       x = init_pose.position.x # Rotate object viewing position
       y = init_pose.position.y
@@ -199,7 +238,11 @@ class DockMaster():
       wp_angle = math.atan2(wp_vec[1], wp_vec[0])
       self.setPoseQuat(wp_pose, wp_angle)
 
-      spin_wp = self.makeWaypoint(wp_pose) # Set waypoint
+      if i == n_wps-1: # Always set last waypoint to be astation
+        spin_wp = self.makeWaypoint(wp_pose, nav_type=Waypoint.NAV_STATION, duration=5.0)
+      else:
+        spin_wp = self.makeWaypoint(wp_pose, nav_type=nav_msg_type) # Set waypoint
+
       circle_wps.append(spin_wp)
 
     circle_wp_route.waypoints = circle_wps
@@ -210,19 +253,24 @@ class DockMaster():
     while not identify_function() and not rospy.is_shutdown:
       r.sleep()
 
-    self.waitForWaypointRequest() # TODO remove this once identify_functions are written
+    self.waitForWaypointRequest() 
 
-  def alignWithDock(self):
+  def alignWithDock(self, bay_index, duration=0.0):
     self.logDock("Aligning with the dock.")
     dock_pos, dock_quat = self.getDockPose()
 
+    align_pose = Pose()
     dock_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
 
-    align_pose = Pose()
-    align_pose.position.x = dock_pos[0] + self.align_dist*math.cos(dock_yaw)
-    align_pose.position.y = dock_pos[1] + self.align_dist*math.sin(dock_yaw)
+    if bay_index == 0:
+      align_pose.position.x = dock_pos[0] + self.align_dist*math.cos(dock_yaw)
+      align_pose.position.y = dock_pos[1] + self.align_dist*math.sin(dock_yaw)
+      align_angle = dock_yaw + np.pi
+    else:
+      align_pose.position.x = dock_pos[0] - self.align_dist*math.cos(dock_yaw)
+      align_pose.position.y = dock_pos[1] - self.align_dist*math.sin(dock_yaw)
+      align_angle = dock_yaw
 
-    align_angle = dock_yaw + np.pi
     if (align_angle > np.pi):
       align_angle -= 2*np.pi
     self.setPoseQuat(align_pose, align_angle)
@@ -237,7 +285,7 @@ class DockMaster():
     self.waitForWaypointRequest()
 
   def getDockPose(self):
-    objects_msg = rospy.wait_for_message('/wamv/objects', ObjectArray)
+    '''objects_msg = rospy.wait_for_message('/wamv/objects', ObjectArray)
     dock_frame_id = None
     for object in objects_msg.objects:
       if object.best_guess == "dock":
@@ -253,24 +301,31 @@ class DockMaster():
       return tf_pos, tf_rot
     except tf.LookupException as e:
       self.logDock(e)
-      return None, None
+      return None, None'''
+    
+    tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
+    tf_rot = [0, 0, 0, 1]
+    return tf_pos, tf_rot
 
-  def performDock(self):
+  def performDock(self, bay_index):
     self.logDock("Starting docking procedure.")
 
     client = actionlib.SimpleActionClient('/wamv/docking', vrx_msgs.msg.DockAction)
     client.wait_for_server()
 
+    bay_pose = Pose()
     dock_pos, dock_quat = self.getDockPose()
-
     dock_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
 
-    bay_pose = Pose()
-    bay_pose.position.x = dock_pos[0] + self.bay_dist*math.cos(dock_yaw)
-    bay_pose.position.y = dock_pos[1] + self.bay_dist*math.sin(dock_yaw)
-    bay_pose.orientation.w = 1
+    if bay_index == 0:
+      bay_pose.position.x = dock_pos[0] + self.bay_dist*math.cos(dock_yaw)
+      bay_pose.position.y = dock_pos[1] + self.bay_dist*math.sin(dock_yaw)
+      align_angle = dock_yaw + np.pi
+    else:
+      bay_pose.position.x = dock_pos[0] - self.bay_dist*math.cos(dock_yaw)
+      bay_pose.position.y = dock_pos[1] - self.bay_dist*math.sin(dock_yaw)
+      align_angle = dock_yaw
 
-    align_angle = dock_yaw + np.pi
     if (align_angle > np.pi):
       align_angle -= 2*np.pi
 

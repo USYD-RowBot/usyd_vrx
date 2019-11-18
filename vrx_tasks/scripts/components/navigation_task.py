@@ -60,7 +60,7 @@ class NavigationTask:
         rospy.sleep(5)
 
         #Find first two buoys.
-        target = self.findGate("white","red" thresh=0.2)
+        target = self.findGate("white","red", thresh=0.2)
         self.publishMarker(target)
         if target is None:
             return

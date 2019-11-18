@@ -216,7 +216,7 @@ class BuoyClassifier(Classifier):
         contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
 
         if len(contours) == 0:
-            print("Couldn't find contours for image mask. Mask might not include a buoy.")
+            #print("Couldn't find contours for image mask. Mask might not include a buoy.")
             return None, None
 
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
@@ -319,11 +319,11 @@ class BuoyClassifier(Classifier):
                 else:
                     dist_scale = 1 - ((distance-10)/60)
 
-                print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
+                #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
                 return label, conf_shape*conf_colour*dist_scale, clustered_img
             else:
-                print("No cropped image returned")
+                #print("No cropped image returned")
                 return "", 0.0, clustered_img
         else:
-            print("No centre colour return:")
+            #print("No centre colour return:")
             return "", 0.0, clustered_img
