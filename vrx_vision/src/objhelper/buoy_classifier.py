@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import rospkg
-
+import rospy
 class BuoyClassifier():
 
     def __init__(self, exclusion_list, hfov, cam_x_px):
@@ -210,7 +210,7 @@ class BuoyClassifier():
         contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
 
         if len(contours) == 0:
-            print("Couldn't find contours for image mask. Mask might not include a buoy.")
+            rospy.logdebug("Couldn't find contours for image mask. Mask might not include a buoy.")
             return None, None
 
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
@@ -295,7 +295,7 @@ class BuoyClassifier():
         ''' Calculates percentage similarity between two identically shaped binary images.
         '''
         if (img1.shape[0] is not img2.shape[0]) and (img1.shape[1] is not img2.shape[1]):
-            print("Images are different sizes! Cannot compute similarity. img1: %s, img2: %s."
+            rospy.logwarn("Images are different sizes! Cannot compute similarity. img1: %s, img2: %s."
                 % (img1.shape, img2.shape))
             return
 
@@ -327,7 +327,7 @@ class BuoyClassifier():
 
             #cv2.imshow('K-Means Clustering', template_img)
             #cv2.waitKey(0)
-        print(label_confidences)
+        #print(label_confidences)
         """conf_shape       = max(label_confidences) # Get highest confidence label and index
         best_shape_index = np.argmax(label_confidences)
 
@@ -402,11 +402,11 @@ class BuoyClassifier():
                 else:
                     dist_scale = 1 - ((distance-15)/60)
 
-                print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
+                rospy.logdebug("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" , label, conf_shape, conf_colour)
                 return label, conf_shape*conf_colour*dist_scale, clustered_img
             else:
-                print("No cropped image returned")
+                rospy.logdebug("No cropped image returned")
                 return "", 0.0, clustered_img
         else:
-            print("No centre colour return:")
+            rospy.logdebug("No centre colour return:")
             return "", 0.0, clustered_img

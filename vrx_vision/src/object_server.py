@@ -7,7 +7,7 @@ from geographic_msgs.msg import GeoPoseStamped
 import math
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid
-from vrx_msgs.msg import ObjectArray, Object
+from vrx_msgs.msg import ObjectArray, Object, Task
 from geometry_msgs.msg import Pose, Vector3, Quaternion
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
@@ -19,40 +19,89 @@ from objhelper.qhull_2d import *
 from objhelper.min_bounding_rect import *
 from objhelper.buoy_classifier import BuoyClassifier
 from imutils import build_montages
+import sys
+import pyproj
 
 
-THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
-DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
-EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
-USE_CAMERA = rospy.get_param("use_camera", True)
-USE_CAMERA = rospy.get_param("use_camera", True)
-DEBUG = rospy.get_param("debug", False)
-print("USING THE CAMERA: " + str(USE_CAMERA))
-print("DISTANCE THRESHOLD: " + str(DIST_THRESH))
-print("EXPIRY_TIME: " + str(EXPIRY_TIME))
+THRESHOLD = rospy.get_param('~threshold', 40); #Min value of a cell before it is counted
+DIST_THRESH = rospy.get_param('~distance_threshold',3); #Distance between clusters before it is condidered seperate
+EXPIRY_TIME = rospy.get_param('~expiry_time', 1) #Time to before cleaning up missing objects
+USE_CAMERA = rospy.get_param("~use_camera", True)
+DEBUG = rospy.get_param("~debug", True)
+USE_CAMERA_RANGE = rospy.get_param('~camera_range', 60)
+rospy.loginfo("USING THE CAMERA: " + str(USE_CAMERA))
+rospy.loginfo("DISTANCE THRESHOLD: " + str(DIST_THRESH))
+rospy.loginfo("EXPIRY_TIME: " + str(EXPIRY_TIME))
 
 MARGIN_X = 200
 MARGIN_Y = 150
-USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
+
+initalised = False
+task = ""
+perception = False
+task_sub=None
+
+class MyTask():
+    def __init__(self):
+
+        self.initalised = False
+        self.task = ""
+
+        task_sub=None
+
+    def taskCallback(self,data):
+        global perception
+        rospy.loginfo("Found task %s",data.name)
+        self.initalised = True
+        self.task = data.name
+        #task_sub.unregister()
+
 if __name__ == "__main__":
     rospy.init_node("object_server")
-    exclusion_list = rospy.get_param("~excluded_buoys", ["yellow_totem", "black_totem", "green_totem", "red_totem"])
-    exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","scan_buoy"]
-    print(exclusion_list)
+    t= MyTask()
+    task_sub = rospy.Subscriber("/vrx/task/info", Task, t.taskCallback)
+    rospy.loginfo("Waiting for vrx task information")
+
+
+    while not t.initalised:
+        #print(t.initalised)
+        rospy.sleep(0.1)
+    task_sub.unregister()
+    rospy.loginfo("Currently on task %s",t.task)
+    exclusion_list = []
+    if t.task=="navigation_course":
+        exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","scan_buoy"]
+    elif t.task=="perception":
+        perception=True
+        DIST_THRESH = 0.5
+        EXPIRY_TIME = 1
+    elif t.task=="scan":
+        USE_CAMERA=False
+    elif t.task=="scan_and_dock":
+        exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","surmark_950410", "surmark_46104", "surmark_950400","polyform"]
+    else:
+        rospy.logerror("EXITING OBJECT SERVER")
+        sys.exit()
 
     tf_broadcaster = tf.TransformBroadcaster()
     tf_listener = tf.TransformListener()
+
+    if perception:
+        p_pub = rospy.Publisher("/vrx/perception/landmark", GeoPoseStamped, queue_size="10")
     classifier = BuoyClassifier(exclusion_list, 1.3962634, 1280)
     bridge = CvBridge()
 
-    THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is counted
-    DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
-    EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
-    USE_CAMERA = rospy.get_param('use_camera', True)
-    print("USING THE CAMERA: " + str(USE_CAMERA))
-    MARGIN_X = 200
-    MARGIN_Y = 150
-    USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
+    #THRESHOLD = rospy.get_param('~threshold', 40); #Min value of a cell before it is counted
+    #DIST_THRESH = rospy.get_param('~distance_threshold',3); #Distance between clusters before it is condidered seperate
+    #EXPIRY_TIME = rospy.get_param('~expiry_time', 3) #Time to before cleaning up missing objects
+    #USE_CAMERA = rospy.get_param('~use_camera', True)
+    #rospy.loginfo("USING THE CAMERA: " + str(USE_CAMERA))
+    #MARGIN_X = 200
+    #MARGIN_Y = 150
+    #USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
+
+
+
 
 
 
@@ -66,7 +115,6 @@ class Obstacle():
         self.object = Object()
         self.points = None
         self.radius = None
-        #self.image_server = image_server
         self.best_guess_conf = 0
         self.object_server = object_server
         self.parent_frame = "map"
@@ -80,12 +128,10 @@ class Obstacle():
         self.image_dist = 0;
         self.image_classified = False
         self.object.best_guess = ""
-
-
+        self.time_published = 0
 
     def classify(self):
         """Here is where you request the cameras to classify the buoy"""
-
         #only worry about best guess and confidence atm.
 
         type = ""
@@ -104,7 +150,7 @@ class Obstacle():
         if self.radius < 2:
             type = "buoy"
             confidence = 0.2
-        elif self.radius > 5 and self.radius < 15 and len(self.points) > 8:
+        elif self.radius > 5 and self.radius < 15 and len(self.points) > 8 and not perception:
             type = "dock"
             confidence = 0.8
             points = numpy.array(self.points)
@@ -135,9 +181,6 @@ class Obstacle():
 
         if USE_CAMERA == True and type=="buoy":
             for camera in self.cameras.values():
-
-                #print("FRAME ID", self.object.frame_id,camera.frame_id)
-                #if camera.name == "middle":
                 try:
                     (trans, rot) = tf_listener.lookupTransform(camera.frame_id,self.object.frame_id, rospy.Time(0))
                 except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -157,27 +200,33 @@ class Obstacle():
                     buoy_pixel_x1 = int((camera.width/2)*(1-((trans[1]+x_len/2 + x_buf)/(trans[0]*math.tan(camera.fov/2)))))
                     buoy_pixel_y1 = int((camera.height/2)*(1-((trans[2]+y_len+y_buf)/(trans[0]*math.tan((camera.fov*9)/(2*16))))))
                     buoy_pixel_y2 = int((camera.height/2)*(1-((trans[2]-y_buf)/(trans[0]*math.tan((camera.fov*9)/(2*16))))))
-                    #print(buoy_pixel_x1,buoy_pixel_x2,buoy_pixel_y1,buoy_pixel_y2)
                     copy_img = camera.image.copy()
                     if buoy_pixel_x2 < camera.width and  buoy_pixel_x1 >0 and buoy_pixel_y1 > 0 and buoy_pixel_y2 < camera.height:
                         crop_img = camera.image[(buoy_pixel_y1):(buoy_pixel_y2), (buoy_pixel_x1):(buoy_pixel_x2)]
-                        #SEND FOR CLASSIFICATION
-                        #image_message = bridge.cv2_to_imgmsg(crop_img, encoding="bgr8")
-                        #if camera.name == "middle" :
-                            #cv2.imshow("middle_cropped", crop_img)
-                            #cv2.waitKey(1)
+
                         self.image = crop_img
                         self.image_dist = dist
                         self.image_classified = False;
 
-                            #type, confidence = classifier.classify(crop_img, dist)
-                        #confidence = res.confidence
-                        #cv2.imshow("middle_cropped", crop_img)
-                        cv2.rectangle(camera.debug_image,(buoy_pixel_x1,buoy_pixel_y1),(buoy_pixel_x2,buoy_pixel_y2),(0,0,255),1)
-                        # cv2.line(copy_img,(int(buoy_pixel_x1),720),(int(buoy_pixel_x2),0),(0,0,255),1)
-                        # cv2.line(copy_img,(0,buoy_pixel_y1),(1280,buoy_pixel_y2),(0,0,255),1)
+                        if perception:
+                            try:
+                                type, confidence,debug = classifier.classify(self.image, 5)
+                            except Exception as e:
+                                rospy.logwarn("Error Classifying Image");
+                                print(e)
+                                return
 
 
+                            if self.object.best_guess != type and confidence > 0.65 and (rospy.Time.now().secs - self.time_published > 2):
+                                rospy.loginfo("The type and confidence is %s, %s. previous guess is %s", type,confidence, self.object.best_guess)
+                                self.time_published = rospy.Time.now().secs
+                                self.perception_publish(type,self.object.frame_id)
+                                self.object.types = [type]
+                                self.object.best_guess = type
+                                self.object.confidences = [confidence]
+                                self.debug_image = debug
+                                #store
+                                pass
 
         if len(self.object.confidences) == 0 or confidence > self.object.confidences[0]:
             self.object.types = [type]
@@ -198,17 +247,16 @@ class Obstacle():
         self.parent_frame
         )
     def classify_image(self):
+
+
         if (len(self.object.confidences) != 0 and self.object.confidences[0] > 0.85 )or self.image_classified or self.image is None:
             return
 
         try:
             type, confidence,debug = classifier.classify(self.image, self.image_dist)
         except Exception as e:
-            print("ERROR CLASSIIYING");
-            print(e)
+            rospy.logwarn("Error Classifying Image");
             return
-            #cv2.imshow("Error", self.image)
-            #cv2.waitKey(1)
 
         self.image_classified = True
         if len(self.object.confidences) == 0 or confidence > self.object.confidences[0]:
@@ -216,9 +264,27 @@ class Obstacle():
             self.object.best_guess = type
             self.object.confidences = [confidence]
             self.debug_image = debug
-
         else:
             pass
+
+
+    def perception_publish(self,type,frame_id):
+        rospy.loginfo("Publishing %s to perception", type)
+        try:
+            (trans, rot) = tf_listener.lookupTransform(frame_id,"base_link", rospy.Time(0))
+        except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+        inFormat = pyproj.Proj("+init=EPSG:4326")
+        zeroMerc=pyproj.Proj("+proj=tmerc +lon_0={} +lat_0={} +units=m".format(-157.8901,21.30996))
+        lon,lat = pyproj.transform(zeroMerc,inFormat,trans[0],trans[1])
+
+        message = GeoPoseStamped()
+        message.pose.position.latitude = lat
+        message.pose.position.longitude = lon
+
+        message.header.frame_id = type
+        p_pub.publish(message)
 
 class Camera():
     def __init__(self,name,frame_id):
@@ -291,8 +357,8 @@ class ObjectServer():
             if r == info.width:
                 r = 0
                 c = c +1
-        if len(my_map.data)==0 and DEBUG:
-            print("Empty Map")
+        if len(my_map.data)==0:
+            rospy.logwarn("Object server recieved empty Map")
             return
         #Apply a distance threshold Cluster on the objects.
         #print(my_data,thresh)
@@ -300,10 +366,14 @@ class ObjectServer():
             return
         try:
             clust = hcluster.fclusterdata(my_data, DIST_THRESH, criterion="distance")
-        except Exception :
-            if DEBUG:
-                print(my_data,DIST_THRESH, "ERROR CLUSTERING")
-            return
+        except Exception as e:
+            #rospy.logwarn("Error occured clustering")
+            my_data = numpy.concatenate((my_data, my_data))
+            try:
+                clust = hcluster.fclusterdata(my_data, DIST_THRESH, criterion="distance")
+            except Exception as e:
+                rospy.logwarn("Second attempt no working")
+            #return
         clusters = {}
         count = 0
         for point in my_data:
@@ -375,11 +445,11 @@ class ObjectServer():
 
     def classify_objects(self):
         """Classify the objects found so far using appropiate cameras."""
-        if USE_CAMERA:
-            for camera in self.cameras.values() :
-                camera.debug_image = camera.image.copy()
-
-            cv2.imshow("middle", self.cameras["middle"].debug_image)
+        # if USE_CAMERA:
+        #     for camera in self.cameras.values() :
+        #         camera.debug_image = camera.image.copy()
+        if DEBUG and self.cameras["middle"].image is not None:
+            cv2.imshow("middle", self.cameras["middle"].image)
             cv2.waitKey(1)
 
         for i in self.objects:
@@ -431,8 +501,9 @@ class ObjectServer():
                 cv2.putText(i2,text,(0,20), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
                 images.append(i2)
         montages = build_montages(images,(200,200),(7,3))
-        cv2.imshow("Buoys",montages[0])
-        cv2.waitKey(1)
+        if DEBUG:
+            cv2.imshow("Buoys Montage",montages[0])
+            cv2.waitKey(1)
 
 
     def thread_func(self):
@@ -441,11 +512,9 @@ class ObjectServer():
             #print("Processing")
             self.process_map()
             self.cleanup()
-
-            if USE_CAMERA:
+            if USE_CAMERA and not perception:
                 self.classify_images()
 
-            rospy.sleep(0.5)
 
 if __name__ == "__main__":
 
@@ -473,13 +542,4 @@ if __name__ == "__main__":
         object_server.broadcast_objects()
         count = count+1
         rate.sleep()
-
-        dt = rospy.get_time()-time_last
-        if dt != 0 and DEBUG:
-
-            print("Hz = " + str(1/dt))
-        if dt != 0 and DEBUG:
-
-            print("Hz = " + str(1/dt))
-        time_last = rospy.get_time()
     thread.join()
