@@ -1,9 +1,5 @@
 <launch>
 
-
-
-
-
   <include file="$(find vrx_tasks)/launch/missioncontrol.launch">
       <arg name="world_name" value="perception_task"/>
   </include>

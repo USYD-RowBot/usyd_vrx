@@ -1,5 +1,9 @@
 excluded_buoys: 
-  - ""
+  - "yellow_totem"
+  - "black_totem"
+  - "green_totem"
+  - "red_totem"
+  - "scan_buoy"
 
 buoy_names:
   - "surmark_950410" # red, conical

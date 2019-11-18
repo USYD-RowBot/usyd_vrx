@@ -35,8 +35,8 @@ MARGIN_Y = 150
 USE_CAMERA_RANGE = rospy.get_param('camera_range', 60)
 if __name__ == "__main__":
     rospy.init_node("object_server")
-    exclusion_list = rospy.get_param("~excluded_buoys", ["yellow_totem", "black_totem", "green_totem", "red_totem"])
-    exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","scan_buoy"]
+    exclusion_list = rospy.get_param("~excluded_buoys")
+    print("Excluded Buoys:")
     print(exclusion_list)
 
     tf_broadcaster = tf.TransformBroadcaster()
@@ -72,11 +72,11 @@ class Obstacle():
         self.object.pose.position.x = self.x
         self.object.pose.position.y = self.y
         self.object.pose.orientation.w = 1
-        self.object.frame_id = frame_id;
+        self.object.frame_id = frame_id
         self.cameras = cameras
         self.image = None
         self.debug_image = None
-        self.image_dist = 0;
+        self.image_dist = 0
         self.image_classified = False
         self.object.best_guess = ""
 

@@ -23,7 +23,7 @@ angle_max: 1.2
 use_inf: false </rosparam>
 
        </node>
-   <node pkg="vrx_navigation" type="mapping" name="mapping" output="screen" launch-prefix="gdb -ex run --args">
+   <node pkg="vrx_navigation" type="mapping" name="mapping" output="screen">
      <param name="~width" value="1024"/>
      <param name="~resolution" value="0.4"/>
      <param name="~offset_x" value="+0.0"/>
