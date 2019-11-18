@@ -4,12 +4,13 @@
   <arg name="use_camera" default="true"/>
   <arg name="distance_threshold" default="3"/>
   <arg name="expiry_time" default="3"/>
-
+  <arg name="debug" default="true"/>
   <arg name="exclusion_list_config_file" value="$(find vrx_vision)/config/exclusion_list_perception.yaml"/>
 
   <group ns="wamv">
     <param name="threshold" value="40"/>
     <param name="use_camera" value="$(arg use_camera)"/>
+    <param name="debug" value="$(arg debug)"/>
     <param name="expiry_time" value="$(arg expiry_time)"/>
     <param name="distance_threshold" value="$(arg distance_threshold)"/>
 

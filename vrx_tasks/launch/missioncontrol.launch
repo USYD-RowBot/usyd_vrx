@@ -5,6 +5,7 @@
     <arg name="thrust_config" default="T"/>
     <arg name="world_name" default="sandisland"/>
     <arg name="rviz" default="true"/>
+    <arg name="debug" default="true"/>
 
     <!-- include the official gazebo file. This is like the server component in
     the competition. Disable it when runing for the comeptition.-->
@@ -25,12 +26,13 @@
     <include file="$(find vrx_navigation)/launch/lidar_node.launch">
     </include>
 
-    <include file="$(find vrx_vision)/launch/object_server.launch">
+    <!--include file="$(find vrx_vision)/launch/object_server.launch">
         <arg name="use_camera" value="true"/>
-    </include>
+        <arg name="debug" value="$(arg debug)"/>
+    </include-->
 
-    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
-    </node>
+    <!--node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+</node-->
 
 
     <!-- Vision translation -->

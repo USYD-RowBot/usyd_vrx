@@ -34,7 +34,7 @@ use_inf: false </rosparam>
    <node pkg="global_planner" type="planner" name="global_planner" output="screen">
        <!--remap from="global_planner/costmap/footprint" to ="costmap_2d/costmap/footprint"/-->
        <!--remap from="global_planner/costmap/costmap" to ="costmap_2d/costmap/costmap"/-->
-       <remap from="global_planner/goal" to="/move_base_simple/goal"/>
+       <!--remap from="global_planner/goal" to="/move_base_simple/goal"/-->
        <param name="planner/old_navfn_behavior" value="false" />
        <param name="planner/use_quadratic" value="true" />
        <param name="planner/use_dijkstra" value="true" />

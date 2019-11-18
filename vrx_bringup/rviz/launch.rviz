@@ -13,6 +13,7 @@ Panels:
         - /Path1
         - /PointCloud21
         - /LaserScan1
+        - /Map2
       Splitter Ratio: 0.5
     Tree Height: 535
   - Class: rviz/Selection
@@ -322,7 +323,7 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /wamv/visualization_marker
-      Name: Marker
+      Name: Object Marker
       Namespaces:
         basic text: true
       Queue Size: 100
@@ -332,8 +333,18 @@ Visualization Manager:
       Marker Topic: /nav_marker
       Name: Marker
       Namespaces:
-        {}
+        nav_task: true
       Queue Size: 100
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: costmap
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /wamv/global_planner/costmap/costmap
+      Unreliable: false
+      Use Timestamp: false
       Value: true
   Enabled: true
   Global Options:
@@ -370,18 +381,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
+        X: 9.754388809204102
+        Y: 1.936496615409851
         Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9403979182243347
+      Pitch: 0.8297966718673706
       Target Frame: wamv/base_link
       Value: ThirdPersonFollower (rviz)
-      Yaw: 6.250401020050049
+      Yaw: 3.3603994846343994
     Saved: ~
 Window Geometry:
   Displays:
