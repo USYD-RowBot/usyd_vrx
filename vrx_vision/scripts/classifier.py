@@ -63,15 +63,16 @@ class Classifier(object):
             return (string, float, float): (label, conf_label, conf_colour), where
                 confidences are from 0 to 1.
         '''
-
         label_confidences  = []
         colour_confidences = []
+
 
         for template_filename in self.template_filename_list: # Compare img with templates
             template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
             label_confidences.append(self.percentSimilar(template_img, img))
 
-        conf_shape       = max(label_confidences) # Get highest confidence label and index
+        print(label_confidences)        
+        """conf_shape       = max(label_confidences) # Get highest confidence label and index
         best_shape_index = np.argmax(label_confidences)
 
         for template_colour in self.template_colours[best_shape_index]: # Compare colour with templates
@@ -81,4 +82,21 @@ class Classifier(object):
         best_colour_index = np.argmax(colour_confidences)
 
         label = self.template_labels[best_shape_index][best_colour_index] # Get best label
-        return label, conf_shape, conf_colour
+        return label, conf_shape, conf_colour"""
+
+        max_conf = 0
+        max_colour_conf = 0
+        max_label_conf = 0
+        label = ""
+        for conf_shape in label_confidences:
+            index = label_confidences.index(conf_shape)
+            for template_colour in self.template_colours[index]: # Compare colour with templates
+                total_conf = self.colourConfidenceRGB(template_colour, colour)*conf_shape
+                index2 = self.template_colours[index].index(template_colour)
+                if total_conf > max_conf:
+                    max_conf = total_conf
+                    max_colour_conf = self.colourConfidenceRGB(template_colour, colour)
+                    max_label_conf = conf_shape
+                    label = self.template_labels[index][index2]
+
+        return label,max_label_conf,max_colour_conf

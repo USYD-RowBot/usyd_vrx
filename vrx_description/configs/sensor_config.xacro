@@ -7,9 +7,6 @@
     <!-- === wamv_gps === -->
       <xacro:wamv_gps x="-0.85" name="gps_wamv" />
 
-    <!-- === wamv_p3d === -->
-      <xacro:wamv_p3d name="p3d_wamv" />
-
     <!-- === wamv_camera === -->
       <xacro:wamv_camera y="0.1" x="0.75" Y="${radians(30)}" name="left_camera" />
       <xacro:wamv_camera y="-0.1" x="0.75" Y="${radians(-30)}" name="right_camera" />
