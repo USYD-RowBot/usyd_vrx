@@ -331,7 +331,7 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /nav_marker
-      Name: Marker
+      Name: Nav Marker
       Namespaces:
         nav_task: true
       Queue Size: 100
@@ -374,25 +374,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 45.867191314697266
+      Distance: 27.757429122924805
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 9.754388809204102
-        Y: 1.936496615409851
-        Z: 0
+        X: 0.40061116218566895
+        Y: 1.1274603605270386
+        Z: 3.814697265625e-6
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8297966718673706
+      Pitch: 0.6047970056533813
       Target Frame: wamv/base_link
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.3603994846343994
+      Yaw: 3.145402431488037
     Saved: ~
 Window Geometry:
   Displays:

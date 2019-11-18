@@ -64,10 +64,10 @@ class NavigationTask:
             target = self.findClosest(self.unused_objects, "buoy").pose
 
         target.orientation = self.current_pose.orientation
-        target = self.translatePose(target,0,-5,0)
+        target = self.translatePose(target,0,-10,0)
         self.publishMarker(target)
         rospy.loginfo("Navigating to nearest buoy for 5 seconds")
-        self.navigateTo(target,timeout = 5,repubish=True,dist_thresh = 6)
+        self.navigateTo(target,timeout = 30,repubish=True,dist_thresh = 6)
         rospy.loginfo("Waiting 5 seconds")
         rospy.sleep(5)
         #Find first two buoys.
@@ -91,8 +91,9 @@ class NavigationTask:
                         continue
                     else:
                         break
-                self.publishMarker(target)
 
+                target = self.translatePose(target,0,1,0)
+                self.publishMarker(target)
                 self.navigateTo(target,dist_thresh = 2, ang_thresh = 1)
 
                 #rospy.sleep(5)
@@ -100,6 +101,7 @@ class NavigationTask:
         target = self.findGate("blue_totem","red")
         if target is None:
             return
+        target = self.translatePose(target,0,1,0)
         self.publishMarker(target)
         self.navigateTo(target)
         rospy.loginfo("END of Program")
@@ -453,6 +455,9 @@ class NavigationTask:
 
 
     def publishMarker(self, pose):
+
+        if pose is None:
+            return
         marker = Marker()
         marker.header.frame_id = "map"
         marker.header.stamp = rospy.Time.now()
