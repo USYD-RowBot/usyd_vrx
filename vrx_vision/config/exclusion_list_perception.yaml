@@ -1,10 +1,10 @@
-excluded_buoys: 
+excluded_buoys:
   - ""
 
 buoy_names:
-  - "surmark_950410" # red, conical
-  - "surmark_46104"  # white, tophat
-  - "surmark_950400" # green, tophat
+  - "surmark950410" # red, conical
+  - "surmark46104"  # white, tophat
+  - "surmark950400" # green, tophat
   - "yellow_totem"
   - "black_totem"
   - "blue_totem"

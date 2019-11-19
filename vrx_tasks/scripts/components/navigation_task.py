@@ -485,21 +485,21 @@ class NavigationTask:
         closest = None
         min_dist = None
         if type =="object":
-            accepted_objects = ["dock", "buoy", "yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem", "polyform_a3", "polyform_a5", "polyform_a7", "surmark_46104", "surmark_950400", "surmark_950410"]
+            accepted_objects = ["dock", "buoy", "yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem", "polyform_a3", "polyform_a5", "polyform_a7", "surmark46104", "surmark950400", "surmark950410"]
         elif type == "buoy":
-            accepted_objects = ["buoy", "yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem", "polyform_a3", "polyform_a5", "polyform_a7", "surmark_46104", "surmark_950400", "surmark_950410"]
+            accepted_objects = ["buoy", "yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem", "polyform_a3", "polyform_a5", "polyform_a7", "surmark46104", "surmark950400", "surmark950410"]
         elif type == "totem":
             accepted_objects = ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"]
         elif type == "polyform":
             accepted_objects= ["polyform_a3", "polyform_a5", "polyform_a7"]
         elif type == "nav":
-            accepted_objects = ["surmark_46104", "surmark_950400","surmark_950410","blue_totem", "polyform_a7", "buoy"]
+            accepted_objects = ["surmark46104", "surmark950400","surmark950410","blue_totem", "polyform_a7", "buoy"]
         elif type == "white":
-            accepted_objects = ["surmark_46104"]
+            accepted_objects = ["surmark46104"]
         elif type == "green":
-            accepted_objects = ["surmark_950400","blue_totem"]
+            accepted_objects = ["surmark950400","blue_totem"]
         elif type == "red":
-            accepted_objects = ["surmark_950410"]
+            accepted_objects = ["surmark950410"]
         else:
             accepted_objects = [type]
 

@@ -78,9 +78,9 @@ if __name__ == "__main__":
     elif t.task=="scan":
         USE_CAMERA=False
     elif t.task=="scan_and_dock":
-        exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","surmark_950410", "surmark_46104", "surmark_950400","polyform"]
+        exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","surmark950410", "surmark46104", "surmark950400","polyform"]
     else:
-        rospy.logerror("EXITING OBJECT SERVER")
+        rospy.logerr("EXITING OBJECT SERVER")
         sys.exit()
 
     tf_broadcaster = tf.TransformBroadcaster()
@@ -488,11 +488,11 @@ class ObjectServer():
                 font = cv2.FONT_HERSHEY_SIMPLEX
 
                 text = ""
-                if i.object.best_guess == "surmark_950410":
+                if i.object.best_guess == "surmark950410":
                     text = "red"
-                elif i.object.best_guess == "surmark_46104":
+                elif i.object.best_guess == "surmark46104":
                     text = "white"
-                elif i.object.best_guess == "surmark_950400":
+                elif i.object.best_guess == "surmark950400":
                     text = "green"
                 else:
                     text = i.object.best_guess
