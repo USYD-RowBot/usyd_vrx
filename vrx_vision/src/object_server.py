@@ -27,7 +27,7 @@ THRESHOLD = rospy.get_param('~threshold', 40); #Min value of a cell before it is
 DIST_THRESH = rospy.get_param('~distance_threshold',3); #Distance between clusters before it is condidered seperate
 EXPIRY_TIME = rospy.get_param('~expiry_time', 1) #Time to before cleaning up missing objects
 USE_CAMERA = rospy.get_param("~use_camera", True)
-DEBUG = rospy.get_param("~debug", True)
+DEBUG = rospy.get_param("~debug", False)
 USE_CAMERA_RANGE = rospy.get_param('~camera_range', 60)
 rospy.loginfo("USING THE CAMERA: " + str(USE_CAMERA))
 rospy.loginfo("DISTANCE THRESHOLD: " + str(DIST_THRESH))
