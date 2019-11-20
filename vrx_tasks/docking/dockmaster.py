@@ -266,10 +266,9 @@ class DockMaster():
 
   def alignWithDock(self, bay_index, duration=0.0):
     self.logDock("Aligning with the dock.")
-    dock_pos, dock_quat = self.getDockPose()
+    dock_pos, dock_yaw = self.getDockPose()
 
     align_pose = Pose()
-    dock_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
 
     if bay_index == 0:
       align_pose.position.x = dock_pos[0] + self.align_dist*math.cos(dock_yaw)
@@ -310,7 +309,9 @@ class DockMaster():
 
     try:
       tf_pos, tf_rot = self.tf_listener.lookupTransform('/map', dock_frame_id, rospy.Time(0))
-      return tf_pos, tf_rot
+      dock_yaw = tf.transformations.euler_from_quaternion(tf_rot)[2]
+      dock_yaw += np.pi/2
+      return tf_pos, dock_yaw
     except tf.LookupException as e:
       self.logDock(e)
       return None, None
@@ -344,8 +345,7 @@ class DockMaster():
     client.wait_for_server()
 
     bay_pose = Pose()
-    dock_pos, dock_quat = self.getDockPose()
-    dock_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
+    dock_pos, dock_yaw = self.getDockPose()
 
     if bay_index == 0:
       bay_pose.position.x = dock_pos[0] + self.bay_dist*math.cos(dock_yaw)
