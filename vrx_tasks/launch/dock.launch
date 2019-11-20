@@ -1,22 +1,8 @@
 <launch>
 
-  <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
-      <arg name="world_name" value="dock"/>
-      <arg name="gui" value="true"/>
-      <arg name="verbose" value="true"/>
-  </include>
-
-  <include file="$(find vrx_bringup)/launch/rviz.launch"/>
-
-  <include file="$(find vrx_bringup)/launch/localisation.launch"/>
-
-  <include file="$(find vrx_navigation)/launch/lidar_node.launch">
-  </include>
-
-  <include file="$(find vrx_vision)/launch/object_server.launch">
-  </include>
-
-  <include file="$(find vrx_control)/launch/control.launch"/>
+    <include file="$(find vrx_tasks)/launch/missioncontrol.launch">
+        <arg name="world_name" value="dock"/>
+    </include>
 
   <include file="$(find vrx_navigation)/launch/docking.launch"/>
 
