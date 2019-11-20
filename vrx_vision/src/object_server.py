@@ -76,7 +76,7 @@ if __name__ == "__main__":
         perception=True
         DIST_THRESH = 0.5
         EXPIRY_TIME = 1
-    elif t.task=="scan":
+    elif t.task=="scan" or t.task=="dock":
         USE_CAMERA=True
     elif t.task=="scan_and_dock":
         exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","surmark950410", "surmark46104", "surmark950400","polyform"]

@@ -172,8 +172,8 @@ class DockMaster():
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
 
-    self.circleObject("dock", revs=0.1, clockwise=True)
-    self.circleObject("dock", revs=0.2, clockwise=False)
+    self.circleObject("dock", revs=1, clockwise=True)
+    #self.circleObject("dock", revs=0.2, clockwise=False)
 #
     self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
@@ -414,13 +414,14 @@ class DockMaster():
     dock_pose = None
     max_conf = 0
 
-    for object in objects_msg.objects:
-      if object.best_guess == "dock":
-        if object.confidences[0] > max_conf:
-          dock_frame_id = object.frame_id
-          dock_pose = object.pose
-          max_conf = object.confidences[0]
-
+    while dock_frame_id is None:
+        for object in objects_msg.objects:
+          if object.best_guess == "dock":
+            if object.confidences[0] > max_conf:
+              dock_frame_id = object.frame_id
+              dock_pose = object.pose
+              max_conf = object.confidences[0]
+        rospy.sleep(0.5)
     if dock_frame_id is None: # Couldn't find dock
       self.logDock("Dock not found.")
       return None, None
