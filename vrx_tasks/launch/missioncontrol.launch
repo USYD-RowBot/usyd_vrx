@@ -27,8 +27,8 @@
     </include>
 
     <include file="$(find vrx_vision)/launch/object_server.launch">
-        <!--arg name="use_camera" value="true"/-->
-        <!--arg name="debug" value="$(arg debug)"/-->
+        <arg name="use_camera" value="true"/>
+        <arg name="debug" value="$(arg debug)"/>
     </include>
 
     <!--include file="$(find vrx_vision)/launch/object_server0.launch">

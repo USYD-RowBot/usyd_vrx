@@ -70,7 +70,7 @@ class Docker:
 
     self.dock_pos = [0, 0] # Position of desired docking bay
     self.dock_yaw = 0      # Yaw at which to enter dock
-
+    self.prev_x_error = 0
     self.getROSParams()
 
     self.dock_sm = DockSM(self.hold_duration) # Initialise docking state machine
@@ -85,9 +85,9 @@ class Docker:
     self.sub_img  = rospy.Subscriber(
       "/wamv/sensors/cameras/middle_camera/image_raw", Image, self.imageCb)
     self.sub_odom = rospy.Subscriber(
-      "/odom", Odometry, self.odomCb)    
+      "/odom", Odometry, self.odomCb)
 
-    rospy.wait_for_service('wamv/classify_placard')
+    rospy.wait_for_service('/wamv/wamv/classify_placard')
 
     self.server = actionlib.SimpleActionServer('docking', DockAction, self.execute, False)
     self.server.start()
@@ -105,7 +105,7 @@ class Docker:
     rospy.loginfo("docking: Goal received.")
 
     # Disable waypoint follower to gain control
-    if not self.enableWaypointFollower(False): 
+    if not self.enableWaypointFollower(False):
       self.server.set_aborted() # Return failure from server
       return # Early exit the execute function if service failed
 
@@ -130,21 +130,21 @@ class Docker:
       # HOLDING POSITION IN DOCK
       elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
 
-        if self.dock_sm.tryExitDock(): # Wait for duration of HOLD before exiting dock          
+        if self.dock_sm.tryExitDock(): # Wait for duration of HOLD before exiting dock
           self.server.publish_feedback(DockFeedback("Entering state EXIT"))
 
       # EXITING DOCK
       elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
 
         # If close enough to initial position outside dock
-        if self.reachedGoalPos(self.initial_pos):         
+        if self.reachedGoalPos(self.initial_pos):
           self.dock_sm.finished() # Tell state machine we have exited successfully
           self.server.publish_feedback(DockFeedback("Entering state STANDBY"))
           self.server.publish_feedback(DockFeedback("Docking successful!"))
           self.server.set_succeeded() # Return success from server
           rospy.loginfo("docking: Finished docking procedure!")
 
-          self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
+          self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control
           cv2.destroyAllWindows() # Destroy opencv windows
 
           return # Exit execute() function
@@ -153,14 +153,28 @@ class Docker:
       course_cmd.station_yaw = self.dock_yaw
       course_cmd.keep_station = True
       course_cmd.yaw = self.getStrafeYaw() # Get strafe yaw based on state
-      course_cmd.speed = self.default_thrust
+      k = 0.01
+      min_thrust = 0.1
+      if abs(self.x_cam_error) > self.pix_threshold and self.x_cam_error>0:
+          thrust = abs(float(abs(self.x_cam_error)-self.pix_threshold)/float(self.pix_threshold)*self.default_thrust)
+          thrust = thrust -  float(abs(self.x_cam_error-self.prev_x_error))*k
+          if thrust < min_thrust:
+              thrust = min_thrust
+      else:
+          thrust = self.default_thrust
+
+      self.prev_x_error = self.x_cam_error
+      if thrust < 0:
+          thrust = 0
+      course_cmd.speed = thrust
+      print(course_cmd)
 
       self.pub_course.publish(course_cmd) # Publish course command
-      rate.sleep
+      rate.sleep()
     # end while loop
 
     self.server.set_aborted()         # Abort if we get here somehow
-    self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
+    self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control
 
   def enableWaypointFollower(self, do_enable):
     try: # Attempt to enable/disable waypoint follower
@@ -171,28 +185,33 @@ class Docker:
     except rospy.ServiceException, e:
         rospy.loginfo("docking: Unable to transfer control to/from waypoint follower: %s"%e)
         return False # Server failed
-    
+
     rospy.loginfo("docking: Transferred control to/from waypoint follower.")
     return True # Succesfully contacted server
 
   def reachedGoalPos(self, goal_pos):
     dist = np.sqrt((goal_pos[0]-self.vessel_pos[0])**2 + (goal_pos[1]-self.vessel_pos[1])**2)
     return dist < self.goal_tolerance_pos
-    
+
   def getStrafeYaw(self):
     yaw = 0
-
+    k = 0.2
     if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
-      if abs(self.x_cam_error) > self.pix_threshold: 
-        yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
+
+      #yaw = self.dock_yaw - ((np.pi/2)/self.pix_threshold )*self.x_cam_error
+      if abs(self.x_cam_error) > self.pix_threshold:
+        yaw = self.dock_yaw - np.sign(self.x_cam_error)*(np.pi/2)
       else:
         yaw = self.dock_yaw # Move forwards
 
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
         yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
-      
+
     elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
-      if abs(self.x_cam_error) > self.pix_threshold: 
+
+      #yaw = self.dock_yaw-np.pi - ((np.pi/2)/self.pix_threshold )*self.x_cam_error
+
+      if abs(self.x_cam_error) > self.pix_threshold:
         yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
       else:
         yaw = (self.dock_yaw - np.pi) # Move backwards
@@ -206,7 +225,7 @@ class Docker:
   def imageCb(self, ros_img):
     # If we aren't in the standby state
     if self.dock_sm.getState() is not self.dock_sm.DockState.DOCK_STANDBY:
-      
+
       self.calculatePlacardSymbolX(ros_img)
       '''try: # Convert ROS image to CV image
         cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
@@ -241,7 +260,7 @@ class Docker:
     new_width = 300 # Scale image down so width is 300 pixels
     aspect = float(img.shape[0]) / float(img.shape[1])
     scaled_img = cv2.resize(img, (new_width, int(new_width * aspect)))
- 
+
     # Generate Gabor filter kernel and filter the scaled image
     g_kernel  = cv2.getGaborKernel((3,3), 16, np.radians(0), 5, 0.5, 0, ktype=cv2.CV_32F)
     gabor_img = cv2.filter2D(scaled_img, -1, g_kernel)
@@ -252,9 +271,9 @@ class Docker:
     params = cv2.SimpleBlobDetector_Params() # Set blob detector parameters
     params.filterByArea = True  # Filter by area.
     params.minArea = 50
-    
+
     detector = cv2.SimpleBlobDetector_create(params) # Create blob detector
-     
+
     keypoints = detector.detect(bordered_img) # Detect blobs
 
     # Only record x error if exactly 1 blob is detected.
@@ -268,11 +287,11 @@ class Docker:
       rospy.logdebug("docking: Error: more than 1 blob detected.")
 
     # Draw detected blobs on gabor filtered image as red circles.
-    blob_img = cv2.drawKeypoints(bordered_img, keypoints, np.array([]), (0,0,255), 
+    blob_img = cv2.drawKeypoints(bordered_img, keypoints, np.array([]), (0,0,255),
       cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     cv2.imshow("detected blobs", blob_img)
     cv2.waitKey(1)'''
-    
+
 def signalHandler(sig, frame):
   cv2.destroyAllWindows()
   rospy.signal_shutdown("Shutting down docking node on Ctrl+C.")

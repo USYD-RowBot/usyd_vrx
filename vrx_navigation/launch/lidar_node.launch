@@ -18,8 +18,8 @@
 angle_increment: 0.00872664625
 range_max: 100.0
 range_min: 2.5
-angle_min: -1.2
-angle_max: 1.2
+angle_min: -1.8
+angle_max: 1.8
 use_inf: false </rosparam>
 
        </node>
@@ -54,7 +54,7 @@ use_inf: false </rosparam>
            <param name="planner/planner_window_y" value="10.0" />
            <param name="planner/default_tolerance" value="0" />
            <param name="planner/publish_scale" value="100" />
-           <param name = "costmap/footprint" value = "[[-2, -1.2], [2, -1.2], [2, 1.2], [-2,1.2]]"/>
+           <param name = "costmap/footprint" value = "[[-4, -2.4], [4, -2.4], [4, 2.4], [-4,2.4]]"/>
            <param name = "costmap/height" value = "100"/>
            <param name = "costmap/width" value = "100"/>
           <param name = "costmap/robot_radius" value = "7.0"/>

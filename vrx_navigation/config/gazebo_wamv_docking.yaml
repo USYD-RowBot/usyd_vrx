@@ -2,7 +2,7 @@ hold_duration:      10.0  # Duration to wait inside docking bay
 goal_tolerance_pos: 0.60 # Distance tolerance for arriving at goal pose
 goal_tolerance_ang: 0.15 # Angular tolerance for arriving at goal yaw
 
-default_thrust: 0.20 # Thrust value to use for docking procedure
+default_thrust: 0.3 # Thrust value to use for docking procedure
 
 pix_threshold: 30 # (px) Threshold for centering the image
 pix_offset:   -30 # (px) Offset center x position in image
