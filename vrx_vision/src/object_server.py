@@ -152,12 +152,32 @@ class Obstacle():
             confidence = 0.2
         elif self.radius > 5 and self.radius < 15 and len(self.points) > 8 and not perception:
             type = "dock"
-            confidence = 0.8
+            confidence = 0.3
             points = numpy.array(self.points)
             hull_points = qhull2D(points)
             hull_points = hull_points[::-1]
-            (rot_angle, area, width, height, center_point, corner_points) = minBoundingRect(hull_points)
-            if (width < height):
+            (rot_angle, area, length, width, center_point, corner_points) = minBoundingRect(hull_points)
+
+            dock_width=8.0
+            dock_length=16.0
+            if width>length:
+                rospy.loginfo("WIDTH is bigger, swapping values")
+                temp = length
+                length = width
+                width = temp
+
+
+            confidence = (1-abs(width/dock_width-1)) * (1-abs(length/dock_length-1))
+
+
+
+            if confidence < 0.3:
+                confidence = 0.3
+
+            rospy.loginfo("Dock length(biggest) %f, dock width(shortest) %f, conf : %f",length, width,confidence)
+
+
+            if (width > length):
                 self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle)
             else:
                 self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle+1.5707)
@@ -228,7 +248,7 @@ class Obstacle():
                                 #store
                                 pass
 
-        if len(self.object.confidences) == 0 or confidence > self.object.confidences[0]:
+        if len(self.object.confidences) == 0 or confidence > self.object.confidences[0] or (type == "dock" and (self.object.best_guess !="dock" and self.object.best_guess !="land")):
             self.object.types = [type]
             self.object.best_guess = type
             self.object.confidences = [confidence]
