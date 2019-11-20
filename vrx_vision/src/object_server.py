@@ -25,7 +25,8 @@ THRESHOLD = rospy.get_param('threshold', 40); #Min value of a cell before it is 
 DIST_THRESH = rospy.get_param('distance_threshold',3); #Distance between clusters before it is condidered seperate
 EXPIRY_TIME = rospy.get_param('expiry_time', 3) #Time to before cleaning up missing objects
 USE_CAMERA = rospy.get_param("use_camera", True)
-DEBUG = False
+USE_CAMERA = rospy.get_param("use_camera", True)
+DEBUG = rospy.get_param("debug", False)
 print("USING THE CAMERA: " + str(USE_CAMERA))
 print("DISTANCE THRESHOLD: " + str(DIST_THRESH))
 print("EXPIRY_TIME: " + str(EXPIRY_TIME))
@@ -378,8 +379,8 @@ class ObjectServer():
             for camera in self.cameras.values() :
                 camera.debug_image = camera.image.copy()
 
-            #cv2.imshow("middle", self.cameras["middle"].debug_image)
-            #cv2.waitKey(1)
+            cv2.imshow("middle", self.cameras["middle"].debug_image)
+            cv2.waitKey(1)
 
         for i in self.objects:
             i.classify()
@@ -430,8 +431,8 @@ class ObjectServer():
                 cv2.putText(i2,text,(0,20), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
                 images.append(i2)
         montages = build_montages(images,(200,200),(7,3))
-        #cv2.imshow("Buoys",montages[0])
-        #cv2.waitKey(1)
+        cv2.imshow("Buoys",montages[0])
+        cv2.waitKey(1)
 
 
     def thread_func(self):

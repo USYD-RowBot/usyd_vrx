@@ -11,6 +11,7 @@ params = {
 }
 
 rospy.init_node("missionControl")
+rospy.loginfo("Starting Mission Planner")
 
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
@@ -18,7 +19,8 @@ initialised=False
 def cb(data):
     global initialised
     if (not initialised):
-        if data.name=="station_keeping":
+        if data.name=="stationkeeping":
+            rospy.loginfo("Executing Station Keeping")
             ## geo pose to pose
             geoPoseToPose.geoPoseToPoseConverter()
             ## pose to course

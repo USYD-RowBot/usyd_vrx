@@ -314,10 +314,10 @@ class BuoyClassifier(Classifier):
                 if label == "polyform":
                     label = self.getPolyformType(obj_width, distance)
 
-                if distance < 10:
+                if distance < 15:
                     dist_scale= 1
                 else:
-                    dist_scale = 1 - ((distance-10)/60)
+                    dist_scale = 1 - ((distance-15)/60)
 
                 #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
                 return label, conf_shape*conf_colour*dist_scale, clustered_img
