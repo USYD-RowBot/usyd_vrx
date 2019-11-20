@@ -67,6 +67,7 @@ add_message_files(
 add_service_files(
  FILES
    ClassifyBuoy.srv
+   ClassifyPlacard.srv
 #   Service2.srv
 )
 

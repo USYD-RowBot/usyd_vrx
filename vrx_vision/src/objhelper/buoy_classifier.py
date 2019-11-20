@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import rospkg
+import rospy
 
 import sys
 rospack = rospkg.RosPack()

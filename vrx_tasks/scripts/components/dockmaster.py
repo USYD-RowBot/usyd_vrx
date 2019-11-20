@@ -14,7 +14,7 @@ from std_msgs.msg import Empty, String
 from vrx_msgs.msg import *
 from geometry_msgs.msg import Pose, Quaternion, PoseStamped
 from nav_msgs.msg import Odometry
-from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
+from vrx_msgs.srv import *
 from sensor_msgs.msg import Image
 from vrx_gazebo.msg import Task
 from visualization_msgs.msg import Marker
@@ -26,19 +26,18 @@ from visualization_msgs.msg import Marker
 
 def quatToEuler(quat):
 
-    if quat.x is None:
-        #Must be a in tf form.
-        quaternion = quat
-    else:
-        quaternion = (
-        quat.x,
-        quat.y,
-        quat.z,
-        quat.w)
-    euler = tf.transformations.euler_from_quaternion(quaternion)
+  if quat.x is None:
+    #Must be a in tf form.
+    quaternion = quat
+  else:
+    quaternion = (
+    quat.x,
+    quat.y,
+    quat.z,
+    quat.w)
 
-    return euler[0],euler[1],euler[2]
-
+  euler = tf.transformations.euler_from_quaternion(quaternion)
+  return euler[0],euler[1],euler[2]
 
 class DockMaster():
 
@@ -72,9 +71,6 @@ class DockMaster():
     self.goal_pub = rospy.Publisher("/wamv/global_planner/goal", PoseStamped, queue_size = 10)
     self.marker_pub = rospy.Publisher("/nav_marker", Marker, queue_size=10)
 
-
-
-
     #rospy.get_param("~hold_duration")
 
     # Wait for any required services to be active
@@ -87,7 +83,6 @@ class DockMaster():
      # if task_msg.state == "ready":
         #ready = True
 
-
   def inRange(self, target, dist_thresh = 0.5, ang_thresh = 0.4):
       dist = math.sqrt((self.current_pose.position.x-target.position.x)**2 + (self.current_pose.position.y-target.position.y)**2)
 
@@ -97,7 +92,6 @@ class DockMaster():
           return True
       else:
           return False
-
 
   def navigateTo(self, target,  wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4, repubish = False):
       # Navigate to the location, if wait is True: Wait until destination is reached, if not,
@@ -124,9 +118,9 @@ class DockMaster():
 
       #Republish a waypoint in its own position if wanted to wait, else, it will exit the function but continue on its trajectory.
 
-
       rospy.loginfo("Arrived at target")
       return
+
   def executePlan(self):
     self.logDock("Executing mission plan.")
 
@@ -186,8 +180,8 @@ class DockMaster():
     while res is None or res.type=="":
         self.logDock("Attempting to Classify")
         try:
-          classifyPlacard = rospy.ServiceProxy('/wamv/wamv/classify_placard', ClassifyBuoy)
-          res = classifyPlacard(ros_img, 0)
+          classifyPlacard = rospy.ServiceProxy('/wamv/wamv/classify_placard', ClassifyPlacard)
+          res = classifyPlacard(ros_img)
         except rospy.ServiceException, e:
            self.logDock("Service call to /wamv/classify_placard failed: %s"%e)
            return False
@@ -197,7 +191,6 @@ class DockMaster():
       return True
     else:
       return False
-
 
   def spinOnSpot(self, n_times):
     self.logDock("Spinning on the spot %d times."%n_times)
@@ -455,14 +448,10 @@ class DockMaster():
   def logDock(self, msg):
     rospy.loginfo("~dockmaster: %s"%msg)
 
-
 def main():
   rospy.init_node("dockmaster")
-
   dm = DockMaster()
-
   rospy.spin()
-
 
 def publishMarker(marker_pub,pose, id = 1):
     rospy.loginfo("publishing marker")
@@ -485,7 +474,6 @@ def publishMarker(marker_pub,pose, id = 1):
     marker.color.a = 1.0
     marker.lifetime = rospy.Duration(0)
     marker_pub.publish(marker)
-
 
 if __name__ == "__main__":
   main()

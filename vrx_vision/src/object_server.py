@@ -27,7 +27,8 @@ THRESHOLD = rospy.get_param('~threshold', 40); #Min value of a cell before it is
 DIST_THRESH = rospy.get_param('~distance_threshold',3); #Distance between clusters before it is condidered seperate
 EXPIRY_TIME = rospy.get_param('~expiry_time', 1) #Time to before cleaning up missing objects
 USE_CAMERA = rospy.get_param("~use_camera", True)
-DEBUG = rospy.get_param("~debug", False)
+#DEBUG = rospy.get_param("~debug", False)
+DEBUG = True
 USE_CAMERA_RANGE = rospy.get_param('~camera_range', 60)
 rospy.loginfo("USING THE CAMERA: " + str(USE_CAMERA))
 rospy.loginfo("DISTANCE THRESHOLD: " + str(DIST_THRESH))
@@ -76,7 +77,7 @@ if __name__ == "__main__":
         DIST_THRESH = 0.5
         EXPIRY_TIME = 1
     elif t.task=="scan":
-        USE_CAMERA=False
+        USE_CAMERA=True
     elif t.task=="scan_and_dock":
         exclusion_list = ["yellow_totem", "black_totem", "green_totem", "red_totem","surmark950410", "surmark46104", "surmark950400","polyform"]
     else:
@@ -520,11 +521,11 @@ class ObjectServer():
                 #i2 = cv2.cvtColor(i2,cv2.COLOR_GRAY2RGB)
                 cv2.putText(i2,text,(0,20), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
                 images.append(i2)
+
         montages = build_montages(images,(200,200),(7,3))
         if DEBUG:
             cv2.imshow("Buoys Montage",montages[0])
             cv2.waitKey(1)
-
 
     def thread_func(self):
         #TODO: Add a kill function with a kill is requested.
