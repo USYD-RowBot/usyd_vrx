@@ -229,10 +229,6 @@ class DockMaster():
   def dumbFunction(self):
     return True
 
-  def findPlacardSymbol(self):
-    # TODO find placard symbol!
-    return True
-
   def getRequestedPlacardSymbol(self):
     self.logDock("Waiting for placard symbol message.")
     return (rospy.wait_for_message('/vrx/scan_dock/placard_symbol', String)).data
@@ -281,10 +277,10 @@ class DockMaster():
       object_pos, _ = self.getExplorePose()
       radius = self.explore_radius
 
-    if (object_string == "dock"):
-      identify_function = self.findPlacardSymbol
+    '''if (object_string == "dock"):
+      identify_function = self.checkPlacard
     else:
-      identify_function = self.dumbFunction
+      identify_function = self.dumbFunction'''
 
     odom_msg = rospy.wait_for_message("/wamv/odom", Odometry) # Current odom
 
@@ -339,9 +335,9 @@ class DockMaster():
     circle_wp_route.speed = self.general_speed
     self.route_pub.publish(circle_wp_route) # Start on route
 
-    r = rospy.Rate(2) # Wait until objective identified
+    '''r = rospy.Rate(2) # Wait until objective identified
     while not identify_function() and not rospy.is_shutdown:
-      r.sleep()
+      r.sleep()'''
 
     self.waitForWaypointRequest()
 
@@ -364,8 +360,6 @@ class DockMaster():
       align_angle -= 2*np.pi
     self.setPoseQuat(align_pose, align_angle)
 
-
-
     #align_wp = self.makeWaypoint(align_pose)
     #align_wps = WaypointRoute()
     #align_wps.waypoints = [align_wp]
@@ -379,26 +373,34 @@ class DockMaster():
   def getDockPose(self):
     objects_msg = rospy.wait_for_message('/wamv/objects', ObjectArray)
     dock_frame_id = None
+    dock_pose = None
     max_conf = 0
 
     for object in objects_msg.objects:
       if object.best_guess == "dock":
         if object.confidences[0] > max_conf:
           dock_frame_id = object.frame_id
+          dock_pose = object.pose
           max_conf = object.confidences[0]
 
     if dock_frame_id is None: # Couldn't find dock
       self.logDock("Dock not found.")
       return None, None
 
-    try:
+    dock_pos = [dock_pose.position.x, dock_pose.position.y, 0]
+    dock_yaw = self.quatToYaw(dock_pose.orientation.x, dock_pose.orientation.y,
+                              dock_pose.orientation.z, dock_pose.orientation.w)
+    dock_yaw -= np.pi/2
+    return dock_pos, dock_yaw
+
+    '''try:
       tf_pos, tf_rot = self.tf_listener.lookupTransform('/map', dock_frame_id, rospy.Time(0))
       dock_yaw = tf.transformations.euler_from_quaternion(tf_rot)[2]
       dock_yaw -= np.pi/2
       return tf_pos, dock_yaw
     except tf.LookupException as e:
       self.logDock(e)
-      return None, None
+      return None, None'''
 
     '''tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
     tf_rot = [0, 0, 0, 1]
