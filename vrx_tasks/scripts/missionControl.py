@@ -37,7 +37,7 @@ def cb(data):
             nav_task = NavigationTask()
             nav_task.startNavigation()
             pass
-        elif data.name=="scan":
+        elif data.name=="scan" or data.name=="dock":
             rospy.loginfo("On Task: docking")
 
             dm = DockMaster()
