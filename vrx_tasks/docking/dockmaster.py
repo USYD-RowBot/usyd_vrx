@@ -59,9 +59,9 @@ class DockMaster():
     #self.scan_code()
 
     #self.spinOnSpot(1)
-    #self.circleObject("dock")
+    self.circleObject("dock")
 
-    self.placard_symbol = self.getRequestedPlacardSymbol()
+    '''self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
     
     correct_bay = None
@@ -77,7 +77,7 @@ class DockMaster():
 
     self.logDock("Found correct bay. Ready to dock.")
 
-    self.performDock(correct_bay)
+    self.performDock(correct_bay)'''
 
   def waitForWaypointRequest(self):
     rospy.wait_for_message("/request_waypoints", Empty)

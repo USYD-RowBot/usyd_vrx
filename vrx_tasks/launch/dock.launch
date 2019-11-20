@@ -6,7 +6,7 @@
       <arg name="verbose" value="true"/>
   </include>
 
-  <!--include file="$(find vrx_bringup)/launch/rviz.launch"/-->
+  <include file="$(find vrx_bringup)/launch/rviz.launch"/>
 
   <include file="$(find vrx_bringup)/launch/localisation.launch"/>
 
