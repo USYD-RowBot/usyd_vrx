@@ -24,6 +24,7 @@ class DockMaster():
 
   def __init__(self):
     self.logDock("Initialising dock master.")
+    rospy.sleep(5)
     self.initMission()
     self.executePlan()
 
@@ -49,14 +50,14 @@ class DockMaster():
     #rospy.wait_for_service('scan_buoy')
     rospy.wait_for_service('wamv/classify_placard')
 
-    ready = False # Wait until competition is in Ready state.
-    while not ready:
-      task_msg = rospy.wait_for_message("/vrx/task/info", Task)
-      if task_msg.state == "ready":
-        ready = True
+    #ready = False # Wait until competition is in Ready state.
+    #while not ready:
+     # task_msg = rospy.wait_for_message("/vrx/task/info", Task)
+     # if task_msg.state == "ready":
+        #ready = True
 
-  def executePlan(self):  
-    self.logDock("Executing mission plan.")  
+  def executePlan(self):
+    self.logDock("Executing mission plan.")
 
     #self.spinOnSpot(1)
     #self.circleObject("scan_buoy")
@@ -67,7 +68,7 @@ class DockMaster():
 
     self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
-    
+
     correct_bay = None
     for i in [0, 1]:
       self.alignWithDock(i, duration=5.0)
@@ -175,7 +176,7 @@ class DockMaster():
     except rospy.ServiceException, e:
         self.logDock("Service call failed: %s"%e)
         return False # I dunno man
-  
+
   def circleObject(self, object_string, revs=1.0, look_dock=True):
     ''' object_string (string): "dock", "any_dock", "scan_buoy", "explore"
     '''
@@ -200,12 +201,12 @@ class DockMaster():
     elif (object_string == "explore"): # Explore!
       object_pos, _ = self.getExplorePose()
       radius = self.explore_radius
-        
+
     if (object_string == "dock"):
       identify_function = self.findPlacardSymbol
     else:
-      identify_function = self.dumbFunction   
-    
+      identify_function = self.dumbFunction
+
     odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
 
     init_vec = [object_pos[0] - odom_msg.pose.pose.position.x, # Boat-to-object vector
@@ -221,7 +222,7 @@ class DockMaster():
 
     circle_wp_route = WaypointRoute() # Waypoint list
     circle_wps = []
-    
+
     #init_wp = self.makeWaypoint(init_pose, nav_type=nav_msg_type) # Create waypoint from above data
     #circle_wps.append(init_wp)
 
@@ -261,7 +262,7 @@ class DockMaster():
     while not identify_function() and not rospy.is_shutdown:
       r.sleep()
 
-    self.waitForWaypointRequest() 
+    self.waitForWaypointRequest()
 
   def alignWithDock(self, bay_index, duration=0.0):
     self.logDock("Aligning with the dock.")
@@ -313,12 +314,12 @@ class DockMaster():
     except tf.LookupException as e:
       self.logDock(e)
       return None, None
-    
+
     '''tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
     tf_rot = [0, 0, 0, 1]
     return tf_pos, tf_rot'''
 
-  def getExplorePose(self):    
+  def getExplorePose(self):
 
     odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
 
@@ -359,7 +360,7 @@ class DockMaster():
       align_angle -= 2*np.pi
 
     # Creates a goal to send to the action server.
-    goal = vrx_msgs.msg.DockGoal(bay_pose, align_angle)  
+    goal = vrx_msgs.msg.DockGoal(bay_pose, align_angle)
 
     # Sends the goal to the action server.
     client.send_goal(goal)
@@ -371,7 +372,7 @@ class DockMaster():
     rospy.loginfo("~dockmaster: %s"%msg)
 
 def main():
-  rospy.init_node("dockmaster")  
+  rospy.init_node("dockmaster")
   dm = DockMaster()
 
   rospy.spin()
