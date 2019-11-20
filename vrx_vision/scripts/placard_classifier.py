@@ -45,13 +45,17 @@ class PlacardClassifier(Classifier):
 
         return binary
 
-    def getSymbolContour(self, img):
+    def getSymbolContour(self, img, original_img):
         # Crop image to buoy
         cont_return = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
 
         if len(contours) == 0:
             print("Couldn't find contours for image mask. Mask might not include a placard symbol.")
+            cv2.imshow("mask", img)
+            cv2.imshow("original_img", original_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
             return None
 
         return max(contours, key=cv2.contourArea) # Get largest contour
@@ -81,18 +85,21 @@ class PlacardClassifier(Classifier):
         scale_factor = 0.5
         small_img    = cv2.resize(img, (0, 0), fx=scale_factor, fy=scale_factor)
 
-        mask      = self.getImageMask(small_img)
-        cnt       = self.getSymbolContour(mask)
+        mask = self.getImageMask(small_img)
+        cnt  = self.getSymbolContour(mask, small_img)
 
-        centre_colour = self.getCentreColour(small_img, cnt)
-        scaled_img    = self.cropScale(mask, cnt)
-        
-        label, conf_shape, conf_colour = self.classifyImage(scaled_img, centre_colour)
-        #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
+        if cnt is not None:
+            centre_colour = self.getCentreColour(small_img, cnt)
+            scaled_img    = self.cropScale(mask, cnt)
+            
+            label, conf_shape, conf_colour = self.classifyImage(scaled_img, centre_colour)
+            #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
 
-        cX, _ = self.getCentre(small_img, cnt)
-        cX    = int(cX/scale_factor)
+            cX, _ = self.getCentre(small_img, cnt)
+            cX    = int(cX/scale_factor)
 
-        return label, cX
+            return label, cX
+        else:
+            return "", 640
 
         

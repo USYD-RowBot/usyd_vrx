@@ -32,15 +32,17 @@ class DockMaster():
     self.do_scan = False   # Scan the sequence on the buoy?
     self.n_onspot_wps = 4  # Number of waypoints constituting spin on spot
     self.n_circle_wps = 4  # Number of waypoints constituting circling an object
+
     self.general_speed = 2 # Circling speed
+    self.explore_speed = 5 # Exploration speed
 
     self.scan_radius    = 10 # Radius at which to circle scan buoy
     self.dock_radius    = 25 # Radius at which to circle dock
-    self.explore_radius = 75
+    self.explore_radius = 50
 
-    self.align_dist   = 15 #  Distance from center of dock to align position
+    self.align_dist   = 15 # Distance from center of dock to align position
     self.bay_dist     = 5  # Distance from center of dock to center of bay
-    self.explore_dist = 75
+    self.explore_dist = 50
 
     self.tf_listener = tf.TransformListener()
     self.route_pub = rospy.Publisher("/waypoints_cmd", WaypointRoute, queue_size=1, latch=True)
@@ -64,7 +66,8 @@ class DockMaster():
     #self.scan_code()
 
     #self.spinOnSpot(1)
-    self.circleObject("dock", revs=1, clockwise=True)
+    #self.circleObject("explore", look_dock=False)
+    self.circleObject("dock", revs=0.5)
 
     self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
@@ -78,7 +81,7 @@ class DockMaster():
         correct_bay = i
         break
 
-      self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
+      #self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
 
     self.logDock("Found correct bay. Ready to dock.")
 
@@ -259,7 +262,10 @@ class DockMaster():
       circle_wps.append(spin_wp)
 
     circle_wp_route.waypoints = circle_wps
-    circle_wp_route.speed = self.general_speed
+    if object_string == "explore":
+      circle_wp_route.speed = self.explore_speed
+    else:
+      circle_wp_route.speed = self.general_speed
     self.route_pub.publish(circle_wp_route) # Start on route
 
     r = rospy.Rate(2) # Wait until objective identified
