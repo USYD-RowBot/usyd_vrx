@@ -64,7 +64,7 @@ class DockMaster():
     #self.scan_code()
 
     #self.spinOnSpot(1)
-    self.circleObject("dock", revs=1)
+    self.circleObject("dock", revs=1, clockwise=True)
 
     self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
@@ -177,7 +177,7 @@ class DockMaster():
         self.logDock("Service call failed: %s"%e)
         return False # I dunno man
 
-  def circleObject(self, object_string, revs=1.0, look_dock=True):
+  def circleObject(self, object_string, revs=1.0, look_dock=True, clockwise=True):
     ''' object_string (string): "dock", "any_dock", "scan_buoy", "explore"
     '''
     self.logDock("Circling the " + object_string + ".")
@@ -185,6 +185,10 @@ class DockMaster():
     radius = 0  # Assign these variables to either circle the dock or scan buoy
     object_pos = []
     identify_function = self.dumbFunction
+
+    dir = 1.0
+    if not clockwise:
+      dir = -1.0
 
     nav_msg_type = 0 # Choose whether to look at dock while circling or just boat around
     if look_dock == True:
@@ -231,7 +235,7 @@ class DockMaster():
 
     for i in range(n_wps):
       wp_pose = Pose() # Set first circling waypoint pose
-      rot = (i+1)*(rev_angle/n_wps)
+      rot = dir*(i+1)*(rev_angle/n_wps)
 
       x = init_pose.position.x # Rotate object viewing position
       y = init_pose.position.y
@@ -324,17 +328,13 @@ class DockMaster():
 
     odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
 
-    boat_pose = Pose() # Set current boat position
-    boat_pose.position.x = odom_msg.pose.pose.position.x
-    boat_pose.position.y = odom_msg.pose.pose.position.y
+    boat_yaw = self.quatToYaw(odom_msg.pose.pose.orientation.x, odom_msg.pose.pose.orientation.y, 
+                              odom_msg.pose.pose.orientation.z, odom_msg.pose.pose.orientation.w)
 
-    boat_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
+    pos_x = odom_msg.pose.pose.position.x + self.explore_dist*math.cos(boat_yaw)
+    pos_y = odom_msg.pose.pose.position.y + self.explore_dist*math.sin(boat_yaw)
 
-    if bay_index == 0:
-      align_pose.position.x = dock_pos[0] + self.align_dist*math.cos(dock_yaw)
-      align_pose.position.y = dock_pos[1] + self.align_dist*math.sin(dock_yaw)
-
-    tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
+    tf_pos = [pos_x, pos_y, 0]
     tf_rot = [0, 0, 0, 1]
     return tf_pos, tf_rot
 
