@@ -7,9 +7,9 @@
   <include file="$(find vrx_navigation)/launch/docking.launch"/>
 
   <group ns="wamv">
-    <node pkg="vrx_tasks" name="dockmaster" type="dockmaster.py" output="screen">
+    <!--node pkg="vrx_tasks" name="dockmaster" type="dockmaster.py" output="screen">
       <remap from="/odom" to="odom"/>
-    </node>
+  </node-->
 
     <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>
   </group>

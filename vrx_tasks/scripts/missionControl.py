@@ -4,6 +4,7 @@
 
 from components import geoPathToPath, geoPoseToPose, poseToCourse
 from components.navigation_task import NavigationTask
+from components.dockmaster import DockMaster
 import rospy
 from vrx_msgs.msg import Task
 params = {
@@ -38,6 +39,9 @@ def cb(data):
             pass
         elif data.name=="scan":
             rospy.loginfo("On Task: docking")
+
+            dm = DockMaster()
+
         elif data.name=="scan_and_dock":
             rospy.loginfo("On Task: scan and dock")
 
