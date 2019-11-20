@@ -1,0 +1,32 @@
+<launch>
+
+  <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+      <arg name="world_name" value="scan_and_dock"/>
+      <arg name="gui" value="true"/>
+      <arg name="verbose" value="true"/>
+  </include>
+
+  <!--include file="$(find vrx_bringup)/launch/rviz.launch"/-->
+
+  <include file="$(find vrx_bringup)/launch/localisation.launch"/>
+
+  <include file="$(find vrx_navigation)/launch/lidar_node.launch">
+  </include>
+
+  <include file="$(find vrx_vision)/launch/object_server.launch">
+  </include>
+
+  <include file="$(find vrx_control)/launch/control.launch"/>
+
+  <include file="$(find vrx_navigation)/launch/docking.launch"/>
+
+  <group ns="wamv">
+    <node pkg="vrx_tasks" name="dockmaster" type="dockmaster.py" output="screen">
+      <remap from="/odom" to="odom"/>
+    </node>
+
+    <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py"/>
+
+  </group>
+
+</launch>

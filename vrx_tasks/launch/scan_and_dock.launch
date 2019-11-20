@@ -1,0 +1,11 @@
+<launch>
+
+  <include file="$(find vrx_bringup)/launch/sensored_boat.launch">
+      <arg name="world_name" value="scan_and_dock"/>
+      <arg name="gui" value="true"/>
+      <arg name="verbose" value="true"/>
+  </include>
+
+
+
+</launch>
