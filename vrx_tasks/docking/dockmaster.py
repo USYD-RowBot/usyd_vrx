@@ -30,12 +30,16 @@ class DockMaster():
   def initMission(self):
     self.do_scan = False   # Scan the sequence on the buoy?
     self.n_onspot_wps = 4  # Number of waypoints constituting spin on spot
-    self.n_circle_wps = 5  # Number of waypoints constituting circling an object
+    self.n_circle_wps = 4  # Number of waypoints constituting circling an object
     self.general_speed = 2 # Circling speed
-    self.scan_radius  = 10 # Radius at which to circle scan buoy
-    self.dock_radius  = 15 # Radius at which to circle dock
-    self.align_dist   = 13 #  Distance from center of dock to align position
+
+    self.scan_radius    = 10 # Radius at which to circle scan buoy
+    self.dock_radius    = 25 # Radius at which to circle dock
+    self.explore_radius = 75
+
+    self.align_dist   = 15 #  Distance from center of dock to align position
     self.bay_dist     = 5  # Distance from center of dock to center of bay
+    self.explore_dist = 75
 
     self.tf_listener = tf.TransformListener()
     self.route_pub = rospy.Publisher("/waypoints_cmd", WaypointRoute, queue_size=1, latch=True)
@@ -59,9 +63,9 @@ class DockMaster():
     #self.scan_code()
 
     #self.spinOnSpot(1)
-    self.circleObject("dock")
+    self.circleObject("dock", revs=1)
 
-    '''self.placard_symbol = self.getRequestedPlacardSymbol()
+    self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
     
     correct_bay = None
@@ -77,7 +81,7 @@ class DockMaster():
 
     self.logDock("Found correct bay. Ready to dock.")
 
-    self.performDock(correct_bay)'''
+    self.performDock(correct_bay)
 
   def waitForWaypointRequest(self):
     rospy.wait_for_message("/request_waypoints", Empty)
@@ -173,7 +177,7 @@ class DockMaster():
         return False # I dunno man
   
   def circleObject(self, object_string, revs=1.0, look_dock=True):
-    ''' object_string (string): "dock", "any_dock", "scan_buoy"
+    ''' object_string (string): "dock", "any_dock", "scan_buoy", "explore"
     '''
     self.logDock("Circling the " + object_string + ".")
 
@@ -190,13 +194,17 @@ class DockMaster():
     if (object_string == "dock" or object_string == "any_dock"):
       object_pos, _ = self.getDockPose() # Dock centroid
       radius = self.dock_radius
-    else:
+    elif (object_string == "scan_buoy"):
       object_pos, _ = self.getScanBuoyPose() # Scan buoy centroid
       radius = self.scan_radius
-      identify_function = self.findFrontOfScanBuoy     
-
+    elif (object_string == "explore"): # Explore!
+      object_pos, _ = self.getExplorePose()
+      radius = self.explore_radius
+        
     if (object_string == "dock"):
       identify_function = self.findPlacardSymbol
+    else:
+      identify_function = self.dumbFunction   
     
     odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
 
@@ -285,12 +293,15 @@ class DockMaster():
     self.waitForWaypointRequest()
 
   def getDockPose(self):
-    '''objects_msg = rospy.wait_for_message('/wamv/objects', ObjectArray)
+    objects_msg = rospy.wait_for_message('/wamv/objects', ObjectArray)
     dock_frame_id = None
+    max_conf = 0
+
     for object in objects_msg.objects:
       if object.best_guess == "dock":
-        dock_frame_id = object.frame_id
-        break
+        if object.confidences[0] > max_conf:
+          dock_frame_id = object.frame_id
+          max_conf = object.confidences[0]
 
     if dock_frame_id is None: # Couldn't find dock
       self.logDock("Dock not found.")
@@ -301,8 +312,26 @@ class DockMaster():
       return tf_pos, tf_rot
     except tf.LookupException as e:
       self.logDock(e)
-      return None, None'''
+      return None, None
     
+    '''tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
+    tf_rot = [0, 0, 0, 1]
+    return tf_pos, tf_rot'''
+
+  def getExplorePose(self):    
+
+    odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
+
+    boat_pose = Pose() # Set current boat position
+    boat_pose.position.x = odom_msg.pose.pose.position.x
+    boat_pose.position.y = odom_msg.pose.pose.position.y
+
+    boat_yaw = tf.transformations.euler_from_quaternion(dock_quat)[2]
+
+    if bay_index == 0:
+      align_pose.position.x = dock_pos[0] + self.align_dist*math.cos(dock_yaw)
+      align_pose.position.y = dock_pos[1] + self.align_dist*math.sin(dock_yaw)
+
     tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
     tf_rot = [0, 0, 0, 1]
     return tf_pos, tf_rot

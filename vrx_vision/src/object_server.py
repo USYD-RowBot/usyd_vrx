@@ -161,7 +161,7 @@ class Obstacle():
             dock_width=8.0
             dock_length=16.0
             if width>length:
-                rospy.loginfo("WIDTH is bigger, swapping values")
+                rospy.logdebug("WIDTH is bigger, swapping values")
                 temp = length
                 length = width
                 width = temp
@@ -174,7 +174,7 @@ class Obstacle():
             if confidence < 0.3:
                 confidence = 0.3
 
-            rospy.loginfo("Dock length(biggest) %f, dock width(shortest) %f, conf : %f",length, width,confidence)
+            rospy.logdebug("Dock length(biggest) %f, dock width(shortest) %f, conf : %f",length, width,confidence)
 
 
             if (width > length):
