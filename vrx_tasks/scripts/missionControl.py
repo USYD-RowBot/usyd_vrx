@@ -35,12 +35,12 @@ def cb(data):
             print("DOING NAVIGATION")
             nav_task = NavigationTask()
             nav_task.startNavigation()
-
             pass
         elif data.name=="scan":
-            pass
+            rospy.loginfo("On Task: docking")
         elif data.name=="scan_and_dock":
-            pass
+            rospy.loginfo("On Task: scan and dock")
+
         initialised=True
         # do something
 
