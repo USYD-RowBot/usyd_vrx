@@ -4,6 +4,7 @@
 
 from components import geoPathToPath, geoPoseToPose, poseToCourse
 from components.navigation_task import NavigationTask
+from components.dockmaster import DockMaster
 import rospy
 from vrx_msgs.msg import Task
 params = {
@@ -11,6 +12,7 @@ params = {
 }
 
 rospy.init_node("missionControl")
+rospy.loginfo("Starting Mission Planner")
 
 for i in params:
     params[i] = rospy.get_param('~'+i, params[i])
@@ -18,7 +20,8 @@ initialised=False
 def cb(data):
     global initialised
     if (not initialised):
-        if data.name=="station_keeping":
+        if data.name=="stationkeeping":
+            rospy.loginfo("Executing Station Keeping")
             ## geo pose to pose
             geoPoseToPose.geoPoseToPoseConverter()
             ## pose to course
@@ -33,12 +36,15 @@ def cb(data):
             print("DOING NAVIGATION")
             nav_task = NavigationTask()
             nav_task.startNavigation()
-
             pass
         elif data.name=="scan":
-            pass
+            rospy.loginfo("On Task: docking")
+
+            dm = DockMaster()
+
         elif data.name=="scan_and_dock":
-            pass
+            rospy.loginfo("On Task: scan and dock")
+
         initialised=True
         # do something
 

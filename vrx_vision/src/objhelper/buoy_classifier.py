@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import rospkg
+import rospy
 
 import sys
 rospack = rospkg.RosPack()
@@ -40,8 +41,8 @@ class BuoyClassifier(Classifier):
         ]
 
         self.template_labels = [
-            ["surmark_950410"],                                                        # Conical
-            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
+            ["surmark950410"],                                                        # Conical
+            ["surmark46104", "surmark950400"],                                       # Tophat: (white, green)
             ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
             ["polyform"],                                                              # Sphere TODO estimate size
             ["scan_buoy"]                                                              # Scan buoy
@@ -314,16 +315,16 @@ class BuoyClassifier(Classifier):
                 if label == "polyform":
                     label = self.getPolyformType(obj_width, distance)
 
-                if distance < 10:
+                if distance < 15:
                     dist_scale= 1
                 else:
-                    dist_scale = 1 - ((distance-10)/60)
+                    dist_scale = 1 - ((distance-15)/60)
 
-                #print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
+                rospy.logdebug("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" , label, conf_shape, conf_colour)
                 return label, conf_shape*conf_colour*dist_scale, clustered_img
             else:
-                #print("No cropped image returned")
+                rospy.logdebug("No cropped image returned")
                 return "", 0.0, clustered_img
         else:
-            #print("No centre colour return:")
+            rospy.logdebug("No centre colour return:")
             return "", 0.0, clustered_img

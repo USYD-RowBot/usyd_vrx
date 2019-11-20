@@ -12,6 +12,7 @@ import pyproj
 
 class geoPoseToPoseConverter:
     def __init__(self):
+        rospy.loginfo("Initalizing geoPosetoPose converter")
         params = {
             "inTopic": "/vrx/station_keeping/goal",
             "outTopic": "/station",
@@ -54,4 +55,3 @@ class geoPoseToPoseConverter:
         # move into map frame
         ps.header.frame_id='map'
         self.pub.publish(ps)
-

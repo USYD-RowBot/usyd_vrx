@@ -1,0 +1,6 @@
+sensor_msgs/Image image
+---
+string label
+float32 confidence
+int32 centre_x
+bool success
