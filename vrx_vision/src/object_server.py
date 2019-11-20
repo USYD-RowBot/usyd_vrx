@@ -500,9 +500,36 @@ class ObjectServer():
 
     def classify_images(self):
         """Method to classify images"""
-        images = []
+
         for i in self.objects:
             i.classify_image()
+        #     if i.debug_image is not None:
+        #         i2 = i.debug_image.copy()
+        #         i2 = cv2.resize(i2,(200,200))
+        #         font = cv2.FONT_HERSHEY_SIMPLEX
+        #
+        #         text = ""
+        #         if i.object.best_guess == "surmark950410":
+        #             text = "red"
+        #         elif i.object.best_guess == "surmark46104":
+        #             text = "white"
+        #         elif i.object.best_guess == "surmark950400":
+        #             text = "green"
+        #         else:
+        #             text = i.object.best_guess
+        #         text = text + " " + str(i.object.confidences[0])
+        #         #i2 = cv2.cvtColor(i2,cv2.COLOR_GRAY2RGB)
+        #         cv2.putText(i2,text,(0,20), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
+        #         images.append(i2)
+        #
+        # montages = build_montages(images,(200,200),(7,3))
+        #if DEBUG:
+            #cv2.imshow("Buoys Montage",montages[0])
+            #cv2.waitKey(1)
+    def print_montage(self):
+        images = []
+        for i in self.objects:
+            #i.classify_image()
             if i.debug_image is not None:
                 i2 = i.debug_image.copy()
                 i2 = cv2.resize(i2,(200,200))
@@ -561,6 +588,7 @@ if __name__ == "__main__":
         #     count = 0
         object_server.classify_objects()
         object_server.broadcast_objects()
+        object_server.print_montage()
         count = count+1
         rate.sleep()
     thread.join()

@@ -16,7 +16,7 @@
 
     <node name="object_server" type ="object_server.py" pkg="vrx_vision" output="screen">
       <!-- <rosparam command="load" file="$(arg exclusion_list_config_file)" /> -->
-      <param name="debug" value="$(arg debug)"/>
+      <!--param name="debug" value="$(arg debug)"/-->
     </node>
 
     <node name="marker_publisher" type="object_markers.py" pkg="vrx_vision" output="screen"/>

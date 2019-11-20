@@ -179,7 +179,7 @@ class DockMaster():
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
 
     correct_bay = None
-    #TODO: GET THE CLOSEST DOCK LOCATION FIRST
+    # TODO: GET THE CLOSEST DOCK LOCATION FIRST
     for i in [0, 1]:
       self.alignWithDock(i, duration=5.0)
 
@@ -401,7 +401,7 @@ class DockMaster():
     #align_wps.waypoints = [align_wp]
     #align_wps.speed = self.general_speed
     #self.route_pub.publish(align_wps)
-
+    rospy.loginfo("Naviating to allign with dock")
     self.navigateTo(align_pose)
 
     #self.waitForWaypointRequest()
