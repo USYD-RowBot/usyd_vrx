@@ -67,11 +67,11 @@ def callback(data):
             marker.action=Marker.ADD
             type_string = i.best_guess
             try:
-                if i.best_guess == "surmark_950400":
+                if i.best_guess == "surmark950400":
                     type_string = "Green Buoy"
-                if i.best_guess =="surmark_950410":
+                if i.best_guess =="surmark950410":
                     type_string = "Red Buoy"
-                if i.best_guess =="surmark_46104":
+                if i.best_guess =="surmark46104":
                     type_string = "White Buoy"
 
                 marker.text = "ID: " +i.frame_id +"\nTYPE: " + type_string +"\nCONF: " +  str(i.confidences[0])

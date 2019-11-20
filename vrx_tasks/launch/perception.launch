@@ -4,6 +4,8 @@
       <arg name="world_name" value="perception_task"/>
   </include>
 
-  <!--node pkg="vrx_tasks" name="perception_publisher" type="perception_publisher.py" output="screen"/-->
+  <!--node pkg="vrx_tasks" name="perception_publisher" type="perception_publisher.py" output="screen">
+      <remap from="objects" to="perception_objects"/>
+  </node-->
 
 </launch>

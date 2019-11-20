@@ -31,6 +31,10 @@
         <arg name="debug" value="$(arg debug)"/>
     </include>
 
+    <!--include file="$(find vrx_vision)/launch/object_server0.launch">
+        <arg name="use_camera" value="true"/>
+    </include-->
+
     <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
     </node>
 

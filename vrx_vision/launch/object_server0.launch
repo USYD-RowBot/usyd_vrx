@@ -6,19 +6,19 @@
   <arg name="expiry_time" default="3"/>
   <arg name="camera_range" default="40"/>
 
-  <arg name="exclusion_list_config_file" value="$(find vrx_vision)/config/exclusion_list_perception.yaml"/>
-
   <group ns="wamv">
-    <param name="threshold" value="40"/>
-    <param name="use_camera" value="$(arg use_camera)"/>
-    <param name="expiry_time" value="$(arg expiry_time)"/>
-    <param name="distance_threshold" value="$(arg distance_threshold)"/>
-    <param name="camera_range" value="$(arg camera_range)"/>
 
-    <node name="object_server" type ="object_server0.py" pkg="vrx_vision" output="screen">
-      <rosparam command="load" file="$(arg exclusion_list_config_file)" />
+
+    <node name="perception_object_server" type ="object_server0.py" pkg="vrx_vision" output="screen">
+      <remap from="map" to="perception_map"/>
+      <param name="threshold" value="40"/>
+      <param name="use_camera" value="$(arg use_camera)"/>
+      <param name="expiry_time" value="$(arg expiry_time)"/>
+      <param name="distance_threshold" value="$(arg distance_threshold)"/>
+      <param name="camera_range" value="$(arg camera_range)"/>
+      <remap from="objects" to="perception_objects"/>
     </node>
 
-    <node name="marker_publisher" type="object_markers.py" pkg="vrx_vision" output="screen"/>
+        
   </group>
 </launch>
