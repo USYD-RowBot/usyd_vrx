@@ -10,7 +10,7 @@ import rospy
 import tf
 import actionlib
 from cv_bridge import CvBridge, CvBridgeError
-from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
+from vrx_msgs.srv import ClassifyPlacard,ClassifyPlacardResponse
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from vrx_msgs.msg import *
@@ -218,11 +218,9 @@ class Docker:
 
   def calculatePlacardSymbolX(self, ros_img):
     try:
-      classifyPlacard = rospy.ServiceProxy('wamv/classify_placard', ClassifyBuoy)
-      res = classifyPlacard(ros_img, 0)
-
-      #rospy.loginfo("cX is %d" % res.confidence)
-      self.x_cam_error = res.confidence - np.round(1280/2) + self.pix_offset
+      classifyPlacard = rospy.ServiceProxy('wamv/classify_placard', ClassifyPlacard)
+      res = classifyPlacard(ros_img)
+      self.x_cam_error = res.centre_x - 640 + self.pix_offset
 
     except rospy.ServiceException, e:
       rospy.loginfo("Service call to /wamv/classify_placard failed: %s"%e)

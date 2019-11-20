@@ -177,17 +177,17 @@ class DockMaster():
   def checkPlacard(self):
     ros_img = rospy.wait_for_message("/wamv/sensors/cameras/middle_camera/image_raw", Image)
     res = None
-    while res is None or res.type=="":
-        self.logDock("Attempting to Classify")
-        try:
-          classifyPlacard = rospy.ServiceProxy('/wamv/wamv/classify_placard', ClassifyPlacard)
-          res = classifyPlacard(ros_img)
-        except rospy.ServiceException, e:
-           self.logDock("Service call to /wamv/classify_placard failed: %s"%e)
-           return False
+    while res is None or res.success==False:
+      self.logDock("Attempting to Classify")
+      try:
+        classifyPlacard = rospy.ServiceProxy('/wamv/wamv/classify_placard', ClassifyPlacard)
+        res = classifyPlacard(ros_img)
+      except rospy.ServiceException, e:
+        self.logDock("Service call to /wamv/classify_placard failed: %s"%e)
+        return False
 
-    self.logDock("Placard classifier result: %s"%res.type)
-    if res.type == self.placard_symbol:
+    self.logDock("Placard classifier result: %s"%res.label)
+    if res.label == self.placard_symbol:
       return True
     else:
       return False
