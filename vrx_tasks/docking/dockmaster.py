@@ -25,7 +25,6 @@ from visualization_msgs.msg import Marker
 
 
 def quatToEuler(quat):
-
     if quat.x is None:
         #Must be a in tf form.
         quaternion = quat
@@ -36,22 +35,15 @@ def quatToEuler(quat):
         quat.z,
         quat.w)
     euler = tf.transformations.euler_from_quaternion(quaternion)
-
     return euler[0],euler[1],euler[2]
 
 
 class DockMaster():
-
   def __init__(self):
     self.logDock("Initialising dock master.")
     rospy.sleep(10)
     self.initMission()
     self.executePlan()
-
-  def odomCb(self, odom_msg):
-      self.current_pose = odom_msg.pose.pose
-      return
-
   def initMission(self):
     self.do_scan = False   # Scan the sequence on the buoy?
     self.n_onspot_wps = 4  # Number of waypoints constituting spin on spot
@@ -74,9 +66,6 @@ class DockMaster():
     self.goal_pub = rospy.Publisher("/wamv/global_planner/goal", PoseStamped, queue_size = 10)
     self.marker_pub = rospy.Publisher("/nav_marker", Marker, queue_size=10)
 
-
-
-
     #rospy.get_param("~hold_duration")
 
     # Wait for any required services to be active
@@ -88,6 +77,47 @@ class DockMaster():
      # task_msg = rospy.wait_for_message("/vrx/task/info", Task)
      # if task_msg.state == "ready":
         #ready = True
+   def executePlan(self):
+     self.logDock("Executing mission plan.")
+
+     #self.spinOnSpot(1)
+     #self.circleObject("scan_buoy")
+     #self.scan_code()
+
+     #self.spinOnSpot(1)
+     self.logDock("Exectuing circling of dock")
+     self.circleObject("dock", revs=0.1, clockwise=True)
+     #self.circleObject("dock", revs=0.4, clockwise=False)
+
+     self.logDock("Getting the symbol from tasks")
+     self.placard_symbol = self.getRequestedPlacardSymbol()
+     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
+
+     correct_bay = None
+     for i in [0, 1]:
+       self.logDock("Aligning with Dock")
+       self.alignWithDock(i, duration=5.0)
+
+       self.logDock("Checking Placard")
+       if self.checkPlacard() == True:       # If correct placard
+         self.logDock("Aigning with docks")
+         self.alignWithDock(i, duration=10.0) # Re-align
+         correct_bay = i
+         break
+
+       #self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
+
+     self.logDock("Found correct bay. Ready to dock.")
+
+     self.performDock(correct_bay)
+
+
+     return
+
+
+  def odomCb(self, odom_msg):
+      self.current_pose = odom_msg.pose.pose
+      return
 
 
   def inRange(self, target, dist_thresh = 0.5, ang_thresh = 0.4):
@@ -129,34 +159,7 @@ class DockMaster():
 
       rospy.loginfo("Arrived at target")
       return
-  def executePlan(self):
-    self.logDock("Executing mission plan.")
 
-    #self.spinOnSpot(1)
-    #self.circleObject("scan_buoy")
-    #self.scan_code()
-
-    #self.spinOnSpot(1)
-    self.circleObject("dock", revs=0.1, clockwise=True)
-    #self.circleObject("dock", revs=0.4, clockwise=False)
-
-    self.placard_symbol = self.getRequestedPlacardSymbol()
-    self.logDock("Requested placard symbol is %s."%self.placard_symbol)
-
-    correct_bay = None
-    for i in [0, 1]:
-      self.alignWithDock(i, duration=5.0)
-
-      if self.checkPlacard() == True:       # If correct placard
-        self.alignWithDock(i, duration=10.0) # Re-align
-        correct_bay = i
-        break
-
-      #self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
-
-    self.logDock("Found correct bay. Ready to dock.")
-
-    self.performDock(correct_bay)
 
   def waitForWaypointRequest(self):
     rospy.wait_for_message("/request_waypoints", Empty)
@@ -285,7 +288,7 @@ class DockMaster():
     else:
       identify_function = self.dumbFunction
 
-    odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
+    odom_msg = rospy.wait_for_message("/wamv/odom", Odometry) # Current odom
 
     init_vec = [object_pos[0] - odom_msg.pose.pose.position.x, # Boat-to-object vector
                 object_pos[1] - odom_msg.pose.pose.position.y]
@@ -341,10 +344,10 @@ class DockMaster():
       circle_wp_route.speed = self.general_speed
     self.route_pub.publish(circle_wp_route) # Start on route
 
-    r = rospy.Rate(2) # Wait until objective identified
-    while not identify_function() and not rospy.is_shutdown:
-      r.sleep()
-
+    #r = rospy.Rate(2) # Wait until objective identified
+    #while not identify_function() and not rospy.is_shutdown:
+     # r.sleep()
+    self.logDock("Waiting for waypoint request")
     self.waitForWaypointRequest()
 
   def alignWithDock(self, bay_index, duration=0.0):

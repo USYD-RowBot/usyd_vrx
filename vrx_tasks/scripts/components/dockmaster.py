@@ -135,6 +135,8 @@ class DockMaster():
     #self.scan_code()
 
     #self.spinOnSpot(1)
+    self.logDock("Exectuing circling of dock")
+
     self.circleObject("dock", revs=0.1, clockwise=True)
     self.circleObject("dock", revs=0.2, clockwise=False)
 
@@ -158,7 +160,7 @@ class DockMaster():
     self.performDock(correct_bay)
 
   def waitForWaypointRequest(self):
-    rospy.wait_for_message("/wamv/request_waypoints", Empty)
+    rospy.wait_for_message("/request_waypoints", Empty)
 
   def setPoseQuat(self, pose, angle_rad):
     quat = quaternion_from_euler(0, 0, angle_rad)
@@ -339,10 +341,10 @@ class DockMaster():
     circle_wp_route.speed = self.general_speed
     self.route_pub.publish(circle_wp_route) # Start on route
 
-    r = rospy.Rate(2) # Wait until objective identified
-    while not identify_function() and not rospy.is_shutdown:
-      r.sleep()
-
+    #r = rospy.Rate(2) # Wait until objective identified
+    #while not identify_function() and not rospy.is_shutdown:
+     # r.sleep()
+    self.logDock("Waiting for wp request")
     self.waitForWaypointRequest()
 
   def alignWithDock(self, bay_index, duration=0.0):
@@ -406,7 +408,7 @@ class DockMaster():
 
   def getExplorePose(self):
 
-    odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
+    odom_msg = rospy.wait_for_message("/wamv/odom", Odometry) # Current odom
 
     boat_yaw = self.quatToYaw(odom_msg.pose.pose.orientation.x, odom_msg.pose.pose.orientation.y,
                               odom_msg.pose.pose.orientation.z, odom_msg.pose.pose.orientation.w)
