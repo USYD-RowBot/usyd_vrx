@@ -57,7 +57,7 @@ use_inf: false </rosparam>
            <param name = "costmap/footprint" value = "[[-2, -1.2], [2, -1.2], [2, 1.2], [-2,1.2]]"/>
            <param name = "costmap/height" value = "100"/>
            <param name = "costmap/width" value = "100"/>
-          <param name = "costmap/robot_radius" value = "4.0"/>
+          <param name = "costmap/robot_radius" value = "7.0"/>
            <param name = "costmap/static_map" value = "true"/>
            <param name = "costmap/inflation_layer/inflation_radius" value = "3.5"/>
            <param name = "costmap/inflation_layer/cost_scaling_factor" value = "1"/>

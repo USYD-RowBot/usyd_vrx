@@ -93,9 +93,50 @@ class DockMaster():
       else:
           return False
 
+
+  def navigateToDirect(self, target, wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4):
+      """ Navigate to the location, if wait is True: Wait until destination is reached, if not,  Not using the mission planner"""
+
+      rospy.loginfo("Navigating to a location x: %f. y:%f", target.position.x, target.position.y)
+      waypoint_msg = WaypointRoute()
+      waypoint_msg.speed = 2
+      ##For Now, waypoints are 2 waypoints. At nav waypoint then a nav station
+
+      loc2 = Waypoint()
+      loc2.pose = target
+      loc2.nav_type = Waypoint.NAV_STATION
+      loc2.station_duration = -1
+      waypoint_msg.waypoints=[loc2]
+      self.route_pub.publish(waypoint_msg)
+
+      start = rospy.Time.now().secs
+      rate = rospy.Rate(20)
+      expired = False
+      while not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh) and wait and not expired:
+          rate.sleep()
+          if timeout != 0 and (rospy.Time.now().secs-start) > timeout:
+              rospy.loginfo("Timeing out: %f", rospy.Time.now().secs-start)
+              expired = True
+
+      #Republish a waypoint in its own position if wanted to wait, else, it will exit the function but continue on its trajectory.
+      if wait:
+          waypoint_msg = WaypointRoute()
+          waypoint_msg.speed = 2
+          loc0 = Waypoint()
+          loc0.pose = self.current_pose
+          loc0.nav_type = Waypoint.NAV_STATION
+          loc0.station_duration = -1
+          waypoint_msg.waypoints=[loc0]
+          self.route_pub.publish(waypoint_msg)
+
+      rospy.loginfo("Arrived at target")
+      return
+
+
   def navigateTo(self, target,  wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4, repubish = False):
       # Navigate to the location, if wait is True: Wait until destination is reached, if not,
-
+      self.navigateToDirect(target,wait=False,timeout=0)
+      publishMarker(self.marker_pub,target)
       rospy.loginfo("Navigating to a location x: %f. y:%f", target.position.x, target.position.y)
       waypoint_msg = WaypointRoute()
       waypoint_msg.speed = 3
@@ -131,8 +172,8 @@ class DockMaster():
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
 
-    self.circleObject("dock", revs=0.1, clockwise=True)
-    self.circleObject("dock", revs=0.2, clockwise=False)
+    #self.circleObject("dock", revs=0.1, clockwise=True)
+    #self.circleObject("dock", revs=0.2, clockwise=False)
 
     self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
@@ -382,20 +423,20 @@ class DockMaster():
       self.logDock("Dock not found.")
       return None, None
 
-    dock_pos = [dock_pose.position.x, dock_pose.position.y, 0]
-    dock_yaw = self.quatToYaw(dock_pose.orientation.x, dock_pose.orientation.y,
-                              dock_pose.orientation.z, dock_pose.orientation.w)
-    dock_yaw -= np.pi/2
-    return dock_pos, dock_yaw
+    # dock_pos = [dock_pose.position.x, dock_pose.position.y, 0]
+    # dock_yaw = self.quatToYaw(dock_pose.orientation.x, dock_pose.orientation.y,
+    #                           dock_pose.orientation.z, dock_pose.orientation.w)
+    # dock_yaw -= np.pi/2
+    # return dock_pos, dock_yaw
 
-    '''try:
+    try:
       tf_pos, tf_rot = self.tf_listener.lookupTransform('/map', dock_frame_id, rospy.Time(0))
       dock_yaw = tf.transformations.euler_from_quaternion(tf_rot)[2]
       dock_yaw -= np.pi/2
       return tf_pos, dock_yaw
     except tf.LookupException as e:
       self.logDock(e)
-      return None, None'''
+      return None, None
 
     '''tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
     tf_rot = [0, 0, 0, 1]
