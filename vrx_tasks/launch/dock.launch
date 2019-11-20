@@ -11,7 +11,7 @@
       <remap from="/odom" to="odom"/>
     </node>
 
-    <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py"/>
+    <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>
   </group>
 
 </launch>

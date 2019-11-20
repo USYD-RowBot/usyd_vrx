@@ -12,21 +12,45 @@ from copy import deepcopy
 
 from std_msgs.msg import Empty, String
 from vrx_msgs.msg import *
-from geometry_msgs.msg import Pose, Quaternion
+from geometry_msgs.msg import Pose, Quaternion, PoseStamped
 from nav_msgs.msg import Odometry
 from vrx_msgs.srv import ClassifyBuoy,ClassifyBuoyResponse
 from sensor_msgs.msg import Image
 from vrx_gazebo.msg import Task
+from visualization_msgs.msg import Marker
+
 
 # MAKE SURE TO CHANGE NAMESPACE OF /ODOM IN LAUNCH FILE
+
+
+
+def quatToEuler(quat):
+
+    if quat.x is None:
+        #Must be a in tf form.
+        quaternion = quat
+    else:
+        quaternion = (
+        quat.x,
+        quat.y,
+        quat.z,
+        quat.w)
+    euler = tf.transformations.euler_from_quaternion(quaternion)
+
+    return euler[0],euler[1],euler[2]
+
 
 class DockMaster():
 
   def __init__(self):
     self.logDock("Initialising dock master.")
-    rospy.sleep(5)
+    rospy.sleep(10)
     self.initMission()
     self.executePlan()
+
+  def odomCb(self, odom_msg):
+      self.current_pose = odom_msg.pose.pose
+      return
 
   def initMission(self):
     self.do_scan = False   # Scan the sequence on the buoy?
@@ -41,9 +65,16 @@ class DockMaster():
     self.align_dist   = 15 #  Distance from center of dock to align position
     self.bay_dist     = 5  # Distance from center of dock to center of bay
     self.explore_dist = 75
-
+    self.current_pose = Pose()
     self.tf_listener = tf.TransformListener()
     self.route_pub = rospy.Publisher("/waypoints_cmd", WaypointRoute, queue_size=1, latch=True)
+    self.odom_sub = rospy.Subscriber("/wamv/odom/", Odometry, self.odomCb)
+    self.goal_pub = rospy.Publisher("/wamv/global_planner/goal", PoseStamped, queue_size = 10)
+    self.marker_pub = rospy.Publisher("/nav_marker", Marker, queue_size=10)
+
+
+
+
     #rospy.get_param("~hold_duration")
 
     # Wait for any required services to be active
@@ -56,6 +87,46 @@ class DockMaster():
      # if task_msg.state == "ready":
         #ready = True
 
+
+  def inRange(self, target, dist_thresh = 0.5, ang_thresh = 0.4):
+      dist = math.sqrt((self.current_pose.position.x-target.position.x)**2 + (self.current_pose.position.y-target.position.y)**2)
+
+      angle = abs(quatToEuler(self.current_pose.orientation)[2] - quatToEuler(target.orientation)[2])
+
+      if (dist<=dist_thresh) and (angle <= ang_thresh):
+          return True
+      else:
+          return False
+
+
+  def navigateTo(self, target,  wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4, repubish = False):
+      # Navigate to the location, if wait is True: Wait until destination is reached, if not,
+
+      rospy.loginfo("Navigating to a location x: %f. y:%f", target.position.x, target.position.y)
+      waypoint_msg = WaypointRoute()
+      waypoint_msg.speed = 3
+      ##For Now, waypoints are 2 waypoints. At nav waypoint then a nav station
+      goal  = PoseStamped()
+      goal.pose = target
+      goal.header.frame_id = "map"
+      goal.header.stamp = rospy.Time.now()
+
+      self.goal_pub.publish(goal)
+      start = rospy.Time.now().secs
+      rate = rospy.Rate(20)
+      #self.waitForWaypointRequest()
+
+      expired = False
+      while not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh) and wait and not expired:
+          rate.sleep()
+          if timeout != 0 and rospy.Time.now().secs-start > timeout:
+              expired = True
+
+      #Republish a waypoint in its own position if wanted to wait, else, it will exit the function but continue on its trajectory.
+
+
+      rospy.loginfo("Arrived at target")
+      return
   def executePlan(self):
     self.logDock("Executing mission plan.")
 
@@ -64,7 +135,8 @@ class DockMaster():
     #self.scan_code()
 
     #self.spinOnSpot(1)
-    self.circleObject("dock", revs=1, clockwise=True)
+    self.circleObject("dock", revs=0.1, clockwise=True)
+    #self.circleObject("dock", revs=0.4, clockwise=False)
 
     self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
@@ -78,7 +150,7 @@ class DockMaster():
         correct_bay = i
         break
 
-      self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
+      #self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
 
     self.logDock("Found correct bay. Ready to dock.")
 
@@ -256,6 +328,8 @@ class DockMaster():
       else:
         spin_wp = self.makeWaypoint(wp_pose, nav_type=nav_msg_type) # Set waypoint
 
+      publishMarker(self.marker_pub, wp_pose, id = i)
+
       circle_wps.append(spin_wp)
 
     circle_wp_route.waypoints = circle_wps
@@ -287,14 +361,17 @@ class DockMaster():
       align_angle -= 2*np.pi
     self.setPoseQuat(align_pose, align_angle)
 
-    align_wp = self.makeWaypoint(align_pose)
 
-    align_wps = WaypointRoute()
-    align_wps.waypoints = [align_wp]
-    align_wps.speed = self.general_speed
 
-    self.route_pub.publish(align_wps)
-    self.waitForWaypointRequest()
+    #align_wp = self.makeWaypoint(align_pose)
+    #align_wps = WaypointRoute()
+    #align_wps.waypoints = [align_wp]
+    #align_wps.speed = self.general_speed
+    #self.route_pub.publish(align_wps)
+
+    self.navigateTo(align_pose)
+
+    #self.waitForWaypointRequest()
 
   def getDockPose(self):
     objects_msg = rospy.wait_for_message('/wamv/objects', ObjectArray)
@@ -314,7 +391,7 @@ class DockMaster():
     try:
       tf_pos, tf_rot = self.tf_listener.lookupTransform('/map', dock_frame_id, rospy.Time(0))
       dock_yaw = tf.transformations.euler_from_quaternion(tf_rot)[2]
-      dock_yaw += np.pi/2
+      dock_yaw -= np.pi/2
       return tf_pos, dock_yaw
     except tf.LookupException as e:
       self.logDock(e)
@@ -328,7 +405,7 @@ class DockMaster():
 
     odom_msg = rospy.wait_for_message("/odom", Odometry) # Current odom
 
-    boat_yaw = self.quatToYaw(odom_msg.pose.pose.orientation.x, odom_msg.pose.pose.orientation.y, 
+    boat_yaw = self.quatToYaw(odom_msg.pose.pose.orientation.x, odom_msg.pose.pose.orientation.y,
                               odom_msg.pose.pose.orientation.z, odom_msg.pose.pose.orientation.w)
 
     pos_x = odom_msg.pose.pose.position.x + self.explore_dist*math.cos(boat_yaw)
@@ -371,11 +448,37 @@ class DockMaster():
   def logDock(self, msg):
     rospy.loginfo("~dockmaster: %s"%msg)
 
+
 def main():
   rospy.init_node("dockmaster")
+
   dm = DockMaster()
 
   rospy.spin()
+
+
+def publishMarker(marker_pub,pose, id = 1):
+    rospy.loginfo("publishing marker")
+    if pose is None:
+        return
+    marker = Marker()
+    marker.header.frame_id = "map"
+    marker.header.stamp = rospy.Time.now()
+    marker.ns = "nav_task"
+    marker.id = id
+    marker.type = Marker.ARROW
+    marker.action=Marker.ADD
+    marker.pose = pose
+    marker.scale.x = 2.0
+    marker.scale.y = 2.0
+    marker.scale.z = 2.0
+    marker.color.r = 0.0
+    marker.color.g = 0.0
+    marker.color.b = 0.0
+    marker.color.a = 1.0
+    marker.lifetime = rospy.Duration(0)
+    marker_pub.publish(marker)
+
 
 if __name__ == "__main__":
   main()
