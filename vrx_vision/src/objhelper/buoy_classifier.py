@@ -166,7 +166,7 @@ class BuoyClassifier(Classifier):
         #cv2.imshow("Keypoints", im_with_keypoints)
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
-        debug = base_mask
+        debug = combined_mask
         if len(keypoints) == 0: # No blob found, assume this is ocean
             '''lower_colour = np.array([0, 127, 0]) # hue 92 - 148 is blue
             upper_colour = np.array([92, 255, 255])
@@ -188,10 +188,12 @@ class BuoyClassifier(Classifier):
 
     def getObjectMask(self, img):
         # Separate buoy cluster and make white
-        thres = 5
+        thres = 10
+
         centre_colour_low  = np.subtract(self.centre_colour, (thres, thres, thres))
         centre_colour_high = np.add(self.centre_colour,      (thres, thres, thres))
         object_mask = cv2.inRange(img, centre_colour_low, centre_colour_high)
+
         return object_mask
 
     def raw_moment(self, data, i_order, j_order):
@@ -320,11 +322,11 @@ class BuoyClassifier(Classifier):
                 else:
                     dist_scale = 1 - ((distance-15)/60)
 
-                rospy.logdebug("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" , label, conf_shape, conf_colour)
+                rospy.loginfo("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" , label, conf_shape, conf_colour)
                 return label, conf_shape*conf_colour*dist_scale, clustered_img
             else:
-                rospy.logdebug("No cropped image returned")
+                rospy.loginfo("No cropped image returned")
                 return "", 0.0, clustered_img
         else:
-            rospy.logdebug("No centre colour return:")
+            rospy.loginfo("No centre colour return:")
             return "", 0.0, clustered_img

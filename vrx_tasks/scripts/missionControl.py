@@ -5,6 +5,7 @@
 from components import geoPathToPath, geoPoseToPose, poseToCourse
 from components.navigation_task import NavigationTask
 from components.dockmaster import DockMaster
+from components.scan_and_dock_task import ScanDock
 import rospy
 from vrx_msgs.msg import Task
 params = {
@@ -44,6 +45,8 @@ def cb(data):
 
         elif data.name=="scan_and_dock":
             rospy.loginfo("On Task: scan and dock")
+            sd = ScanDock()
+            sd.start()
 
         initialised=True
         # do something

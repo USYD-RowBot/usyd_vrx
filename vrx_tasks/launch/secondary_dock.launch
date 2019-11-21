@@ -5,9 +5,8 @@
       <!--node pkg="vrx_tasks" name="dockmaster" type="dockmaster.py" output="screen">
         <remap from="/odom" to="odom"/>
     </node-->
-    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
     </node>
-
-      <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+     <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>
     </group>
 </launch>

@@ -174,7 +174,7 @@ public:
         }
 
         //Iterate through range less range, and set those pixels to free pixels untill a lower limit of 0.
-        for (int j = int(range/resolution); j>0;j--){
+        for (int j = int(range/resolution); j>int(range_min/resolution);j--){
           int x = int(odom_x + float(j)*cos(angle));
           int y = int(odom_y + float(j)*sin(angle));
           int index = clampMax(y*width + x, index_max);
@@ -192,7 +192,7 @@ public:
       else{
         float clear_range = 30;
 
-        for (int j = int(clear_range/resolution); j>0;j--){
+        for (int j = int(clear_range/resolution); j>int(range_min/resolution);j--){
           int x = int(odom_x + float(j)*cos(angle));
           int y = int(odom_y + float(j)*sin(angle));
           int index = clampMax(y*width + x, index_max);

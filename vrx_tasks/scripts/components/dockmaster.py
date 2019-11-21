@@ -41,11 +41,13 @@ def quatToEuler(quat):
 
 class DockMaster():
 
-  def __init__(self):
+  def __init__(self,placard_symbol = None):
     self.logDock("Initialising dock master.")
+    self.placard_symbol = placard_symbol
     rospy.sleep(10)
     self.initMission()
     self.executePlan()
+
 
   def odomCb(self, odom_msg):
       self.current_pose = odom_msg.pose.pose
@@ -75,6 +77,8 @@ class DockMaster():
 
     # Wait for any required services to be active
     #rospy.wait_for_service('scan_buoy')
+
+    rospy.loginfo("Waiting of classif_placard service")
     rospy.wait_for_service('/wamv/wamv/classify_placard')
 
     #ready = False # Wait until competition is in Ready state.
@@ -172,10 +176,12 @@ class DockMaster():
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
 
-    self.circleObject("dock", revs=1, clockwise=True)
+    #self.circleObject("dock", revs=0.3, clockwise=True)
     #self.circleObject("dock", revs=0.2, clockwise=False)
 #
-    self.placard_symbol = self.getRequestedPlacardSymbol()
+    if self.placard_symbol is None:
+        rospy.loginfo("Requesting placard Symbol")
+        self.placard_symbol = self.getRequestedPlacardSymbol()
     self.logDock("Requested placard symbol is %s."%self.placard_symbol)
 
     correct_bay = None

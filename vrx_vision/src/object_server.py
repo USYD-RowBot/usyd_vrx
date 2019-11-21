@@ -28,7 +28,7 @@ DIST_THRESH = rospy.get_param('~distance_threshold',3); #Distance between cluste
 EXPIRY_TIME = rospy.get_param('~expiry_time', 1) #Time to before cleaning up missing objects
 USE_CAMERA = rospy.get_param("~use_camera", True)
 #DEBUG = rospy.get_param("~debug", False)
-DEBUG = False
+DEBUG = True
 USE_CAMERA_RANGE = rospy.get_param('~camera_range', 60)
 rospy.loginfo("USING THE CAMERA: " + str(USE_CAMERA))
 rospy.loginfo("DISTANCE THRESHOLD: " + str(DIST_THRESH))
@@ -212,8 +212,8 @@ class Obstacle():
                 if (angle < camera.fov/2 and angle > -camera.fov/2) and dist < USE_CAMERA_RANGE:
 
                     #TODO Specify this in params.
-                    x_len = 1.0 #m
-                    y_len = 1.0 #m
+                    x_len = 1.5 #m
+                    y_len = 2 #m
                     y_buf =0.3#m
                     x_buf =0.5#m
 
