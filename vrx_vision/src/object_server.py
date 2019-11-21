@@ -28,7 +28,7 @@ DIST_THRESH = rospy.get_param('~distance_threshold',3); #Distance between cluste
 EXPIRY_TIME = rospy.get_param('~expiry_time', 1) #Time to before cleaning up missing objects
 USE_CAMERA = rospy.get_param("~use_camera", True)
 #DEBUG = rospy.get_param("~debug", False)
-DEBUG = True
+DEBUG = False
 USE_CAMERA_RANGE = rospy.get_param('~camera_range', 60)
 rospy.loginfo("USING THE CAMERA: " + str(USE_CAMERA))
 rospy.loginfo("DISTANCE THRESHOLD: " + str(DIST_THRESH))
@@ -162,11 +162,11 @@ class Obstacle():
             dock_width=8.0
             dock_length=16.0
             if width>length:
-                rospy.logdebug("WIDTH is bigger, swapping values")
+                #rospy.loginfo("WIDTH is bigger, swapping values")
                 temp = length
                 length = width
                 width = temp
-
+                rot_angle = rot_angle + 1.5707
 
             confidence = (1-abs(width/dock_width-1)) * (1-abs(length/dock_length-1))
 
@@ -175,7 +175,7 @@ class Obstacle():
             if confidence < 0.3:
                 confidence = 0.3
 
-            rospy.logdebug("Dock length(biggest) %f, dock width(shortest) %f, conf : %f",length, width,confidence)
+            #rospy.loginfo("Dock length(biggest) %f, dock width(shortest) %f, conf : %f",length, width,confidence)
 
 
             if (width > length):

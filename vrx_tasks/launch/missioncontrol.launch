@@ -32,7 +32,7 @@
     </include>
 
 
-    <!--include file="$(find vrx_navigation)/launch/docking.launch"/-->
+    <include file="$(find vrx_navigation)/launch/docking.launch"/>
 
     <!--<group ns="wamv">
 
@@ -43,8 +43,8 @@
         <arg name="use_camera" value="true"/>
     </include-->
 
-    <!--node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
-</node-->
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+    </node>
 
     <!-- Vision translation -->
 

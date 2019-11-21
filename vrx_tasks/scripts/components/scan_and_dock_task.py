@@ -38,7 +38,7 @@ class ScanDock(Mission):
         rospy.loginfo("Sleeping for 5 seconds")
         rospy.sleep(1)
         ##Find the Scan Buoy
-        scan = self.findClosest(self.unused_objects, type="buoy")
+        scan = self.exploreFor(type="buoy",conf_thresh = 0.3)
 
         if scan is None:
             rospy.logwarn("No buoys found")
@@ -83,7 +83,7 @@ class ScanDock(Mission):
         # target.orientation = self.current_pose.orientation
         # target = self.navigateTo(target)
 
-        self.exploreFor(type="dock", conf_thresh=0.35)
+        docker = self.exploreFor(type="dock", conf_thresh=0.35)
 
         rospy.loginfo("attempting to find nearest dock")
         dock = self.findClosest(self.unused_objects, type="dock",conf_thresh = 0.35)

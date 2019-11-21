@@ -11,16 +11,17 @@ class Mission():
 
     def __init__(self):
         print("Initalising Mission Base")
-        self.object_sub = rospy.Subscriber("wamv/objects/", ObjectArray, self.objectsCb)
-        self.odom_sub = rospy.Subscriber("wamv/odom/", Odometry, self.odomCb)
-        self.waypoint_pub = rospy.Publisher("waypoints_cmd", WaypointRoute,queue_size = 10)
-        self.marker_pub = rospy.Publisher("nav_marker", Marker, queue_size=10)
-        self.goal_pub = rospy.Publisher("wamv/global_planner/goal", PoseStamped, queue_size = 10)
+
         self.object_list = None
         self.used_objects = []
         self.unused_objects = None
         self.current_pose = Pose()
         self.tf_listener = tf.TransformListener()
+        self.object_sub = rospy.Subscriber("wamv/objects/", ObjectArray, self.objectsCb)
+        self.odom_sub = rospy.Subscriber("wamv/odom/", Odometry, self.odomCb)
+        self.waypoint_pub = rospy.Publisher("waypoints_cmd", WaypointRoute,queue_size = 10)
+        self.marker_pub = rospy.Publisher("nav_marker", Marker, queue_size=10)
+        self.goal_pub = rospy.Publisher("wamv/global_planner/goal", PoseStamped, queue_size = 10)
 
     def getDist(self,pose1,pose2):
         return math.sqrt((pose1.position.x-pose2.position.x)**2 + (pose1.position.y-pose2.position.y)**2 )
@@ -216,8 +217,10 @@ class Mission():
         current_target_object = Object()
         current_target_object.frame_id = ""
         target = None
+        random_target = None
         object_search_list_used = []
         object = None
+        count = 0
         while object is None:
             object_search_list = self.unused_objects[:]
             for object in object_search_list[:]:
@@ -235,19 +238,32 @@ class Mission():
                     guess = self.findClosest(object_search_list, type="object", conf_thresh = 0)
                     if guess is None:
                         rospy.logwarn("No Objects Found... at all")
-                        #TODO Handle this:
-                        return None
+                        #Go to a random posiiont:
+                        count = count +1
 
-                if current_target_object.frame_id != guess.frame_id:
+                        if (random_target is None or self.inRange(random_target,dist_thresh = 6, ang_thresh = 1)) and count >10:
+                            rospy.logwarn("Cannot find any new things to investigate, lets try a random position")
+                            random_target = Pose()
+                            random_target.position.x = 0
+                            random_target.position.y = 50
+                            random_target.orientation=self.current_pose.orientation
+                            self.navigateTo(random_target, wait=False)
+                            count = 0
+                        rospy.sleep(0.5)
+                        continue
+
+
+                count = 0
+                if guess is not None and current_target_object.frame_id != guess.frame_id:
                     rospy.loginfo("Getting a new location to try ")
                     target = Pose()
                     target.position = guess.pose.position
                     target.orientation = self.current_pose.orientation
-                    target = self.translatePose(target,0,-8,0)
+                    target = self.translatePose(target,0,-15,0)
                     current_target_object = guess
                     self.navigateTo(target,wait=False)
 
-                if self.inRange(target) or (len(current_target_object.confidences) != 0 and current_target_object.confidences[0]>0.8):
+                if target is not None and current_target_object is not None and (self.inRange(target) or (len(current_target_object.confidences) != 0 and current_target_object.confidences[0]>0.8)):
                     #If it is in at the nav location or the classificaiton is very high
                         ##Remove the item in object search list:
                     rospy.loginfo("Removing object because its not what we are looking for")

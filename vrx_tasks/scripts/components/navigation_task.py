@@ -93,7 +93,7 @@ class NavigationTask:
                     else:
                         break
 
-                target = self.translatePose(target,0,1,0)
+                target = self.translatePose(target,0,0.1,0)
                 self.publishMarker(target)
                 self.navigateTo(target,dist_thresh = 2, ang_thresh = 1)
 
@@ -102,7 +102,7 @@ class NavigationTask:
         target = self.findGate("blue_totem","red")
         if target is None:
             return
-        target = self.translatePose(target,0,1,0)
+        target = self.translatePose(target,0,0.1,0)
         self.publishMarker(target)
         self.navigateTo(target)
         rospy.loginfo("END of Program")
