@@ -2,7 +2,7 @@
 
 # Checks info messages to determine what needs to be done.
 
-from components import geoPathToPath, geoPoseToPose, poseToCourse
+from components import geoPathToPath, geoPoseToPose, poseToRoute, pathToRoute
 from components.navigation_task import NavigationTask
 from components.dockmaster import DockMaster
 import rospy
@@ -24,11 +24,12 @@ def cb(data):
             rospy.loginfo("Executing Station Keeping")
             ## geo pose to pose
             geoPoseToPose.geoPoseToPoseConverter()
-            ## pose to course
-            poseToCourse.poseToCourseConverter()
+            ## pose to route
+            poseToRoute.poseToRouteConverter()
             pass
         elif data.name=="wayfinding":
             geoPathToPath.geoPathToPathConverter()
+            pathToRoute.pathToRouteConverter()
             pass
         elif data.name=="perception":
             pass
