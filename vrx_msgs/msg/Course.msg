@@ -11,3 +11,7 @@ bool keep_station
 
 # If station keeping, need to keep heading aligned with station_yaw 
 float32 station_yaw
+
+# Distance from vessel to station, used for stationkeeping PID
+float32 station_dist_x
+float32 station_dist_y

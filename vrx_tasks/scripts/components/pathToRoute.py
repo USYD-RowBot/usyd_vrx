@@ -37,8 +37,11 @@ class pathToRouteConverter:
             wp=Waypoint()
             wp.pose=dps.pose # it starts as a posestamped so extract the pose
             wp.nav_type=wp.NAV_STATION
-            wp.station_duration = 3 # Wait 3 seconds at station to minimise error
+            wp.station_duration = 6 # Wait for seconds at station to minimise error
             waypoints.append(wp)
+
+        waypoints[-1].station_duration = -1.0 # Make last waypoint infinite
+
         route.waypoints=waypoints
         route.speed=self.speed
         self.pub.publish(route)

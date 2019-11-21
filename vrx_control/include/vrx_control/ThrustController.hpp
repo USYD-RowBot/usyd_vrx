@@ -52,6 +52,24 @@ class ThrustController
       bool use_sim_time);
 
     /*!
+    * Configure stationkeeping PID controller.
+    * @param Kp proportional gain.
+    * @param Ki integral gain.
+    * @param Kd derivative gain.
+    * @param max_integral maximum integral accumulation.
+    * @param use_sim_time use simulator time (true) or real time (false)
+    */
+    void initStationPID(float Kp, float Ki, float Kd, float max_integral, 
+      bool use_sim_time);
+
+    /*!
+    * Gets the time mode to use for each PID controller.
+    * @param use_sim_time use simulator time (true) or real time (false)
+    * @return time mode, either sim or real.
+    */
+    SimplePID::TIME_MODE getTimeMode(bool use_sim_time);
+
+    /*!
     * Resets PID variables.
     */
     void resetPIDs();
@@ -73,9 +91,17 @@ class ThrustController
     * Update controller with current odometry data from vehicle.
     * @param linear_velocity current linear x velocity.
     * @param angle current yaw.
+    * @param station_dist distance from vessel to station wp.
     */
     void setOdometry(
       double linear_velocity, double angle);
+
+    /*!
+    * Update PID controller with current distance to station wp.
+    * @param E_x distance from vessel to station wp in global x.
+    * @param E_y distance from vessel to station wp in global y.
+    */
+    void setStationTarget(double E_x, double E_y);
 
     /*!
     * Checks whether the desired station angle has been reached.
@@ -87,10 +113,11 @@ class ThrustController
     * Use PIDs to set thruster values in traversal mode.
     * @param thrust_right float to store right thrust command in.
     * @param thrust_left float to store left thrust command in.
+    * @param thrust_lat float to store lateral thrust command in.
     * @param sim_time current ROS time.
     */
-    void getControlSignalTraverse(
-      float &thrust_right, float &thrust_left, double sim_time=0);
+    void getControlSignalTraverse(float &thrust_right, float &thrust_left, 
+      float &thrust_lat, double sim_time=0);
 
     /*!
     * Set thruster values for strafing and rotating when station-keeping.
@@ -129,6 +156,12 @@ class ThrustController
 
     //! PID controller for angular velocity.
     usyd_vrx::SimplePID* angularPID_;
+
+    //! PID controller for stationkeeping in x.
+    usyd_vrx::SimplePID* stationXPID_;
+
+    //! PID controller for stationkeeping in y.
+    usyd_vrx::SimplePID* stationYPID_;
 
     //! Current vessel yaw.
     float vessel_yaw_;

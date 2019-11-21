@@ -205,27 +205,18 @@ void WaypointFollower::assignCourse(vrx_msgs::Course& msg, bool station)
   // If less than threshold, reduce speed on approach
   if (distance_to_wp < station_brake_distance_)
   {
-    if (station) // station-keeping
-      msg.speed = station_default_thrust_;
-    else // traversing
-      msg.speed = (distance_to_wp/station_brake_distance_)*speed_;
+    msg.speed = (distance_to_wp/station_brake_distance_)*speed_;
   }  
   else
     msg.speed = speed_;
 
-  /*if (station) // Slow down when reaching station position
+  if (station == true)
   {
-    float distance_to_wp =
-      GuidanceAlgorithms::Distance_2(vessel_pos_, wp_next_) - wp_tolerance_/2;
-
-    // If less than threshold, reduce speed on approach
-    if (distance_to_wp < station_brake_distance_)
-      msg.speed = (distance_to_wp/station_brake_distance_)*speed_;
-    else
-      msg.speed = speed_;
+    Vec2D distance_components = 
+      GuidanceAlgorithms::DistanceComponents(vessel_pos_, wp_next_);
+    msg.station_dist_x = distance_components.x;
+    msg.station_dist_y = distance_components.y;
   }
-  else
-    msg.speed = speed_;*/
 }
 
 void WaypointFollower::followRoute()

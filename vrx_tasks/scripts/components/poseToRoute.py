@@ -16,7 +16,7 @@ class poseToRouteConverter:
         params = {
             "inTopic": "/station",
             "outTopic": "/waypoints_cmd",
-            "speed":4
+            "speed":5
         }
 
         for i in params:

@@ -21,6 +21,22 @@ namespace GuidanceAlgorithms {
   float Distance_2(Vec2D& vec1, Vec2D& vec2);
 
   /*!
+  * Calculates distance from vec1 to vec2.
+  * @param vec1 first vector.
+  * @param vec2 second vector.
+  * @return distance from vec1 to vec2.
+  */
+  float Distance(Vec2D& vec1, Vec2D& vec2);
+
+  /*!
+  * Calculates distance in x and y from vec1 to vec2.
+  * @param vec1 first vector.
+  * @param vec2 second vector.
+  * @return distance components in x and y from vec1 to vec2.
+  */
+  Vec2D DistanceComponents(Vec2D& vec1, Vec2D& vec2);
+
+  /*!
   * Computes virtual waypoint target using nonlinear guidance law.
   * @param wp_prev the previous waypoint.
   * @param wp_next the next waypoint.

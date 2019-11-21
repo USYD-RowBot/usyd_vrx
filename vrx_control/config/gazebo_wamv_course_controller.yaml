@@ -8,8 +8,8 @@ neg_scale_factor:     1.9
 priority_yaw_range:   1.0 # radians
 
 # Station keeping config
-lateral_scale_x:        1.14 # experimentally found
-lateral_scale_y:        0.85 # TODO experimentally find
+lateral_scale_x:        1.14 # experimentally found, balances strafing action
+lateral_scale_y:        1.00 # using this as scaling for lateral thruster during traversal
 reconfig_duration:      1.0  # secs
 station_tolerance_ang:  0.1  # rad (0.175 rad ~= 10 deg)
 
@@ -21,7 +21,12 @@ lin_Kd: 1.28
 # Angular PID controller gains
 ang_Kp: 1.0
 ang_Ki: 0.0
-ang_Kd: 1.28
+ang_Kd: 1.4
+
+# Station PID controller gains
+stn_Kp: 1.0
+stn_Ki: 0.0
+stn_Kd: 0.5
 
 # General PID configuration
 use_sim_time: true  # Use simulator time (true) or real time (false)
