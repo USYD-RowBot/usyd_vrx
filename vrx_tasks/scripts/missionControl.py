@@ -27,19 +27,19 @@ def cb(data):
             geoPoseToPose.geoPoseToPoseConverter()
             ## pose to route
             poseToRoute.poseToRouteConverter()
-            pass
+
         elif data.name=="wayfinding":
             rospy.loginfo("Executing Wayfinding")
             geoPathToPath.geoPathToPathConverter()
             pathToRoute.pathToRouteConverter()
-            pass
+
         elif data.name=="perception":
-            pass
+
         elif data.name=="navigation_course":
             print("DOING NAVIGATION")
             nav_task = NavigationTask()
             nav_task.startNavigation()
-            pass
+
         elif data.name=="scan" or data.name=="dock":
             rospy.loginfo("On Task: docking")
 

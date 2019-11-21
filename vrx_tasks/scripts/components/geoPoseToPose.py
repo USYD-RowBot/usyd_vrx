@@ -44,9 +44,10 @@ class geoPoseToPoseConverter:
     def cb(self,data):
         #print("RECEIVED GEO PATH MESSAGE")
         #print (data)
-        if self.lastSatPos is None:
-            print("geoPoseToPose: NO SAT DATA, FAIL")
-            return
+        while self.lastSatPos is None:
+            rospy.logwarn("geoPoseToPose: NO SAT DATA, FAIL")
+            rospy.sleep(0.5)
+
         #print (lastSatPos)
         ps = PoseStamped()
         ps.header = data.header
