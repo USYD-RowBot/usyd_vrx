@@ -18,40 +18,28 @@ from vrx_msgs.srv import *
 from sensor_msgs.msg import Image
 from vrx_gazebo.msg import Task
 from visualization_msgs.msg import Marker
-
-
+from mission_base import Mission, quatToEuler ,eulerToQuat
+from placard_classifier import PlacardClassifier
+from cv_bridge import CvBridge, CvBridgeError
 # MAKE SURE TO CHANGE NAMESPACE OF /ODOM IN LAUNCH FILE
 
 
 
-def quatToEuler(quat):
 
-  if quat.x is None:
-    #Must be a in tf form.
-    quaternion = quat
-  else:
-    quaternion = (
-    quat.x,
-    quat.y,
-    quat.z,
-    quat.w)
-
-  euler = tf.transformations.euler_from_quaternion(quaternion)
-  return euler[0],euler[1],euler[2]
-
-class DockMaster():
+class DockMaster(Mission):
 
   def __init__(self,placard_symbol = None):
+    rospy.loginfo("INitalizing MIssion base")
+    Mission.__init__( self )
+    self.bridge = CvBridge()
     self.logDock("Initialising dock master.")
     self.placard_symbol = placard_symbol
-    rospy.sleep(10)
+    self.placardClassifier = PlacardClassifier()
     self.initMission()
     self.executePlan()
 
 
-  def odomCb(self, odom_msg):
-      self.current_pose = odom_msg.pose.pose
-      return
+
 
   def initMission(self):
     self.do_scan = False   # Scan the sequence on the buoy?
@@ -69,17 +57,14 @@ class DockMaster():
     self.current_pose = Pose()
     self.tf_listener = tf.TransformListener()
     self.route_pub = rospy.Publisher("/waypoints_cmd", WaypointRoute, queue_size=1, latch=True)
-    self.odom_sub = rospy.Subscriber("/wamv/odom/", Odometry, self.odomCb)
-    self.goal_pub = rospy.Publisher("/wamv/global_planner/goal", PoseStamped, queue_size = 10)
-    self.marker_pub = rospy.Publisher("/nav_marker", Marker, queue_size=10)
 
     #rospy.get_param("~hold_duration")
 
     # Wait for any required services to be active
     #rospy.wait_for_service('scan_buoy')
 
-    rospy.loginfo("Waiting of classif_placard service")
-    rospy.wait_for_service('/wamv/wamv/classify_placard')
+    #rospy.loginfo("Waiting of classif_placard service")
+    #rospy.wait_for_service('/wamv/wamv/classify_placard')
 
     #ready = False # Wait until competition is in Ready state.
     #while not ready:
@@ -87,96 +72,26 @@ class DockMaster():
      # if task_msg.state == "ready":
         #ready = True
 
-  def inRange(self, target, dist_thresh = 0.5, ang_thresh = 0.4):
-      dist = math.sqrt((self.current_pose.position.x-target.position.x)**2 + (self.current_pose.position.y-target.position.y)**2)
-
-      angle = abs(quatToEuler(self.current_pose.orientation)[2] - quatToEuler(target.orientation)[2])
-
-      if (dist<=dist_thresh) and (angle <= ang_thresh):
-          return True
-      else:
-          return False
-
-
-  def navigateToDirect(self, target, wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4):
-      """ Navigate to the location, if wait is True: Wait until destination is reached, if not,  Not using the mission planner"""
-
-      rospy.loginfo("Navigating to a location x: %f. y:%f", target.position.x, target.position.y)
-      waypoint_msg = WaypointRoute()
-      waypoint_msg.speed = 2
-      ##For Now, waypoints are 2 waypoints. At nav waypoint then a nav station
-
-      loc2 = Waypoint()
-      loc2.pose = target
-      loc2.nav_type = Waypoint.NAV_STATION
-      loc2.station_duration = -1
-      waypoint_msg.waypoints=[loc2]
-      self.route_pub.publish(waypoint_msg)
-
-      start = rospy.Time.now().secs
-      rate = rospy.Rate(20)
-      expired = False
-      while not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh) and wait and not expired:
-          rate.sleep()
-          if timeout != 0 and (rospy.Time.now().secs-start) > timeout:
-              rospy.loginfo("Timeing out: %f", rospy.Time.now().secs-start)
-              expired = True
-
-      #Republish a waypoint in its own position if wanted to wait, else, it will exit the function but continue on its trajectory.
-      if wait:
-          waypoint_msg = WaypointRoute()
-          waypoint_msg.speed = 2
-          loc0 = Waypoint()
-          loc0.pose = self.current_pose
-          loc0.nav_type = Waypoint.NAV_STATION
-          loc0.station_duration = -1
-          waypoint_msg.waypoints=[loc0]
-          self.route_pub.publish(waypoint_msg)
-
-      rospy.loginfo("Arrived at target")
-      return
-
-
-  def navigateTo(self, target,  wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4, repubish = False):
-      # Navigate to the location, if wait is True: Wait until destination is reached, if not,
-      self.navigateToDirect(target,wait=False,timeout=0)
-      publishMarker(self.marker_pub,target)
-      rospy.loginfo("Navigating to a location x: %f. y:%f", target.position.x, target.position.y)
-      waypoint_msg = WaypointRoute()
-      waypoint_msg.speed = 3
-      ##For Now, waypoints are 2 waypoints. At nav waypoint then a nav station
-      goal  = PoseStamped()
-      goal.pose = target
-      goal.header.frame_id = "map"
-      goal.header.stamp = rospy.Time.now()
-
-      self.goal_pub.publish(goal)
-      start = rospy.Time.now().secs
-      rate = rospy.Rate(20)
-      #self.waitForWaypointRequest()
-
-      expired = False
-      while not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh) and wait and not expired:
-          rate.sleep()
-          if timeout != 0 and rospy.Time.now().secs-start > timeout:
-              expired = True
-
-      #Republish a waypoint in its own position if wanted to wait, else, it will exit the function but continue on its trajectory.
-
-      rospy.loginfo("Arrived at target")
-      return
-
   def executePlan(self):
     self.logDock("Executing mission plan.")
+    self.logDock("Sleeping 5 seconds")
+    rospy.sleep(5)
+
+    if self.placard_symbol is None:
+        #Search for dock
+        dock = self.exploreFor(type = "dock",conf_thresh = 0.4)
 
     #self.spinOnSpot(1)
     #self.circleObject("scan_buoy")
     #self.scan_code()
-
+    if dock is None:
+        rospy.logerr("Cant find dock :(")
+        return
+    rospy.loginfo("Found DOck")    
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
 
-    #self.circleObject("dock", revs=0.3, clockwise=True)
+    self.circleObject("dock", revs=0.5, clockwise=True,thresh = 0.7)
     #self.circleObject("dock", revs=0.2, clockwise=False)
 #
     if self.placard_symbol is None:
@@ -224,19 +139,27 @@ class DockMaster():
     return euler[2]
 
   def checkPlacard(self):
-    ros_img = rospy.wait_for_message("/wamv/sensors/cameras/middle_camera/image_raw", Image)
-    res = None
-    while res is None or res.success==False:
-      self.logDock("Attempting to Classify")
-      try:
-        classifyPlacard = rospy.ServiceProxy('/wamv/wamv/classify_placard', ClassifyPlacard)
-        res = classifyPlacard(ros_img)
-      except rospy.ServiceException, e:
-        self.logDock("Service call to /wamv/classify_placard failed: %s"%e)
-        return False
+    label = ""
 
-    self.logDock("Placard classifier result: %s"%res.label)
-    if res.label == self.placard_symbol:
+    while label == "":
+        rospy.loginfo("Classifying placard")
+        ros_img = rospy.wait_for_message("/wamv/sensors/cameras/middle_camera/image_raw", Image)
+        res = None
+
+        image = self.bridge.imgmsg_to_cv2(ros_img, desired_encoding="bgr8")
+        label, _, _ = self.placardClassifier.classifyPlacard(image)
+
+    # while res is None or res.success==False:
+    #   self.logDock("Attempting to Classify")
+    #   try:
+    #     classifyPlacard = rospy.ServiceProxy('/wamv/wamv/classify_placard', ClassifyPlacard)
+    #     res = classifyPlacard(ros_img)
+    #   except rospy.ServiceException, e:
+    #     self.logDock("Service call to /wamv/classify_placard failed: %s"%e)
+    #     return False
+    #
+    # self.logDock("Placard classifier result: %s"%res.label)
+    if label == self.placard_symbol:
       return True
     else:
       return False
@@ -292,7 +215,7 @@ class DockMaster():
         self.logDock("Service call failed: %s"%e)
         return False # I dunno man
 
-  def circleObject(self, object_string, revs=1.0, look_dock=True, clockwise=True):
+  def circleObject(self, object_string, revs=1.0, look_dock=True, clockwise=True,thresh = 0):
     ''' object_string (string): "dock", "any_dock", "scan_buoy", "explore"
     '''
     self.logDock("Circling the " + object_string + ".")
@@ -337,6 +260,11 @@ class DockMaster():
     init_pose.position.y = (object_pos[1] + float(radius)*(-init_vec[1]/init_dist))
 
     init_angle = math.atan2(init_vec[1], init_vec[0]) # Set angle to face object
+
+    if clockwise:
+        init_angle = init_angle+1.5707
+    else:
+        init_angle = init_angle-1.5707
     self.setPoseQuat(init_pose, init_angle)
 
     circle_wp_route = WaypointRoute() # Waypoint list
@@ -364,6 +292,13 @@ class DockMaster():
       # Work out angle to object
       wp_vec = [object_pos[0] - wp_pose.position.x, object_pos[1] - wp_pose.position.y]
       wp_angle = math.atan2(wp_vec[1], wp_vec[0])
+
+      if clockwise:
+          wp_angle = wp_angle+1.5707
+      else:
+          wp_angle = wp_angle-1.5707
+
+      self.setPoseQuat(init_pose, init_angle)
       self.setPoseQuat(wp_pose, wp_angle)
 
       if i == n_wps-1: # Always set last waypoint to be astation
@@ -371,7 +306,7 @@ class DockMaster():
       else:
         spin_wp = self.makeWaypoint(wp_pose, nav_type=nav_msg_type) # Set waypoint
 
-      publishMarker(self.marker_pub, wp_pose, id = i)
+      self.publishMarker(wp_pose, id = i)
 
       circle_wps.append(spin_wp)
 
@@ -381,9 +316,19 @@ class DockMaster():
 
     #r = rospy.Rate(2) # Wait until objective identified
     #while not identify_function() and not rospy.is_shutdown:
-     # r.sleep()
-    self.logDock("Waiting for wp request")
-    self.waitForWaypointRequest()
+    # r.sleep()
+    if thresh == 0:
+        self.logDock("Waiting for wp request")
+        self.waitForWaypointRequest()
+        return
+    else:
+        conf = 0
+        while(conf <thresh ):
+            #TODO: Make a function to find the object base on frame_id
+            dock = self.findClosest(self.unused_objects, type="dock")
+            if len(dock.confidences) != 0:
+                conf = dock.confidences[0]
+
 
   def alignWithDock(self, bay_index, duration=0.0):
     self.logDock("Aligning with the dock.")
@@ -503,27 +448,6 @@ def main():
   dm = DockMaster()
   rospy.spin()
 
-def publishMarker(marker_pub,pose, id = 1):
-    rospy.loginfo("publishing marker")
-    if pose is None:
-        return
-    marker = Marker()
-    marker.header.frame_id = "map"
-    marker.header.stamp = rospy.Time.now()
-    marker.ns = "nav_task"
-    marker.id = id
-    marker.type = Marker.ARROW
-    marker.action=Marker.ADD
-    marker.pose = pose
-    marker.scale.x = 2.0
-    marker.scale.y = 2.0
-    marker.scale.z = 2.0
-    marker.color.r = 0.0
-    marker.color.g = 0.0
-    marker.color.b = 0.0
-    marker.color.a = 1.0
-    marker.lifetime = rospy.Duration(0)
-    marker_pub.publish(marker)
 
 if __name__ == "__main__":
   main()

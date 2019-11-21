@@ -33,10 +33,11 @@
 
 
     <include file="$(find vrx_navigation)/launch/docking.launch"/>
-    <group ns="wamv">
+
+    <!--<group ns="wamv">
 
         <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>
-    </group>
+    </group> -->
 
     <!--include file="$(find vrx_vision)/launch/object_server0.launch">
         <arg name="use_camera" value="true"/>

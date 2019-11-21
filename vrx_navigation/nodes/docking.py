@@ -15,6 +15,7 @@ from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from vrx_msgs.msg import *
 from std_srvs.srv import SetBool
+from placard_classifier import PlacardClassifier
 
 # State machine for docking procedure
 class DockSM:
@@ -29,6 +30,7 @@ class DockSM:
     self.state = self.DockState.DOCK_STANDBY # Initialise state machine state
     self.hold_time_target = 0           # Timer for HOLD state
     self.hold_duration = hold_duration  # Duration for HOLD state
+
 
   def getState(self):
     return self.state
@@ -71,6 +73,7 @@ class Docker:
     self.dock_pos = [0, 0] # Position of desired docking bay
     self.dock_yaw = 0      # Yaw at which to enter dock
     self.prev_x_error = 0
+    self.placard_classifier = PlacardClassifier()
     self.getROSParams()
 
     self.dock_sm = DockSM(self.hold_duration) # Initialise docking state machine
@@ -87,7 +90,7 @@ class Docker:
     self.sub_odom = rospy.Subscriber(
       "/odom", Odometry, self.odomCb)
 
-    rospy.wait_for_service('/wamv/wamv/classify_placard')
+    #rospy.wait_for_service('/wamv/wamv/classify_placard')
 
     self.server = actionlib.SimpleActionServer('docking', DockAction, self.execute, False)
     self.server.start()
@@ -155,19 +158,19 @@ class Docker:
       course_cmd.yaw = self.getStrafeYaw() # Get strafe yaw based on state
       k = 0.01
       min_thrust = 0.1
-      if abs(self.x_cam_error) > self.pix_threshold and self.x_cam_error>0:
-          thrust = abs(float(abs(self.x_cam_error)-self.pix_threshold)/float(self.pix_threshold)*self.default_thrust)
-          thrust = thrust -  float(abs(self.x_cam_error-self.prev_x_error))*k
-          if thrust < min_thrust:
-              thrust = min_thrust
-      else:
-          thrust = self.default_thrust
-
+      # if abs(self.x_cam_error) > self.pix_threshold and self.x_cam_error>0:
+      #     thrust = abs(float(abs(self.x_cam_error)-self.pix_threshold)/float(self.pix_threshold)*self.default_thrust)
+      #     thrust = thrust -  float(abs(self.x_cam_error-self.prev_x_error))*k
+      #     if thrust < min_thrust:
+      #         thrust = min_thrust
+      # else:
+      #     thrust = self.default_thrust
+      thrust = self.default_thrust
       self.prev_x_error = self.x_cam_error
       if thrust < 0:
           thrust = 0
       course_cmd.speed = thrust
-      print(course_cmd)
+      #print(course_cmd)
 
       self.pub_course.publish(course_cmd) # Publish course command
       rate.sleep()
@@ -236,13 +239,16 @@ class Docker:
       self.processImage(cv_img) # Pass converted image to processing algorithm'''
 
   def calculatePlacardSymbolX(self, ros_img):
-    try:
-      classifyPlacard = rospy.ServiceProxy('wamv/classify_placard', ClassifyPlacard)
-      res = classifyPlacard(ros_img)
-      self.x_cam_error = res.centre_x - 640 + self.pix_offset
-
-    except rospy.ServiceException, e:
-      rospy.loginfo("Service call to /wamv/classify_placard failed: %s"%e)
+      cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
+      label,conf,error = self.placard_classifier.classifyPlacard(cv_img)
+      self.x_cam_error = error- 640 + self.pix_offset
+    # try:
+    #   classifyPlacard = rospy.ServiceProxy('wamv/classify_placard', ClassifyPlacard)
+    #   res = classifyPlacard(ros_img)
+    #   self.x_cam_error = res.centre_x - 640 + self.pix_offset
+    #
+    # except rospy.ServiceException, e:
+    #   rospy.loginfo("Service call to /wamv/classify_placard failed: %s"%e)
 
   def odomCb(self, odom):
     # Store current vessel position in odom frame

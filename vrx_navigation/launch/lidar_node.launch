@@ -17,7 +17,7 @@
          <rosparam>min_height: -3
 angle_increment: 0.00872664625
 range_max: 100.0
-range_min: 10
+range_min: 8
 angle_min: -1.5
 angle_max: 1.5
 use_inf: false </rosparam>

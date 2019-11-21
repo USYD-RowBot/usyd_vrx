@@ -71,7 +71,8 @@ class Mission():
             waypoint_msg.waypoints=[loc0]
             self.waypoint_pub.publish(waypoint_msg)
 
-        rospy.loginfo("Arrived at target")
+        if wait:
+            rospy.loginfo("Arrived at target")
         return
 
     def navigateToDirect(self, target, wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4):
@@ -109,7 +110,9 @@ class Mission():
             waypoint_msg.waypoints=[loc0]
             self.waypoint_pub.publish(waypoint_msg)
 
-        rospy.loginfo("Arrived at target")
+        if wait:
+            rospy.loginfo("Arrived at target")
+        return
         return
 
     def inRange(self, target, dist_thresh = 0.5, ang_thresh = 0.4):
@@ -172,7 +175,7 @@ class Mission():
 
         return
 
-    def publishMarker(self, pose):
+    def publishMarker(self, pose,id = 0):
 
         if pose is None:
             return
@@ -180,7 +183,7 @@ class Mission():
         marker.header.frame_id = "map"
         marker.header.stamp = rospy.Time.now()
         marker.ns = "nav_task"
-        marker.id = 1
+        marker.id = id
         marker.type = Marker.ARROW
         marker.action=Marker.ADD
         marker.pose = pose
@@ -193,10 +196,69 @@ class Mission():
         marker.color.a = 1.0
         marker.lifetime = rospy.Duration(0)
         self.marker_pub.publish(marker)
+    #
+    # def findObject(self,object_list,frame_id):
+    #     if object_list is None:
+    #         rospy.logwarn("Find Closest passed empty list")
+    #         return None
+    #     for object in object_list:
+    #         #Get distance of object
+    #         if object.best_guess in accepted_objects and object.confidences[0]>conf_thresh:
+    #
 
 
 
-    def findClosest(self,object_list, type="object",frame="base_link", conf_thresh = 0):
+    def exploreFor(self,type="object",conf_thresh = 0):
+        """ Try find an object by navigating around"""
+        rospy.loginfo("Looking for %s", type)
+        object_search_list = self.unused_objects[:]
+        object = self.findClosest(object_search_list, type=type, conf_thresh = conf_thresh)
+        prev_target_object = ""
+        while object is None:
+            #Execute explore for object
+            object = self.findClosest(object_search_list, type=type, conf_thresh = conf_thresh)
+            if object is None:
+                rospy.loginfo("Cant find, looking for low confidnece")
+                guess = self.findClosest(object_search_list, type=type, conf_thresh = 0)
+                if guess is None:
+                    rospy.loginfo("Cant find, looking for Any Object")
+                    guess = self.findClosest(object_search_list, type="object", conf_thresh = 0)
+                    if guess is None:
+                        rospy.logwarn("No Objects Found... at all")
+                        #TODO Handle this:
+                        return None
+
+
+
+                if prev_target_object != guess.frame_id:
+                    target = Pose()
+                    target.position = guess.pose.position
+                    target.orientation = self.current_pose.orientation
+                    target = self.translatePose(target,0,-8,0)
+                    self.navigateTo(target,wait=False)
+
+                if self.inRange(target):
+                        ##Remove the item in object search list:
+                        rem = None
+                        for object in object_search_list:
+                            if object.frame_id == target.frame_id:
+                                rem = object
+                                break
+                        if rem is not None:
+                            object_search_list.remove(rem)
+                        prev_target_object = guess.frame_id
+
+                rospy.sleep(0.5)
+
+            else:
+                rospy.loginfo("Found object whilst exploring")
+                break
+
+
+        return object
+
+
+    def findClosest(self,object_list, type="object",frame="base_link", conf_thresh = 0,ignore_land = False):
 
         if object_list is None:
             rospy.logwarn("Find Closest passed empty list")
@@ -226,11 +288,16 @@ class Mission():
         for object in object_list:
             #Get distance of object
             if object.best_guess in accepted_objects and object.confidences[0]>conf_thresh:
+
                 try:
                     (trans,rot) = tf_listener.lookupTransform(frame,object.frame_id, rospy.Time(0))
                 except Exception as e:
                     rospy.logwarn("Transform Lookup Error")
                     print(e)
+                    continue
+
+                if object.pose.position.y > (-1.908*object.pose.position.x + 426) and not ignore_land:
+                    rospy.loginfo("Found object in land: ignoring")
                     continue
 
                 dist = math.sqrt(trans[0]**2 +trans[1]**2)
