@@ -8,7 +8,8 @@
 #include <tf2_msgs/TFMessage.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
-
+#include <vrx_gazebo/Task.h>
+#include <string>
 
 class MappingServer{
     /*Mapping Server to Create a map from odometry well*/
@@ -21,6 +22,7 @@ private:
   float resolution;
   float offset_x;
   float offset_y;
+  float range_min_;
 
 public:
   MappingServer(ros::NodeHandle node){
@@ -28,11 +30,21 @@ public:
     tf2_ros::TransformListener tf_listener(tf_buffer);
     this->node = node;
 
-
     ros::param::get("~width", width);
     ros::param::get("~resolution", resolution);
     ros::param::get("~offset_x", offset_x);
     ros::param::get("~offset_y", offset_y);
+
+    vrx_gazebo::Task task_msg = *(ros::topic::waitForMessage<vrx_gazebo::Task>("/vrx/task/info"));
+    std::string task_name = task_msg.name;
+
+    if (task_name == "perception")
+      range_min_ = 2.0;
+    else
+      range_min_ = 10.0;
+
+    ROS_DEBUG_STREAM("range_min_ is " << range_min_ "metres.");
+
     // width = 1024;
     // resolution = 0.4;
     // offset_x = 60;
@@ -128,7 +140,8 @@ public:
     float angle_min = scan.angle_min;
     float angle_increment = scan.angle_increment;
     float range_max = scan.range_max;
-    float range_min = scan.range_min;
+    //float range_min = scan.range_min;
+    float range_min = range_min_;
 
     //Amount of points that need to be calculated.
     int c = int((angle_max - angle_min)/angle_increment);

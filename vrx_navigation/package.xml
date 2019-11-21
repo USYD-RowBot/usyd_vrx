@@ -52,8 +52,10 @@
 
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>
+  <build_depend>vrx_gazebo</build_depend>
   <exec_depend>actionlib</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
+  <exec_depend>vrx_gazebo</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

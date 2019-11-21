@@ -10,6 +10,7 @@ project(vrx_navigation)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   tf
+  vrx_gazebo
 )
 
 ## System dependencies are found with CMake's conventions
