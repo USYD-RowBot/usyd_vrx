@@ -68,8 +68,8 @@ class Scanner():
     xx,yy =binary.shape
     mask = mask[int(xx/3):int(2*xx/3),:]
     img = img[int(xx/3):int(2*xx/3),:,:]
-    cv2.imshow("binary", mask)
-    cv2.waitKey(1)
+    #cv2.imshow("binary", mask)
+    #cv2.waitKey(1)
 
     # Find contours of image
     cont_return = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

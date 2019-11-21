@@ -29,6 +29,7 @@ def cb(data):
             poseToRoute.poseToRouteConverter()
             pass
         elif data.name=="wayfinding":
+            rospy.loginfo("Executing Wayfinding")
             geoPathToPath.geoPathToPathConverter()
             pathToRoute.pathToRouteConverter()
             pass

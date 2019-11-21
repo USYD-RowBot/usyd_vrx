@@ -76,22 +76,23 @@ class DockMaster(Mission):
     self.logDock("Executing mission plan.")
     self.logDock("Sleeping 5 seconds")
     rospy.sleep(5)
-
+    dock = None
     if self.placard_symbol is None:
         #Search for dock
         dock = self.exploreFor(type = "dock",conf_thresh = 0.4)
+        if dock is None:
+            rospy.logerr("Cant find dock :(")
+            return
 
     #self.spinOnSpot(1)
     #self.circleObject("scan_buoy")
     #self.scan_code()
-    if dock is None:
-        rospy.logerr("Cant find dock :(")
-        return
-    rospy.loginfo("Found DOck")    
+
+    rospy.loginfo("Found DOck")
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
 
-    self.circleObject("dock", revs=0.5, clockwise=True,thresh = 0.7)
+    self.circleObject("dock", revs=0.5, clockwise=True,thresh = 0.9)
     #self.circleObject("dock", revs=0.2, clockwise=False)
 #
     if self.placard_symbol is None:
@@ -105,7 +106,7 @@ class DockMaster(Mission):
       self.alignWithDock(i, duration=5.0)
 
       if self.checkPlacard() == True:       # If correct placard
-        self.alignWithDock(i, duration=10.0) # Re-align
+        #self.alignWithDock(i, duration=10.0) # Re-align
         correct_bay = i
         break
 
@@ -355,7 +356,7 @@ class DockMaster(Mission):
     #align_wps.speed = self.general_speed
     #self.route_pub.publish(align_wps)
     rospy.loginfo("Naviating to allign with dock")
-    self.navigateTo(align_pose)
+    self.navigateTo(align_pose,ang_thresh=0.1)
 
     #self.waitForWaypointRequest()
 

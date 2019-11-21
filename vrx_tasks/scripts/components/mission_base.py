@@ -37,7 +37,7 @@ class Mission():
 
         return new_pose
 
-    def navigateTo(self, target, wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4, repubish = False):
+    def navigateTo(self, target, wait=True, timeout = 0, dist_thresh = 1, ang_thresh = 0.4, repubish = False):
         self.publishMarker(target)
         # Navigate to the location, if wait is True: Wait until destination is reached, if not,
         self.navigateToDirect(target,wait=False,timeout=0)
@@ -55,7 +55,7 @@ class Mission():
         start = rospy.Time.now().secs
         rate = rospy.Rate(20)
         expired = False
-        while not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh) and wait and not expired:
+        while (not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh)) and wait and not expired:
             rate.sleep()
             if timeout != 0 and rospy.Time.now().secs-start > timeout:
                 expired = True
@@ -75,7 +75,7 @@ class Mission():
             rospy.loginfo("Arrived at target")
         return
 
-    def navigateToDirect(self, target, wait=True, timeout = 0, dist_thresh = 0.5, ang_thresh = 0.4):
+    def navigateToDirect(self, target, wait=True, timeout = 0, dist_thresh = 1, ang_thresh = 0.4):
         """ Navigate to the location, if wait is True: Wait until destination is reached, if not,  Not using the mission planner"""
         self.publishMarker(target)
         rospy.loginfo("Navigating to a location x: %f. y:%f", target.position.x, target.position.y)
@@ -93,7 +93,8 @@ class Mission():
         start = rospy.Time.now().secs
         rate = rospy.Rate(20)
         expired = False
-        while not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh) and wait and not expired:
+        while (not self.inRange(target,dist_thresh = dist_thresh, ang_thresh = ang_thresh)) and wait and not expired:
+            #print(target,self.current_pose)
             rate.sleep()
             if timeout != 0 and (rospy.Time.now().secs-start) > timeout:
                 rospy.loginfo("Timeing out: %f", rospy.Time.now().secs-start)
@@ -110,14 +111,15 @@ class Mission():
             waypoint_msg.waypoints=[loc0]
             self.waypoint_pub.publish(waypoint_msg)
 
-        if wait:
-            rospy.loginfo("Arrived at target")
-        return
+
+        rospy.loginfo("Arrived at target")
         return
 
-    def inRange(self, target, dist_thresh = 0.5, ang_thresh = 0.4):
+
+    def inRange(self, target, dist_thresh = 1.2, ang_thresh = 0.4):
+
         dist = math.sqrt((self.current_pose.position.x-target.position.x)**2 + (self.current_pose.position.y-target.position.y)**2)
-
+        #rospy.loginfo("Range: %f", dist)
         angle = abs(quatToEuler(self.current_pose.orientation)[2] - quatToEuler(target.orientation)[2])
 
         if (dist<=dist_thresh) and (angle <= ang_thresh):
@@ -208,50 +210,58 @@ class Mission():
 
 
 
-    def exploreFor(self,type="object",conf_thresh = 0):
+    def exploreFor(self,type="object",conf_thresh = 0.3):
         """ Try find an object by navigating around"""
         rospy.loginfo("Looking for %s", type)
-        object_search_list = self.unused_objects[:]
-        object = self.findClosest(object_search_list, type=type, conf_thresh = conf_thresh)
-        prev_target_object = ""
+        current_target_object = Object()
+        current_target_object.frame_id = ""
+        target = None
+        object_search_list_used = []
+        object = None
         while object is None:
+            object_search_list = self.unused_objects[:]
+            for object in object_search_list[:]:
+                for i in object_search_list_used:
+                    if i.frame_id == object.frame_id:
+                        object_search_list.remove(object)
+                        break
             #Execute explore for object
             object = self.findClosest(object_search_list, type=type, conf_thresh = conf_thresh)
             if object is None:
-                rospy.loginfo("Cant find, looking for low confidnece")
+                #rospy.loginfo("Cant find, looking for low confidnece")
                 guess = self.findClosest(object_search_list, type=type, conf_thresh = 0)
                 if guess is None:
-                    rospy.loginfo("Cant find, looking for Any Object")
+                    #rospy.loginfo("Cant find, looking for Any Object")
                     guess = self.findClosest(object_search_list, type="object", conf_thresh = 0)
                     if guess is None:
                         rospy.logwarn("No Objects Found... at all")
                         #TODO Handle this:
                         return None
 
-
-
-                if prev_target_object != guess.frame_id:
+                if current_target_object.frame_id != guess.frame_id:
+                    rospy.loginfo("Getting a new location to try ")
                     target = Pose()
                     target.position = guess.pose.position
                     target.orientation = self.current_pose.orientation
                     target = self.translatePose(target,0,-8,0)
+                    current_target_object = guess
                     self.navigateTo(target,wait=False)
 
-                if self.inRange(target):
+                if self.inRange(target) or (len(current_target_object.confidences) != 0 and current_target_object.confidences[0]>0.8):
+                    #If it is in at the nav location or the classificaiton is very high
                         ##Remove the item in object search list:
-                        rem = None
-                        for object in object_search_list:
-                            if object.frame_id == target.frame_id:
-                                rem = object
-                                break
-                        if rem is not None:
-                            object_search_list.remove(rem)
-                        prev_target_object = guess.frame_id
+                    rospy.loginfo("Removing object because its not what we are looking for")
+                    object_search_list_used.append(current_target_object)
+
+                #Update the object search list
+
+
+
 
                 rospy.sleep(0.5)
 
             else:
-                rospy.loginfo("Found object whilst exploring")
+                rospy.loginfo("Found object %s whilst exploring",type)
                 break
 
 

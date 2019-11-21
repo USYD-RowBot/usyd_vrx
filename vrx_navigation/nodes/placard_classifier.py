@@ -160,7 +160,7 @@ class PlacardClassifier(Classifier):
                     best_label      = label
                     best_confidence = conf_shape*conf_colour
 
-            rospy.logdebug("Label: %s\nConfidence: %s\n" % (best_label, best_confidence))
+            rospy.loginfo("Label: %s\nConfidence: %s\n" % (best_label, best_confidence))
 
             if TRACKBAR:
                 cv2.imshow("mask", mask)

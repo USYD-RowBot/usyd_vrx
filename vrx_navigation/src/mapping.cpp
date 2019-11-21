@@ -41,9 +41,9 @@ public:
     if (task_name == "perception")
       range_min_ = 2.0;
     else
-      range_min_ = 10.0;
+      range_min_ = 8.0;
 
-    ROS_DEBUG_STREAM("range_min_ is " << range_min_ "metres.");
+    ROS_DEBUG("range_min_ is %f metres.", range_min_ );
 
     // width = 1024;
     // resolution = 0.4;
@@ -172,7 +172,7 @@ public:
       int index  = clampMax(y*width + x, index_max);
       int index2 = clampMax(odom_y*width + odom_x, index_max);
 
-      if (range < range_max && range > range_min)
+      if (range < range_max)
       {
         ROS_DEBUG("RANGE: %f angle: %f", range,angle);
 

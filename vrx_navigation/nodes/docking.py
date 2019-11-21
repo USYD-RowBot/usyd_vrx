@@ -170,7 +170,7 @@ class Docker:
       if thrust < 0:
           thrust = 0
       course_cmd.speed = thrust
-      #print(course_cmd)
+      print(course_cmd)
 
       self.pub_course.publish(course_cmd) # Publish course command
       rate.sleep()
@@ -241,7 +241,8 @@ class Docker:
   def calculatePlacardSymbolX(self, ros_img):
       cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
       label,conf,error = self.placard_classifier.classifyPlacard(cv_img)
-      self.x_cam_error = error- 640 + self.pix_offset
+      self.x_cam_error = error - 640 + self.pix_offset
+      print(self.x_cam_error)
     # try:
     #   classifyPlacard = rospy.ServiceProxy('wamv/classify_placard', ClassifyPlacard)
     #   res = classifyPlacard(ros_img)

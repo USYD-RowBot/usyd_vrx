@@ -32,7 +32,7 @@
     </include>
 
 
-    <include file="$(find vrx_navigation)/launch/docking.launch"/>
+    <!--include file="$(find vrx_navigation)/launch/docking.launch"/-->
 
     <!--<group ns="wamv">
 
