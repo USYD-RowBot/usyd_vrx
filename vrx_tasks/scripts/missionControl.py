@@ -34,6 +34,7 @@ def cb(data):
             pathToRoute.pathToRouteConverter()
 
         elif data.name=="perception":
+            pass
 
         elif data.name=="navigation_course":
             print("DOING NAVIGATION")
