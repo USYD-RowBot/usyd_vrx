@@ -18,7 +18,7 @@ class pathToRouteConverter:
             "speed":5
         }
 
-        rospy.init_node("pathToRoute",anonymous=True)
+        #rospy.init_node("pathToRoute",anonymous=True)
 
         for i in params:
             params[i] = rospy.get_param('~'+i, params[i])

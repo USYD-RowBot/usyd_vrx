@@ -15,7 +15,7 @@ import pyproj
 class geoPathToPathConverter:
     def __init__(self):
         params = {
-            "inTopic": "/pointToHold",
+            "inTopic": "/vrx/wayfinding/waypoints",
             "outTopic": "/waypoints",
             "gpsTopic": "wamv/sensors/gps/gps/fix",
         }
