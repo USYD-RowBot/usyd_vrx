@@ -9,6 +9,21 @@ float Distance_2(Vec2D& vec1, Vec2D& vec2)
   return pow(vec2.x - vec1.x, 2) + pow(vec2.y - vec1.y, 2);
 }
 
+float Distance(Vec2D& vec1, Vec2D& vec2)
+{
+  return sqrt(pow(vec2.x - vec1.x, 2) + pow(vec2.y - vec1.y, 2));
+}
+
+Vec2D DistanceComponents(Vec2D& vec1, Vec2D& vec2)
+{
+  Vec2D distance_components;
+
+  distance_components.x = vec2.x - vec1.x;
+  distance_components.y = vec2.y - vec1.y;
+
+  return distance_components;
+}
+
 Vec2D NonlinearGuidanceLaw(
   Vec2D& wp_prev, Vec2D& wp_next, Vec2D& vessel, float& nlgl_radius)
 {
