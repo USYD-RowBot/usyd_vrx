@@ -6,7 +6,7 @@
     <arg name="world_name" default="sandisland"/>
     <arg name="rviz" default="true"/>
     <arg name="debug" default="true"/>
-
+    <param name ="/use_sim_time" value="true"/>
     <!-- include the official gazebo file. This is like the server component in
     the competition. Disable it when runing for the comeptition.-->
     <include file="$(find vrx_bringup)/launch/sensored_boat.launch" if="$(arg gazebo)">
@@ -32,8 +32,9 @@
     </include>
 
 
-    <include file="$(find vrx_navigation)/launch/docking.launch"/>
-
+    <!--include file="$(find vrx_navigation)/launch/docking.launch"/-->
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+    </node>
     <!--<group ns="wamv">
 
         <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>
@@ -43,8 +44,7 @@
         <arg name="use_camera" value="true"/>
     </include-->
 
-    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
-    </node>
+
 
     <!-- Vision translation -->
 
@@ -56,5 +56,4 @@
         <arg name="use_camera" value="true"/>
         <arg name="expiry_time" value="2"/>
     </include-->
-    <!--TODO:-->
 </launch>

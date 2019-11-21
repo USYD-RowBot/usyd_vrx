@@ -23,7 +23,7 @@ angle_max: 1.5
 use_inf: false </rosparam>
 
        </node>
-       <node pkg="vrx_navigation" type="mapping" name="mapping" output="screen" launch-prefix="gdb -ex run --args">
+       <node pkg="vrx_navigation" type="mapping" name="mapping" output="screen">
          <param name="~width" value="1024"/>
          <param name="~resolution" value="0.4"/>
          <param name="~offset_x" value="+60.0"/>
@@ -40,7 +40,7 @@ use_inf: false </rosparam>
          <remap from="scan" to="sensors/lidars/lidar/scan"/>
           <remap from="map" to="perception_map"/>
        </node> -->
-
+       
        <node pkg="global_planner" type="planner" name="global_planner" output="screen">
            <!--remap from="global_planner/costmap/footprint" to ="costmap_2d/costmap/footprint"/-->
            <!--remap from="global_planner/costmap/costmap" to ="costmap_2d/costmap/costmap"/-->
