@@ -93,9 +93,13 @@ class NavigationTask:
                     else:
                         break
 
-                target = self.translatePose(target,0,0.1,0)
+                target = self.translatePose(target,0,-1,0)
                 self.publishMarker(target)
                 self.navigateTo(target,dist_thresh = 2, ang_thresh = 1)
+
+                target = self.translatePose(target,0,4,0)
+                self.publishMarker(target)
+                self.navigateToDirect(target,dist_thresh = 2, ang_thresh = 1)
 
                 #rospy.sleep(5)
 
@@ -105,6 +109,13 @@ class NavigationTask:
         target = self.translatePose(target,0,0.1,0)
         self.publishMarker(target)
         self.navigateTo(target)
+
+
+        target = self.translatePose(target,0,4,0)
+        self.publishMarker(target)
+        self.navigateToDirect(target,dist_thresh = 2, ang_thresh = 1)
+
+        
         rospy.loginfo("END of Program")
         return
 
@@ -119,7 +130,7 @@ class NavigationTask:
             # Get distance, verify it is within acceptable range
             #Then navigate
             dist = math.sqrt((left.pose.position.x-right.pose.position.x)**2 + (left.pose.position.y-right.pose.position.y)**2 )
-            if dist < 17 and dist > 3:
+            if dist < 22 and dist > 3:
                 rospy.loginfo("Found %s and %s buoys ID %s and ID %s", left_colour , right_colour,left.frame_id, right.frame_id )
                 self.used_objects.append(left)
                 self.used_objects.append(right)
@@ -154,7 +165,7 @@ class NavigationTask:
             left = self.findClosest(self.unused_objects,type="blue_totem", conf_thresh = thresh)
             if left is not None:
                 dist = math.sqrt((left.pose.position.x-right.pose.position.x)**2 + (left.pose.position.y-right.pose.position.y)**2 )
-                if dist < 15 and dist > 5:
+                if dist < 22 and dist > 5:
                     self.used_objects.append(left)
                     self.used_objects.append(right)
                     self.updateUnused()
@@ -167,7 +178,7 @@ class NavigationTask:
             #Try find the missing left object.
             #Navigate to the buoy in two second and try find the right buoy
             rospy.loginfo("No %s Buoy found trying to find left", left_colour)
-
+            attempts = 0
             while left is None:
                 rospy.loginfo("Navigating closer to see if it works")
                 dist = self.getDist(right.pose, self.current_pose)
@@ -179,14 +190,18 @@ class NavigationTask:
                 target.orientation = self.current_pose.orientation
                 target = self.translatePose(target,-6,0,0)
                 self.publishMarker(target)
-                self.navigateToDirect(target, timeout = 2, dist_thresh = 8)
+                self.navigateTo(target, timeout = 2, dist_thresh = 6)
+                if self.getDist(self.current_pose,target)<8:
+                    left = self.findClosest(self.unused_objects,type="object", frame_id=right.frame_id, conf_thresh = 0)
+                    break;
                 left = self.findClosest(self.unused_objects,type=left_colour, conf_thresh = thresh-0.1)
                 if left is not None:
                     dist = math.sqrt((left.pose.position.x-right.pose.position.x)**2 + (left.pose.position.y-right.pose.position.y)**2 )
-                    if dist < 17 and dist > 3:
+                    if dist < 22 and dist > 3:
                         break
                     else:
                         left = None
+                attempts = attempts+1
 
             self.used_objects.append(right)
             self.used_objects.append(left)
@@ -211,7 +226,12 @@ class NavigationTask:
                 target.orientation = self.current_pose.orientation
                 target = self.translatePose(target,+6,0,0)
                 self.publishMarker(target)
-                self.navigateToDirect(target,timeout = 2, dist_thresh = 8)
+                self.navigateTo(target,timeout = 2, dist_thresh = 6)
+
+                if self.getDist(self.current_pose,target)<8:
+                    right = self.findClosest(self.unused_objects,type="object", frame_id=left.frame_id, conf_thresh = 0)
+                    break;
+
                 right = self.findClosest(self.unused_objects,type=right_colour, conf_thresh = thresh-0.1)
                 if right is not None:
                     dist = math.sqrt((left.pose.position.x-right.pose.position.x)**2 + (left.pose.position.y-right.pose.position.y)**2 )
@@ -430,6 +450,11 @@ class NavigationTask:
                         #If there is a match, remove the obect
                         self.unused_objects.remove(object)
                         break
+                    dist = self.getDist(object.pose,i.pose)
+                    if dist < 4:
+                        #Its the same object but differnt id:
+                        self.unused_objects.remove(object)
+                        break
         return
 
     def updateUnused(self):
@@ -486,7 +511,7 @@ class NavigationTask:
         closest = None
         min_dist = None
         if type =="object":
-            accepted_objects = ["dock", "buoy", "yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem", "polyform_a3", "polyform_a5", "polyform_a7", "surmark46104", "surmark950400", "surmark950410"]
+            accepted_objects = ["dock", "buoy", "yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem", "polyform_a3", "polyform_a5", "polyform_a7", "surmark46104", "surmark950400", "surmark950410","unknown"]
         elif type == "buoy":
             accepted_objects = ["buoy", "yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem", "polyform_a3", "polyform_a5", "polyform_a7", "surmark46104", "surmark950400", "surmark950410"]
         elif type == "totem":

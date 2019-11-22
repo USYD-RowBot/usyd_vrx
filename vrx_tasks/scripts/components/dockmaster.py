@@ -79,6 +79,7 @@ class DockMaster(Mission):
     dock = None
     if self.placard_symbol is None:
         #Search for dock
+        rospy.loginfo("Exporing for Dock")
         dock = self.exploreFor(type = "dock",conf_thresh = 0.4)
         if dock is None:
             rospy.logerr("Cant find dock :(")
@@ -88,11 +89,11 @@ class DockMaster(Mission):
     #self.circleObject("scan_buoy")
     #self.scan_code()
 
-    rospy.loginfo("Found DOck")
+    rospy.loginfo("Found Dock")
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
 
-    self.circleObject("dock", revs=0.5, clockwise=True,thresh = 0.9)
+    self.circleObject("dock", revs=0.6, clockwise=True)
     #self.circleObject("dock", revs=0.2, clockwise=False)
 #
     if self.placard_symbol is None:
@@ -102,19 +103,55 @@ class DockMaster(Mission):
 
     correct_bay = None
     # TODO: GET THE CLOSEST DOCK LOCATION FIRST
-    for i in [0, 1]:
-      self.alignWithDock(i, duration=5.0)
+    dock = self.findClosest(self.unused_objects, type="dock", conf_thresh = 0.6)
+    if dock is None:
+        rospy.logerr("Cannot find Dock")
+        return
 
-      if self.checkPlacard() == True:       # If correct placard
-        #self.alignWithDock(i, duration=10.0) # Re-align
-        correct_bay = i
-        break
+    loc1 = self.translatePose(dock.pose,self.align_dist,0,np.pi/2 )
+    loc2 = self.translatePose(dock.pose,-self.align_dist,0,-np.pi/2 )
+
+
+
+    bay_pose1 = self.translatePose(dock.pose,self.bay_dist,0,np.pi/2  )
+    bay_pose2 = self.translatePose(dock.pose,-self.bay_dist,0,-np.pi/2 )
+
+
+
+    if self.getDist(self.current_pose, loc1) > self.getDist(self.current_pose, loc2):
+        #loc 2 is closer swap the values around
+        temp = loc1
+        loc1 = loc2
+        loc2 = temp
+
+        temp2 = bay_pose1
+        bay_pose1 = bay_pose2
+        bay_pose2 = temp2
+
+    self.navigateTo(loc1,ang_thresh = 0.1)
+    rospy.sleep(2)
+    if self.checkPlacard() == True:
+        self.logDock("Found correct bay. Ready to dock.")
+        self.publishMarker(bay_pose1)
+        self.performDock(bay_pose1)
+
+    else:
+        self.navigateTo(loc2,ang_thresh = 0.1)
+        rospy.sleep(2)
+        if self.checkPlacard() == True:
+            self.logDock("Found correct bay. Ready to dock.")
+            self.publishMarker(bay_pose2)
+            self.performDock(bay_pose2)
+        else:
+            rospy.logwarn("No correct bay found, attempting to dock either way")
+            self.publishMarker(bay_pose2)
+            self.performDock(bay_pose2)
+
+
+
 
       #self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
 
-    self.logDock("Found correct bay. Ready to dock.")
-
-    self.performDock(correct_bay)
 
     self.logDock("Completed Docking!")
 
@@ -411,27 +448,30 @@ class DockMaster(Mission):
     tf_rot = [0, 0, 0, 1]
     return tf_pos, tf_rot
 
-  def performDock(self, bay_index):
+  def performDock(self, bay_pose):
     self.logDock("Starting docking procedure.")
 
     client = actionlib.SimpleActionClient('/wamv/docking', vrx_msgs.msg.DockAction)
+    rospy.loginfo("Waiting for docking server")
     client.wait_for_server()
+    rospy.loginfo("Found Docking Server, Executing Dock")
+    # bay_pose = Pose()
+    # dock_pos, dock_yaw = self.getDockPose()
+    #
+    #
+    #
+    # if bay_index == 0:
+    #   bay_pose.position.x = dock_pos[0] + self.bay_dist*math.cos(dock_yaw)
+    #   bay_pose.position.y = dock_pos[1] + self.bay_dist*math.sin(dock_yaw)
+    #   align_angle = dock_yaw + np.pi
+    # else:
+    #   bay_pose.position.x = dock_pos[0] - self.bay_dist*math.cos(dock_yaw)
+    #   bay_pose.position.y = dock_pos[1] - self.bay_dist*math.sin(dock_yaw)
+    #   align_angle = dock_yaw
 
-    bay_pose = Pose()
-    dock_pos, dock_yaw = self.getDockPose()
-
-    if bay_index == 0:
-      bay_pose.position.x = dock_pos[0] + self.bay_dist*math.cos(dock_yaw)
-      bay_pose.position.y = dock_pos[1] + self.bay_dist*math.sin(dock_yaw)
-      align_angle = dock_yaw + np.pi
-    else:
-      bay_pose.position.x = dock_pos[0] - self.bay_dist*math.cos(dock_yaw)
-      bay_pose.position.y = dock_pos[1] - self.bay_dist*math.sin(dock_yaw)
-      align_angle = dock_yaw
-
-    if (align_angle > np.pi):
-      align_angle -= 2*np.pi
-
+    # if (align_angle > np.pi):
+    #   align_angle -= 2*np.pi
+    align_angle = quatToEuler(bay_pose.orientation)[2]
     # Creates a goal to send to the action server.
     goal = vrx_msgs.msg.DockGoal(bay_pose, align_angle)
 

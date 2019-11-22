@@ -18,8 +18,8 @@
 angle_increment: 0.00872664625
 range_max: 100.0
 range_min: 2
-angle_min: -1.5
-angle_max: 1.5
+angle_min: -1.65
+angle_max: 1.65
 use_inf: false </rosparam>
 
        </node>
@@ -40,7 +40,7 @@ use_inf: false </rosparam>
          <remap from="scan" to="sensors/lidars/lidar/scan"/>
           <remap from="map" to="perception_map"/>
        </node> -->
-       
+
        <node pkg="global_planner" type="planner" name="global_planner" output="screen">
            <!--remap from="global_planner/costmap/footprint" to ="costmap_2d/costmap/footprint"/-->
            <!--remap from="global_planner/costmap/costmap" to ="costmap_2d/costmap/costmap"/-->

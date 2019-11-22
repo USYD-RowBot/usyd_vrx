@@ -184,9 +184,9 @@ class Obstacle():
                 self.rot =tf.transformations.quaternion_from_euler(0,0,rot_angle+1.5707)
 
             self.object.pose.orientation.x = self.rot[0]
-            self.object.pose.orientation.x = self.rot[1]
-            self.object.pose.orientation.x = self.rot[2]
-            self.object.pose.orientation.x = self.rot[3]
+            self.object.pose.orientation.y = self.rot[1]
+            self.object.pose.orientation.z = self.rot[2]
+            self.object.pose.orientation.w = self.rot[3]
 
         elif self.radius >= 15:
             type = "land"
