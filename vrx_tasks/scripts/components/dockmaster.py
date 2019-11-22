@@ -89,8 +89,10 @@ class DockMaster(Mission):
     rospy.loginfo("Found Dock")
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
-
-    self.circleObject("dock", revs=0.6, clockwise=True)
+    if self.placard_symbol is None:
+        self.circleObject("dock", revs=0.5, clockwise=True)
+    else:
+        self.circleObject("dock", revs=0.2, clockwise=True)
     #self.circleObject("dock", revs=0.2, clockwise=False)
 #
     if self.placard_symbol is None:
