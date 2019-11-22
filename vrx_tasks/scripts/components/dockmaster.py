@@ -25,12 +25,10 @@ import cv2
 # MAKE SURE TO CHANGE NAMESPACE OF /ODOM IN LAUNCH FILE
 
 
-
-
 class DockMaster(Mission):
 
   def __init__(self,placard_symbol = None):
-    rospy.loginfo("INitalizing MIssion base")
+    self.logDock("Initalising mission base")
     Mission.__init__( self )
     self.bridge = CvBridge()
     self.logDock("Initialising dock master.")
@@ -38,8 +36,6 @@ class DockMaster(Mission):
     self.placardClassifier = PlacardClassifier()
     self.initMission()
     self.executePlan()
-
-
 
 
   def initMission(self):
@@ -52,8 +48,8 @@ class DockMaster(Mission):
     self.dock_radius    = 25 # Radius at which to circle dock
     self.explore_radius = 75
 
-    self.align_dist   = 15 #  Distance from center of dock to align position
-    self.bay_dist     = 5  # Distance from center of dock to center of bay
+    self.align_dist   = 15  # Distance from center of dock to align position
+    self.bay_dist     = 5.5 # Distance from center of dock to center of bay
     self.explore_dist = 75
     self.current_pose = Pose()
     self.tf_listener = tf.TransformListener()
@@ -86,7 +82,7 @@ class DockMaster(Mission):
             rospy.logerr("Cant find dock :(")
             return
 
-    #self.spinOnSpot(1)
+    #self.spinOnSpot(1) # OLD SCAN BUOY CODE
     #self.circleObject("scan_buoy")
     #self.scan_code()
 
@@ -184,7 +180,7 @@ class DockMaster(Mission):
     label = ""
     attempts = 0
     while label == "":
-        rospy.loginfo("Classifying placard")
+        self.logDock("Classifying placard")
         ros_img = rospy.wait_for_message("/wamv/sensors/cameras/middle_camera/image_raw", Image)
         res = None
 
@@ -406,7 +402,7 @@ class DockMaster(Mission):
     #align_wps.waypoints = [align_wp]
     #align_wps.speed = self.general_speed
     #self.route_pub.publish(align_wps)
-    rospy.loginfo("Naviating to allign with dock")
+    self.logDock("Navigating to align with dock")
     self.navigateTo(align_pose,ang_thresh=0.1)
 
     #self.waitForWaypointRequest()
@@ -444,8 +440,8 @@ class DockMaster(Mission):
       self.logDock(e)
       return None, None
 
-    '''tf_pos = [137, 100, 0] # TODO uncomment above code when dock position estimation is improved
-    tf_rot = [0, 0, 0, 1]
+    '''tf_pos = [137, 100, 0] # Hardcoded dock pose
+    tf_rot = 0.00
     return tf_pos, tf_rot'''
 
   def getExplorePose(self):
@@ -487,7 +483,7 @@ class DockMaster(Mission):
     #   align_angle -= 2*np.pi
     align_angle = quatToEuler(bay_pose.orientation)[2]
     # Creates a goal to send to the action server.
-    goal = vrx_msgs.msg.DockGoal(bay_pose, align_angle)
+    goal = vrx_msgs.msg.DockGoal(bay_pose, dock_pose, align_angle)
 
     # Sends the goal to the action server.
     client.send_goal(goal)
