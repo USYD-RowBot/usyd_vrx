@@ -102,12 +102,12 @@ class DockMaster(Mission):
     # TODO: GET THE CLOSEST DOCK LOCATION FIRST
     dock = self.findClosest(self.unused_objects, type="dock", conf_thresh = 0.6)
     if dock is None:
-        rospy.logerr("Cannot find Dock")
-        return
+        rospy.logerr("Cannot find Dock of high conf")
+        dock = self.findClosest(self.unused_objects, type="dock", conf_thresh = 0.4)
 
     loc1 = self.translatePose(dock.pose,self.align_dist,0,np.pi/2 )
     loc2 = self.translatePose(dock.pose,-self.align_dist,0,-np.pi/2 )
-    loc3 = self.self.translatePose(dock.pose,0,-self.align_dist,-np.pi/2 )
+    loc3 = self.translatePose(dock.pose,0,-self.align_dist,-np.pi/2 )
 
 
 
@@ -131,7 +131,7 @@ class DockMaster(Mission):
     if self.checkPlacard() == True:
         self.logDock("Found correct bay. Ready to dock.")
         self.publishMarker(bay_pose1)
-        self.performDock(bay_pose1)
+        self.performDock(bay_pose1,dock.pose)
 
     else:
         loc3.orientation = self.current_pose.orientation
@@ -141,11 +141,11 @@ class DockMaster(Mission):
         if self.checkPlacard() == True:
             self.logDock("Found correct bay. Ready to dock.")
             self.publishMarker(bay_pose2)
-            self.performDock(bay_pose2)
+            self.performDock(bay_pose2,dock.pose)
         else:
             rospy.logwarn("No correct bay found, attempting to dock either way")
             self.publishMarker(bay_pose2)
-            self.performDock(bay_pose2)
+            self.performDock(bay_pose2,dock.pose)
 
 
 
@@ -458,7 +458,7 @@ class DockMaster(Mission):
     tf_rot = [0, 0, 0, 1]
     return tf_pos, tf_rot
 
-  def performDock(self, bay_pose):
+  def performDock(self, bay_pose,dock_pose):
     self.logDock("Starting docking procedure.")
 
     client = actionlib.SimpleActionClient('/wamv/docking', vrx_msgs.msg.DockAction)
