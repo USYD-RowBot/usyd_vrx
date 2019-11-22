@@ -21,6 +21,7 @@ from visualization_msgs.msg import Marker
 from mission_base import Mission, quatToEuler ,eulerToQuat
 from placard_classifier import PlacardClassifier
 from cv_bridge import CvBridge, CvBridgeError
+import cv2
 # MAKE SURE TO CHANGE NAMESPACE OF /ODOM IN LAUNCH FILE
 
 
@@ -110,6 +111,7 @@ class DockMaster(Mission):
 
     loc1 = self.translatePose(dock.pose,self.align_dist,0,np.pi/2 )
     loc2 = self.translatePose(dock.pose,-self.align_dist,0,-np.pi/2 )
+    loc3 = self.self.translatePose(dock.pose,0,-self.align_dist,-np.pi/2 )
 
 
 
@@ -136,6 +138,8 @@ class DockMaster(Mission):
         self.performDock(bay_pose1)
 
     else:
+        loc3.orientation = self.current_pose.orientation
+        self.navigateTo(loc3,dist_thresh = 3, ang_thresh = 0.5)
         self.navigateTo(loc2,ang_thresh = 0.1)
         rospy.sleep(2)
         if self.checkPlacard() == True:
@@ -178,7 +182,7 @@ class DockMaster(Mission):
 
   def checkPlacard(self):
     label = ""
-
+    attempts = 0
     while label == "":
         rospy.loginfo("Classifying placard")
         ros_img = rospy.wait_for_message("/wamv/sensors/cameras/middle_camera/image_raw", Image)
@@ -186,6 +190,16 @@ class DockMaster(Mission):
 
         image = self.bridge.imgmsg_to_cv2(ros_img, desired_encoding="bgr8")
         label, _, _ = self.placardClassifier.classifyPlacard(image)
+
+        if attempts > 30:
+            rospy.logwarn("Could not classify placard")
+            image_path = '/home/johnsumskas/images/placard.png'
+            cv2.imwrite(image_path,image)
+            break
+        attempts = attempts+1
+
+
+
 
     # while res is None or res.success==False:
     #   self.logDock("Attempting to Classify")

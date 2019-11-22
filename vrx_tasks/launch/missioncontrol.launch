@@ -33,8 +33,8 @@
 
 
     <include file="$(find vrx_navigation)/launch/docking.launch"/>
-    <!--node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
-</node-->
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+    </node>
     <!--<group ns="wamv">
 
         <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>

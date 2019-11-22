@@ -59,8 +59,8 @@ class ScanDock(Mission):
             rospy.logwarn("No sequence found, defaulting to rgb")
             sequence = ["red","green","blue"]
 
-        print(sequence)
-        #self.reportSequence(sequence)
+        #print(sequence)
+        self.reportSequence(sequence)
         colour = sequence[0]
 
         if sequence[2] == "red":
