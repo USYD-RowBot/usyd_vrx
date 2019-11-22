@@ -1,5 +1,6 @@
 # GOAL -------------------------
-geometry_msgs/Pose dock_position  # Position of center of the desired docking bay
+geometry_msgs/Pose bay_position   # Position of center of the desired docking bay
+geometry_msgs/Pose dock_position  # Position of center of the dock
 float32            dock_yaw       # Yaw that the vessel must maintain when entering
 ---
 # RESULT -----------------------

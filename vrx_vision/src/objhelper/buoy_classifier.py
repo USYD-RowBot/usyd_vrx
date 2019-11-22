@@ -322,11 +322,11 @@ class BuoyClassifier(Classifier):
                 else:
                     dist_scale = 1 - ((distance-15)/60)
 
-                rospy.loginfo("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" , label, conf_shape, conf_colour)
+                rospy.logdebug("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" , label, conf_shape, conf_colour)
                 return label, conf_shape*conf_colour*dist_scale, clustered_img
             else:
-                rospy.loginfo("No cropped image returned")
+                rospy.logdebug("No cropped image returned")
                 return "", 0.0, clustered_img
         else:
-            rospy.loginfo("No centre colour return:")
+            rospy.logdebug("No centre colour return:")
             return "", 0.0, clustered_img

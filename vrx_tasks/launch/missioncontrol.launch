@@ -6,11 +6,13 @@
     <arg name="world_name" default="sandisland"/>
     <arg name="rviz" default="true"/>
     <arg name="debug" default="true"/>
+    <arg name="verbose" default="true"/>
 
     <!-- include the official gazebo file. This is like the server component in
     the competition. Disable it when runing for the comeptition.-->
     <include file="$(find vrx_bringup)/launch/sensored_boat.launch" if="$(arg gazebo)">
         <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="verbose" default="$(arg verbose)"/>
     </include>
 
     <!-- include the localisation code -->
