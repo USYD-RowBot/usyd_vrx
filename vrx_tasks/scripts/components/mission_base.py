@@ -322,7 +322,7 @@ class Mission():
                     print(e)
                     continue
 
-                if object.pose.position.y > (-1.908*object.pose.position.x + 420) and not ignore_land:
+                if object.pose.position.y > (-1.908*object.pose.position.x + 392) and not ignore_land:
                     rospy.loginfo("Found object in land: ignoring")
                     continue
 
