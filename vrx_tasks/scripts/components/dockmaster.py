@@ -42,7 +42,7 @@ class DockMaster(Mission):
     self.do_scan = False   # Scan the sequence on the buoy?
     self.n_onspot_wps = 4  # Number of waypoints constituting spin on spot
     self.n_circle_wps = 4  # Number of waypoints constituting circling an object
-    self.general_speed = 2 # Circling speed
+    self.general_speed = 4 # Circling speed
 
     self.scan_radius    = 10 # Radius at which to circle scan buoy
     self.dock_radius    = 25 # Radius at which to circle dock
@@ -90,7 +90,7 @@ class DockMaster(Mission):
     #self.spinOnSpot(1)
     self.logDock("Exectuing circling of dock")
     if self.placard_symbol is None:
-        self.circleObject("dock", revs=0.5, clockwise=True)
+        self.circleObject("dock", revs=0.65, clockwise=True)
     else:
         self.circleObject("dock", revs=0.2, clockwise=True)
     #self.circleObject("dock", revs=0.2, clockwise=False)
@@ -120,16 +120,44 @@ class DockMaster(Mission):
 
     if self.getDist(self.current_pose, loc1) > self.getDist(self.current_pose, loc2):
         #loc 2 is closer swap the values around
-        temp = loc1
-        loc1 = loc2
-        loc2 = temp
+        self.navigateTo(loc2,ang_thresh = 0.1)
+        dock = self.findClosest(self.unused_objects, type="dock", conf_thresh = 0.4)
+        bay_pose2 = self.translatePose(dock.pose,-self.bay_dist,0,-np.pi/2 )
+        rospy.sleep(3)
+        if self.checkPlacard() == True:
+            self.logDock("Found correct bay. Ready to dock.")
+            self.publishMarker(bay_pose2)
+            self.performDock(bay_pose2,dock.pose)
 
-        temp2 = bay_pose1
-        bay_pose1 = bay_pose2
-        bay_pose2 = temp2
+        else:
+            loc3.orientation = self.current_pose.orientation
+            self.navigateTo(loc3,dist_thresh = 3, ang_thresh = 0.5)
+            self.navigateTo(loc1,ang_thresh = 0.1)
+            dock = self.findClosest(self.unused_objects, type="dock", conf_thresh = 0.4)
+            bay_pose1 = self.translatePose(dock.pose,self.bay_dist,0,np.pi/2  )
+            rospy.sleep(3)
+            if self.checkPlacard() == True:
+                self.logDock("Found correct bay. Ready to dock.")
+                self.publishMarker(bay_pose1)
+                self.performDock(bay_pose1,dock.pose)
+            else:
+                rospy.logwarn("No correct bay found, attempting to dock either way")
+                self.publishMarker(bay_pose1)
+                self.performDock(bay_pose1,dock.pose)
+        return
+
+
+
+
+          #self.circleObject("dock", revs=0.5, look_dock=False) # Circle to other side of dock
+
+
+        self.logDock("Completed Docking!")
 
     self.navigateTo(loc1,ang_thresh = 0.1)
-    rospy.sleep(2)
+    dock = self.findClosest(self.unused_objects, type="dock", conf_thresh = 0.4)
+    bay_pose1 = self.translatePose(dock.pose,self.bay_dist,0,np.pi/2  )
+    rospy.sleep(3)
     if self.checkPlacard() == True:
         self.logDock("Found correct bay. Ready to dock.")
         self.publishMarker(bay_pose1)
@@ -139,7 +167,9 @@ class DockMaster(Mission):
         loc3.orientation = self.current_pose.orientation
         self.navigateTo(loc3,dist_thresh = 3, ang_thresh = 0.5)
         self.navigateTo(loc2,ang_thresh = 0.1)
-        rospy.sleep(2)
+        rospy.sleep(3)
+        dock = self.findClosest(self.unused_objects, type="dock", conf_thresh = 0.4)
+        bay_pose2 = self.translatePose(dock.pose,-self.bay_dist,0,-np.pi/2 )
         if self.checkPlacard() == True:
             self.logDock("Found correct bay. Ready to dock.")
             self.publishMarker(bay_pose2)

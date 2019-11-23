@@ -38,7 +38,7 @@ class ScanDock(Mission):
         rospy.loginfo("Sleeping for 5 seconds")
         rospy.sleep(1)
         ##Find the Scan Buoy
-        scan = self.exploreFor(type="buoy",conf_thresh = 0.3)
+        scan = self.exploreFor(type="buoy",conf_thresh = 0.28)
 
         if scan is None:
             rospy.logwarn("No buoys found")

@@ -9,7 +9,7 @@ priority_yaw_range:   1.0 # radians
 
 # Station keeping config
 lateral_scale_x:        1.14 # experimentally found, balances strafing action
-lateral_scale_y:        1.00 # using this as scaling for lateral thruster during traversal
+lateral_scale_y:        2.00 # using this as scaling for lateral thruster during traversal
 reconfig_duration:      1.0  # secs
 station_tolerance_ang:  0.1  # rad (0.175 rad ~= 10 deg)
 

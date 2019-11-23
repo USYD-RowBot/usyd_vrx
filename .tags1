@@ -1,0 +1,26 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	0	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+DockMaster	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^class DockMaster(Mission):$/;"	class	line:28
+__init__	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def __init__(self,placard_symbol = None):$/;"	member	line:30	class:DockMaster
+initMission	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def initMission(self):$/;"	member	line:41	class:DockMaster
+executePlan	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def executePlan(self):$/;"	member	line:72	class:DockMaster
+waitForWaypointRequest	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def waitForWaypointRequest(self):$/;"	member	line:190	class:DockMaster
+setPoseQuat	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def setPoseQuat(self, pose, angle_rad):$/;"	member	line:193	class:DockMaster
+makeWaypoint	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def makeWaypoint(self, pose, nav_type=Waypoint.NAV_STATION, duration=0):$/;"	member	line:200	class:DockMaster
+quatToYaw	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def quatToYaw(self, x, y, z, w):$/;"	member	line:207	class:DockMaster
+checkPlacard	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def checkPlacard(self):$/;"	member	line:211	class:DockMaster
+spinOnSpot	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def spinOnSpot(self, n_times):$/;"	member	line:247	class:DockMaster
+dumbFunction	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def dumbFunction(self):$/;"	member	line:276	class:DockMaster
+getRequestedPlacardSymbol	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def getRequestedPlacardSymbol(self):$/;"	member	line:279	class:DockMaster
+findFrontOfScanBuoy	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def findFrontOfScanBuoy(self):$/;"	member	line:283	class:DockMaster
+circleObject	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def circleObject(self, object_string, revs=1.0, look_dock=True, clockwise=True,thresh = 0):$/;"	member	line:298	class:DockMaster
+alignWithDock	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def alignWithDock(self, bay_index, duration=0.0):$/;"	member	line:413	class:DockMaster
+getDockPose	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def getDockPose(self):$/;"	member	line:442	class:DockMaster
+getExplorePose	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def getExplorePose(self):$/;"	member	line:479	class:DockMaster
+performDock	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def performDock(self, bay_pose,dock_pose):$/;"	member	line:493	class:DockMaster
+logDock	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def logDock(self, msg):$/;"	member	line:526	class:DockMaster
+main	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^def main():$/;"	function	line:529
