@@ -1,6 +1,9 @@
 <?xml version="1.0" ?>
 <launch>
   <arg name="rviz" default="true"/>
-  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="$(anon rviz)" respawn="false" output="screen" args="-d $(find vrx_bringup)/rviz/launch.rviz" />
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="$(anon rviz)" respawn="false" output="screen" args="-d $(find vrx_bringup)/rviz/launch.rviz" >
+      <remap from="/move_base_simple/goal" to="wamv/global_planner/goal"/>
+
+  </node>
 
 </launch>

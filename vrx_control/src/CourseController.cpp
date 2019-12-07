@@ -41,6 +41,7 @@ void CourseController::setupThrustController()
   float lateral_scale_x, lateral_scale_y, neg_scale_factor;
   float lin_Kp, lin_Ki, lin_Kd, max_integral;
   float ang_Kp, ang_Ki, ang_Kd;
+  float stn_Kp, stn_Ki, stn_Kd;
 
   // Get ROS parameters from config file.
   ros::param::get("~thrust_config", thrust_config);
@@ -55,6 +56,9 @@ void CourseController::setupThrustController()
   ros::param::get("~ang_Kp", ang_Kp);
   ros::param::get("~ang_Ki", ang_Ki);
   ros::param::get("~ang_Kd", ang_Kd);
+  ros::param::get("~stn_Kp", stn_Kp);
+  ros::param::get("~stn_Ki", stn_Ki);
+  ros::param::get("~stn_Kd", stn_Kd);
   ros::param::get("~max_integral", max_integral);
   ros::param::get("~use_sim_time", use_sim_time);
   ros::param::get("~reconfig_duration", reconfig_duration);
@@ -78,6 +82,8 @@ void CourseController::setupThrustController()
   thrust_controller_->initLinearPID(lin_Kp, lin_Ki, lin_Kd,
     max_integral, use_sim_time);
   thrust_controller_->initAngularPID(ang_Kp, ang_Ki, ang_Kd,
+    max_integral, use_sim_time);
+  thrust_controller_->initStationPID(stn_Kp, stn_Ki, stn_Kd,
     max_integral, use_sim_time);
 
   // Instantiate thrust state machine
@@ -136,7 +142,10 @@ void CourseController::courseCb(const vrx_msgs::Course::ConstPtr& msg)
       thrust_controller_->setStrafeProportions(msg->yaw);
 
       // Update the thrust controller with strafe thrust and station yaw.
-      thrust_controller_->setTarget(msg->speed, msg->station_yaw);
+      thrust_controller_->setTarget(0, msg->station_yaw);
+
+      // Update the thrust controller with distance to station.
+      thrust_controller_->setStationTarget(msg->station_dist_x, msg->station_dist_y);
       break;
   }
 }
@@ -181,7 +190,7 @@ void CourseController::updateController()
   {
     case ThrustSM::THRUST_TRAVERSE:
       thrust_controller_->getControlSignalTraverse(
-        thrust_right, thrust_left, sim_time); // Normal traverse
+        thrust_right, thrust_left, thrust_lateral, sim_time); // Normal traverse
       break;
 
     case ThrustSM::THRUST_RECONFIG_STRAIGHT:

@@ -10,10 +10,17 @@ import rospy
 import tf
 import actionlib
 from cv_bridge import CvBridge, CvBridgeError
+from vrx_msgs.srv import ClassifyPlacard,ClassifyPlacardResponse
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from vrx_msgs.msg import *
 from std_srvs.srv import SetBool
+
+import sys
+import rospkg
+rospack = rospkg.RosPack()
+sys.path.insert(1, rospack.get_path('vrx_vision')+"/scripts")
+from placard_classifier import PlacardClassifier
 
 # State machine for docking procedure
 class DockSM:
@@ -24,10 +31,13 @@ class DockSM:
     DOCK_HOLD     = 3     # Waiting inside the dock
     DOCK_EXIT     = 4     # Exiting the dock
 
-  def __init__(self, hold_duration):
+  def __init__(self, hold_duration, entry_duration):
     self.state = self.DockState.DOCK_STANDBY # Initialise state machine state
     self.hold_time_target = 0           # Timer for HOLD state
     self.hold_duration = hold_duration  # Duration for HOLD state
+
+    self.entry_time_target = 0
+    self.entry_duration = entry_duration  # Duration for ENTER
 
   def getState(self):
     return self.state
@@ -35,6 +45,7 @@ class DockSM:
   def beginDocking(self):
     if self.state is self.DockState.DOCK_STANDBY:
       self.state = self.DockState.DOCK_ENTER
+      self.entry_time_target = rospy.get_time() + self.entry_duration
 
   def hold(self):
     if self.state is self.DockState.DOCK_ENTER:
@@ -48,6 +59,7 @@ class DockSM:
     if self.state is self.DockState.DOCK_HOLD:
       if rospy.get_time() > self.hold_time_target: # Check hold timer expired
         self.state = self.DockState.DOCK_EXIT
+        self.entry_time_target = rospy.get_time() + self.entry_duration
         exiting = True
 
     return exiting
@@ -55,6 +67,16 @@ class DockSM:
   def finished(self):
     if self.state is self.DockState.DOCK_EXIT:
       self.state = self.DockState.DOCK_STANDBY
+
+  def getEntryPercentage(self):
+    if self.state is self.DockState.DOCK_ENTER or self.state is self.DockState.DOCK_EXIT:
+      if rospy.get_time() <= self.entry_time_target:
+        return 1.0 - float(self.entry_time_target - rospy.get_time())/self.entry_duration
+      else:
+        return 1.0
+    elif self.state is self.DockState.DOCK_HOLD:
+      return 1.0
+
 
 class Docker:
 
@@ -67,12 +89,18 @@ class Docker:
     self.vessel_yaw  = 0
     self.initial_pos = [0, 0] # Position to return to when exiting dock
 
-    self.dock_pos = [0, 0] # Position of desired docking bay
+    self.bay_pos = [0, 0] # Position of desired docking bay
     self.dock_yaw = 0      # Yaw at which to enter dock
-
+    
+    self.placard_classifier = PlacardClassifier()
     self.getROSParams()
 
-    self.dock_sm = DockSM(self.hold_duration) # Initialise docking state machine
+    self.dest_pos = [] # Interpolate dock/entry exit into wps
+    for _ in range(self.n_dests):
+      self.dest_pos.append([0, 0])
+
+    # Initialise docking state machine
+    self.dock_sm = DockSM(self.hold_duration, self.entry_duration) 
     self.bridge  = CvBridge()                 # For converting ROS images to CV images
 
     rospy.loginfo("docking: Waiting for vessel odometry.")
@@ -81,10 +109,13 @@ class Docker:
 
     self.pub_course = rospy.Publisher("/course_cmd", Course, queue_size=1)
 
-    self.sub_img  = rospy.Subscriber(
-      "/wamv/sensors/cameras/middle_camera/image_raw", Image, self.imageCb)
-    self.sub_odom = rospy.Subscriber(
-      "/odom", Odometry, self.odomCb)    
+    #self.sub_img  = rospy.Subscriber(
+    #  "/wamv/sensors/cameras/middle_camera/image_raw", Image, self.imageCb)
+    self.sub_odom = rospy.Subscriber("/odom", Odometry, self.odomCb)
+
+    hfov     = 1.3962634
+    cam_x_px = 1280
+    self.focal_length = (float(cam_x_px)/2)/np.tan(float(hfov)/2)
 
     self.server = actionlib.SimpleActionServer('docking', DockAction, self.execute, False)
     self.server.start()
@@ -93,25 +124,30 @@ class Docker:
     self.hold_duration      = rospy.get_param("~hold_duration")
     self.goal_tolerance_pos = rospy.get_param("~goal_tolerance_pos")
     self.goal_tolerance_ang = rospy.get_param("~goal_tolerance_ang")
-    self.pix_threshold      = rospy.get_param("~pix_threshold")
+    #self.pix_threshold      = rospy.get_param("~pix_threshold")
     self.pix_offset         = rospy.get_param("~pix_offset")
-    self.default_thrust     = rospy.get_param("~default_thrust")
+    self.entry_duration     = rospy.get_param("~entry_duration")
+    self.n_dests            = rospy.get_param("~n_entry_wps")
 
   def execute(self, goal):
 
     rospy.loginfo("docking: Goal received.")
 
     # Disable waypoint follower to gain control
-    if not self.enableWaypointFollower(False): 
+    if not self.enableWaypointFollower(False):
       self.server.set_aborted() # Return failure from server
       return # Early exit the execute function if service failed
 
     # Set goal of docking bay position and yaw
-    self.dock_pos = [goal.dock_position.position.x, goal.dock_position.position.y]
+    self.bay_pos = [goal.bay_position.position.x, goal.bay_position.position.y]
     self.dock_yaw = goal.dock_yaw
     self.initial_pos = list(self.vessel_pos) # Store initial vessel position for exiting
 
+    # Call placard classifier and get pixel x position of centre of placard symbol
+    self.setPlacardXError(goal.dock_position)
+
     self.dock_sm.beginDocking() # Tell state machine we are beginning
+    rospy.loginfo("Entering state ENTER")
 
     rate = rospy.Rate(10) # 10hz loop
     while not rospy.is_shutdown():
@@ -120,28 +156,30 @@ class Docker:
       if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
 
         # If close enough to docking bay position
-        if self.reachedGoalPos(self.dock_pos):
+        if self.reachedGoalPos(self.bay_pos):
           self.dock_sm.hold() # Tell state machine we will wait in dock bay
           self.server.publish_feedback(DockFeedback("Entering state HOLD"))
+          rospy.loginfo("Entering state HOLD")
 
       # HOLDING POSITION IN DOCK
       elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
 
-        if self.dock_sm.tryExitDock(): # Wait for duration of HOLD before exiting dock          
+        if self.dock_sm.tryExitDock(): # Wait for duration of HOLD before exiting dock
           self.server.publish_feedback(DockFeedback("Entering state EXIT"))
+          rospy.loginfo("Entering state EXIT")
 
       # EXITING DOCK
       elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
 
         # If close enough to initial position outside dock
-        if self.reachedGoalPos(self.initial_pos):         
+        if self.reachedGoalPos(self.initial_pos):
           self.dock_sm.finished() # Tell state machine we have exited successfully
           self.server.publish_feedback(DockFeedback("Entering state STANDBY"))
           self.server.publish_feedback(DockFeedback("Docking successful!"))
           self.server.set_succeeded() # Return success from server
           rospy.loginfo("docking: Finished docking procedure!")
 
-          self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
+          self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control
           cv2.destroyAllWindows() # Destroy opencv windows
 
           return # Exit execute() function
@@ -149,15 +187,83 @@ class Docker:
       course_cmd = Course() # Generate course cmd for strafing
       course_cmd.station_yaw = self.dock_yaw
       course_cmd.keep_station = True
-      course_cmd.yaw = self.getStrafeYaw() # Get strafe yaw based on state
-      course_cmd.speed = self.default_thrust
+
+      station_dist_x, station_dist_y = self.getStationDistance()
+      course_cmd.station_dist_x = station_dist_x
+      course_cmd.station_dist_y = station_dist_y
 
       self.pub_course.publish(course_cmd) # Publish course command
-      rate.sleep
+      rate.sleep()
     # end while loop
 
     self.server.set_aborted()         # Abort if we get here somehow
-    self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control 
+    self.enableWaypointFollower(True) # Re-enable waypoint follower to transfer control
+
+  def setPlacardXError(self, dock_pose):
+    label = ""
+    while label == "" and not rospy.is_shutdown(): # Get one single camera image
+      ros_img = rospy.wait_for_message("/wamv/sensors/cameras/middle_camera/image_raw", Image)
+      cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
+      label, conf, cX = self.placard_classifier.classifyPlacard(cv_img)
+      cv2.imwrite("/home/nickyx/Pictures/cv_img.png", cv_img)
+
+    x = 640 - cX + self.pix_offset # x position of placard symbol relative to centre of img
+    theta = np.arctan(float(x)/self.focal_length) 
+
+    # Distance to dock centre
+    d = np.sqrt((dock_pose.position.x - self.vessel_pos[0])**2 + (dock_pose.position.y - self.vessel_pos[1])**2)
+    X = d*np.tan(theta) # Vessel's horizontal offset from dock in metres
+
+    rospy.logdebug("cX is %d px." % cX)
+    rospy.logdebug("x is %f px."  % x)
+    rospy.logdebug("X is %f metres." % X)
+
+    error_vec = [0, X] # Modification to bay_pos in boat frame
+
+    # Transform from boat frame to world frame
+    error_x = error_vec[0]*np.cos(-self.vessel_yaw) + error_vec[1]*np.sin(-self.vessel_yaw)
+    error_y = error_vec[1]*np.cos(-self.vessel_yaw) - error_vec[0]*np.sin(-self.vessel_yaw)
+
+    rospy.logdebug("bay_pos is %f, %f." % (self.bay_pos[0], self.bay_pos[1]))
+
+    self.bay_pos[0] += error_x # Adjust bay_pos according to the x error
+    self.bay_pos[1] += error_y
+
+    self.initial_pos[0] += error_x # Also adjust initial position for smooth exit
+    self.initial_pos[1] += error_y
+
+    rospy.logdebug("new bay_pos is %f, %f.\n" % (self.bay_pos[0], self.bay_pos[1]))
+
+    init_to_bay_vec = [self.bay_pos[0] - self.initial_pos[0], self.bay_pos[1] - self.initial_pos[1]]
+    self.dest_pos[0][0] = self.initial_pos[0] # Set first interpolated pos to initial pos
+    self.dest_pos[0][1] = self.initial_pos[1]
+
+    for i in range(self.n_dests-1):
+      self.dest_pos[i+1][0] = self.initial_pos[0] + init_to_bay_vec[0]*float(i+1)/(self.n_dests-1)
+      self.dest_pos[i+1][1] = self.initial_pos[1] + init_to_bay_vec[1]*float(i+1)/(self.n_dests-1)
+  
+  def getStationDistance(self):
+    station_dist_x = 0
+    station_dist_y = 0
+
+    if self.dock_sm.getState() is not self.dock_sm.DockState.DOCK_STANDBY:
+      entry_percent = self.dock_sm.getEntryPercentage() # Interpolate entry/exit
+      dest_index = int(np.floor(entry_percent*self.n_dests))
+
+      if dest_index > self.n_dests - 1:
+        dest_index = self.n_dests - 1
+
+      if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
+        dest_index = int(self.n_dests - 1 - dest_index) # Invert index to exit
+
+      station_dist_x = self.dest_pos[dest_index][0] - self.vessel_pos[0]
+      station_dist_y = self.dest_pos[dest_index][1] - self.vessel_pos[1]
+
+    else:
+      station_dist_x = self.initial_pos[0] - self.vessel_pos[0]
+      station_dist_y = self.initial_pos[1] - self.vessel_pos[1]
+
+    return station_dist_x, station_dist_y
 
   def enableWaypointFollower(self, do_enable):
     try: # Attempt to enable/disable waypoint follower
@@ -168,64 +274,13 @@ class Docker:
     except rospy.ServiceException, e:
         rospy.loginfo("docking: Unable to transfer control to/from waypoint follower: %s"%e)
         return False # Server failed
-    
+
     rospy.loginfo("docking: Transferred control to/from waypoint follower.")
     return True # Succesfully contacted server
 
   def reachedGoalPos(self, goal_pos):
     dist = np.sqrt((goal_pos[0]-self.vessel_pos[0])**2 + (goal_pos[1]-self.vessel_pos[1])**2)
     return dist < self.goal_tolerance_pos
-
-  def yawWithinTolerance(self):
-    return abs(self.dock_yaw - self.vessel_yaw) < self.goal_tolerance_ang
-    
-  def getStrafeYaw(self):
-    yaw = 0
-
-    if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
-      if abs(self.x_cam_error) > self.pix_threshold and self.yawWithinTolerance(): 
-        if self.x_cam_error > 0:        # Correct lateral position
-          yaw = self.dock_yaw - np.pi/2
-        else:
-          yaw = self.dock_yaw + np.pi/2
-      else:
-        yaw = self.dock_yaw             # Move forwards
-
-    elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
-      if self.yawWithinTolerance():
-        if self.x_cam_error > 0:
-          yaw = self.dock_yaw - np.pi/2
-        else:
-          yaw = self.dock_yaw + np.pi/2
-      else:
-        yaw = (self.dock_yaw - np.pi) # TODO get rid of this case, ughhhh
-      
-    elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
-      if abs(self.x_cam_error) > self.pix_threshold and self.yawWithinTolerance(): 
-        if self.x_cam_error > 0:        # Correct lateral position
-          yaw = self.dock_yaw - np.pi/2
-        else:
-          yaw = self.dock_yaw + np.pi/2
-      else:
-        yaw = (self.dock_yaw - np.pi)   # Move forwards
-
-    # Limit yaw from -PI to PI
-    if (abs(yaw) > np.pi):
-      yaw = -np.sign(yaw)*(2*np.pi - abs(yaw))
-
-    return yaw
-
-  def imageCb(self, ros_img):
-    # If we aren't in the standby state
-    if self.dock_sm.getState() is not self.dock_sm.DockState.DOCK_STANDBY:
-      
-      try: # Convert ROS image to CV image
-        cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
-      except CvBridgeError as e:
-        rospy.logdebug(e)
-        return
-
-      self.processImage(cv_img) # Pass converted image to processing algorithm
 
   def odomCb(self, odom):
     # Store current vessel position in odom frame
@@ -238,43 +293,40 @@ class Docker:
     euler = tf.transformations.euler_from_quaternion(quaternion)
     self.vessel_yaw = euler[2]
 
-  def processImage(self, img):
+  '''def calculatePlacardSymbolX(self, ros_img):
+      cv_img = self.bridge.imgmsg_to_cv2(ros_img, "bgr8")
+      label,conf,error = self.placard_classifier.classifyPlacard(cv_img)
+      self.x_cam_error = error - 640 + self.pix_offset'''
 
-    new_width = 300 # Scale image down so width is 300 pixels
-    aspect = float(img.shape[0]) / float(img.shape[1])
-    scaled_img = cv2.resize(img, (new_width, int(new_width * aspect)))
- 
-    # Generate Gabor filter kernel and filter the scaled image
-    g_kernel  = cv2.getGaborKernel((3,3), 16, np.radians(0), 5, 0.5, 0, ktype=cv2.CV_32F)
-    gabor_img = cv2.filter2D(scaled_img, -1, g_kernel)
+  '''def getStrafeYaw(self):
+    yaw = 0
+    k = 0.2
+    if self.dock_sm.getState() is self.dock_sm.DockState.DOCK_ENTER:
 
-    bordered_img = cv2.copyMakeBorder(gabor_img, 1, 1, 1, 1, # Add white border
-      cv2.BORDER_CONSTANT, value=(255, 255, 255))
+      #yaw = self.dock_yaw - ((np.pi/2)/self.pix_threshold )*self.x_cam_error
+      if abs(self.x_cam_error) > self.pix_threshold:
+        yaw = self.dock_yaw - np.sign(self.x_cam_error)*(np.pi/2)
+      else:
+        yaw = self.dock_yaw # Move forwards
 
-    params = cv2.SimpleBlobDetector_Params() # Set blob detector parameters
-    params.filterByArea = True  # Filter by area.
-    params.minArea = 50
-    
-    detector = cv2.SimpleBlobDetector_create(params) # Create blob detector
-     
-    keypoints = detector.detect(bordered_img) # Detect blobs
+    elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_HOLD:
+        yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
 
-    # Only record x error if exactly 1 blob is detected.
-    if len(keypoints) is 1:
-      # Calculate error in x direction, in pixels.
-      self.x_cam_error = keypoints[0].pt[0] - np.round(300/2) + self.pix_offset
+    elif self.dock_sm.getState() is self.dock_sm.DockState.DOCK_EXIT:
 
-    elif len(keypoints) is 0:
-      rospy.logdebug("docking: Error: no blob detected.")
-    else:
-      rospy.logdebug("docking: Error: more than 1 blob detected.")
+      #yaw = self.dock_yaw-np.pi - ((np.pi/2)/self.pix_threshold )*self.x_cam_error
 
-    # Draw detected blobs on gabor filtered image as red circles.
-    blob_img = cv2.drawKeypoints(bordered_img, keypoints, np.array([]), (0,0,255), 
-      cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    cv2.imshow("detected blobs", blob_img)
-    cv2.waitKey(1)
-    
+      if abs(self.x_cam_error) > self.pix_threshold:
+        yaw = self.dock_yaw - np.sign(self.x_cam_error)*np.pi/2
+      else:
+        yaw = (self.dock_yaw - np.pi) # Move backwards
+
+    # Limit yaw from -PI to PI
+    if (abs(yaw) > np.pi):
+      yaw = -np.sign(yaw)*(2*np.pi - abs(yaw))
+
+    return yaw'''
+
 def signalHandler(sig, frame):
   cv2.destroyAllWindows()
   rospy.signal_shutdown("Shutting down docking node on Ctrl+C.")

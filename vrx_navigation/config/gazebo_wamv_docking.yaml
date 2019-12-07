@@ -1,8 +1,9 @@
-hold_duration:      15  # Duration to wait inside docking bay
-goal_tolerance_pos: 0.5 # Distance tolerance for arriving at goal pose
-goal_tolerance_ang: 0.1 # Angular tolerance for arriving at goal yaw
+hold_duration:      10.0  # Duration to wait inside docking bay
+goal_tolerance_pos: 0.70 # Distance tolerance for arriving at goal pose
+goal_tolerance_ang: 0.30 # Angular tolerance for arriving at goal yaw
 
-default_thrust: 0.2 # Thrust value to use for docking procedure
+#pix_threshold: 30 # (px) Threshold for centering the image
+pix_offset:     10 # (px) Offset center x position in image
 
-pix_threshold: 13 # (px) Threshold for centering the image (note, img is 300x300)
-pix_offset:    13 # (px) Offset center x position in image (note, img is 300x300)
+n_entry_wps:     5 # Number of waypoints to split dock bay entry into
+entry_duration: 20 # Time to enter into dock bay

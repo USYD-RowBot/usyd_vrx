@@ -5,11 +5,14 @@
     <arg name="thrust_config" default="T"/>
     <arg name="world_name" default="sandisland"/>
     <arg name="rviz" default="true"/>
+    <arg name="debug" default="true"/>
+    <arg name="verbose" default="true"/>
 
     <!-- include the official gazebo file. This is like the server component in
     the competition. Disable it when runing for the comeptition.-->
     <include file="$(find vrx_bringup)/launch/sensored_boat.launch" if="$(arg gazebo)">
         <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="verbose" default="$(arg verbose)"/>
     </include>
 
     <!-- include the localisation code -->
@@ -22,9 +25,27 @@
     </include>
     <include file="$(find vrx_waypoints)/launch/waypoint_follower.launch" />
 
+    <include file="$(find vrx_navigation)/launch/lidar_node.launch">
+    </include>
 
-    <!--node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
-</node-->
+    <include file="$(find vrx_vision)/launch/object_server.launch">
+        <arg name="use_camera" value="true"/>
+        <arg name="debug" value="$(arg debug)"/>
+    </include>
+
+
+    <include file="$(find vrx_navigation)/launch/docking.launch"/>
+    <node pkg="vrx_tasks" type="missionControl.py" name="missionControl" output="screen">
+    </node>
+    <!--<group ns="wamv">
+
+        <node pkg="vrx_vision" name="placard_classifier" type="classify_placard_server.py" output="screen"/>
+    </group> -->
+
+    <!--include file="$(find vrx_vision)/launch/object_server0.launch">
+        <arg name="use_camera" value="true"/>
+    </include-->
+
 
 
     <!-- Vision translation -->
@@ -37,5 +58,4 @@
         <arg name="use_camera" value="true"/>
         <arg name="expiry_time" value="2"/>
     </include-->
-    <!--TODO:-->
 </launch>

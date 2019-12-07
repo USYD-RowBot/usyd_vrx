@@ -1,0 +1,63 @@
+markers	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_navigation/config/gazebo_wamv_path_to_waypoints.yaml	/^markers:        false$/;"	function	line:1
+default_speed	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_navigation/config/gazebo_wamv_path_to_waypoints.yaml	/^default_speed:  4$/;"	function	line:2
+thinning_value	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_navigation/config/gazebo_wamv_path_to_waypoints.yaml	/^thinning_value: 50$/;"	function	line:3
+heartbeat_duration	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^heartbeat_duration:   1.0  # secs$/;"	function	line:2
+PID_rate	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^PID_rate:             20.0 # Hz$/;"	function	line:3
+motor_cmd_limit	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^motor_cmd_limit:      2.0$/;"	function	line:6
+neg_scale_factor	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^neg_scale_factor:     1.9$/;"	function	line:7
+priority_yaw_range	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^priority_yaw_range:   1.0 # radians$/;"	function	line:8
+lateral_scale_x	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^lateral_scale_x:        1.14 # experimentally found, balances strafing action$/;"	function	line:11
+lateral_scale_y	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^lateral_scale_y:        2.00 # using this as scaling for lateral thruster during traversal$/;"	function	line:12
+reconfig_duration	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^reconfig_duration:      1.0  # secs$/;"	function	line:13
+station_tolerance_ang	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^station_tolerance_ang:  0.1  # rad (0.175 rad ~= 10 deg)$/;"	function	line:14
+lin_Kp	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^lin_Kp: 1.0$/;"	function	line:17
+lin_Ki	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^lin_Ki: 0.0$/;"	function	line:18
+lin_Kd	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^lin_Kd: 1.28$/;"	function	line:19
+ang_Kp	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^ang_Kp: 1.0$/;"	function	line:22
+ang_Ki	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^ang_Ki: 0.0$/;"	function	line:23
+ang_Kd	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^ang_Kd: 1.4$/;"	function	line:24
+stn_Kp	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^stn_Kp: 1.0$/;"	function	line:27
+stn_Ki	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^stn_Ki: 0.0$/;"	function	line:28
+stn_Kd	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^stn_Kd: 0.5$/;"	function	line:29
+use_sim_time	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^use_sim_time: true  # Use simulator time (true) or real time (false)$/;"	function	line:32
+max_integral	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_control/config/gazebo_wamv_course_controller.yaml	/^max_integral: 5.0$/;"	function	line:33
+ScanDock	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/scan_and_dock_task.py	/^class ScanDock(Mission):$/;"	class	line:17
+__init__	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/scan_and_dock_task.py	/^    def __init__(self):$/;"	member	line:18	class:ScanDock
+start	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/scan_and_dock_task.py	/^    def start(self):$/;"	member	line:34	class:ScanDock
+scanBuoy	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/scan_and_dock_task.py	/^    def scanBuoy(self):$/;"	member	line:112	class:ScanDock
+reportSequence	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/scan_and_dock_task.py	/^    def reportSequence(self,sequence):$/;"	member	line:157	class:ScanDock
+DockMaster	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^class DockMaster(Mission):$/;"	class	line:28
+__init__	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def __init__(self,placard_symbol = None):$/;"	member	line:30	class:DockMaster
+initMission	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def initMission(self):$/;"	member	line:41	class:DockMaster
+executePlan	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def executePlan(self):$/;"	member	line:72	class:DockMaster
+waitForWaypointRequest	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def waitForWaypointRequest(self):$/;"	member	line:190	class:DockMaster
+setPoseQuat	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def setPoseQuat(self, pose, angle_rad):$/;"	member	line:193	class:DockMaster
+makeWaypoint	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def makeWaypoint(self, pose, nav_type=Waypoint.NAV_STATION, duration=0):$/;"	member	line:200	class:DockMaster
+quatToYaw	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def quatToYaw(self, x, y, z, w):$/;"	member	line:207	class:DockMaster
+checkPlacard	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def checkPlacard(self):$/;"	member	line:211	class:DockMaster
+spinOnSpot	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def spinOnSpot(self, n_times):$/;"	member	line:247	class:DockMaster
+dumbFunction	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def dumbFunction(self):$/;"	member	line:276	class:DockMaster
+getRequestedPlacardSymbol	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def getRequestedPlacardSymbol(self):$/;"	member	line:279	class:DockMaster
+findFrontOfScanBuoy	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def findFrontOfScanBuoy(self):$/;"	member	line:283	class:DockMaster
+circleObject	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def circleObject(self, object_string, revs=1.0, look_dock=True, clockwise=True,thresh = 0):$/;"	member	line:298	class:DockMaster
+alignWithDock	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def alignWithDock(self, bay_index, duration=0.0):$/;"	member	line:413	class:DockMaster
+getDockPose	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def getDockPose(self):$/;"	member	line:442	class:DockMaster
+getExplorePose	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def getExplorePose(self):$/;"	member	line:479	class:DockMaster
+performDock	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def performDock(self, bay_pose,dock_pose):$/;"	member	line:493	class:DockMaster
+logDock	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^  def logDock(self, msg):$/;"	member	line:526	class:DockMaster
+main	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/dockmaster.py	/^def main():$/;"	function	line:529
+Mission	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^class Mission():$/;"	class	line:10
+__init__	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def __init__(self):$/;"	member	line:12	class:Mission
+getDist	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def getDist(self,pose1,pose2):$/;"	member	line:26	class:Mission
+translatePose	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def translatePose(self,pose,x,y, yaw):$/;"	member	line:29	class:Mission
+navigateTo	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def navigateTo(self, target, wait=True, timeout = 0, dist_thresh = 1, ang_thresh = 0.4, repubish = False):$/;"	member	line:41	class:Mission
+navigateToDirect	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def navigateToDirect(self, target, wait=True, timeout = 0, dist_thresh = 1, ang_thresh = 0.4):$/;"	member	line:79	class:Mission
+inRange	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def inRange(self, target, dist_thresh = 1.2, ang_thresh = 0.4):$/;"	member	line:120	class:Mission
+odomCb	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def odomCb(self, odom_msg):$/;"	member	line:132	class:Mission
+objectsCb	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def objectsCb(self,msg):$/;"	member	line:137	class:Mission
+updateUnused	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def updateUnused(self):$/;"	member	line:160	class:Mission
+publishMarker	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def publishMarker(self, pose,id = 0):$/;"	member	line:181	class:Mission
+exploreFor	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def exploreFor(self,type="object",conf_thresh = 0.3):$/;"	member	line:214	class:Mission
+findClosest	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^    def findClosest(self,object_list, type="object",frame="base_link", conf_thresh = 0,ignore_land = False):$/;"	member	line:287	class:Mission
+quatToEuler	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^def quatToEuler(quat):$/;"	function	line:339
+eulerToQuat	/home/johnsumskas/vrx_ws/src/usyd_vrx/vrx_tasks/scripts/components/mission_base.py	/^def eulerToQuat(euler):$/;"	function	line:354

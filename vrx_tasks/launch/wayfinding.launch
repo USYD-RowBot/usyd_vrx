@@ -1,0 +1,8 @@
+<launch>
+    <!-- include the official gazebo file -->
+
+    <include file="$(find vrx_tasks)/launch/missioncontrol.launch">
+        <arg name="world_name" value="wayfinding"/>
+    </include>
+
+</launch>

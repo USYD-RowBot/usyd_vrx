@@ -8,7 +8,8 @@
 #include <tf2_msgs/TFMessage.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
-
+#include <vrx_gazebo/Task.h>
+#include <string>
 
 class MappingServer{
     /*Mapping Server to Create a map from odometry well*/
@@ -21,6 +22,7 @@ private:
   float resolution;
   float offset_x;
   float offset_y;
+  float range_min_;
 
 public:
   MappingServer(ros::NodeHandle node){
@@ -28,11 +30,21 @@ public:
     tf2_ros::TransformListener tf_listener(tf_buffer);
     this->node = node;
 
-
     ros::param::get("~width", width);
     ros::param::get("~resolution", resolution);
     ros::param::get("~offset_x", offset_x);
     ros::param::get("~offset_y", offset_y);
+
+    vrx_gazebo::Task task_msg = *(ros::topic::waitForMessage<vrx_gazebo::Task>("/vrx/task/info"));
+    std::string task_name = task_msg.name;
+
+    if (task_name == "perception")
+      range_min_ = 2.0;
+    else
+      range_min_ = 8.0;
+
+    ROS_DEBUG("range_min_ is %f metres.", range_min_ );
+
     // width = 1024;
     // resolution = 0.4;
     // offset_x = 60;
@@ -102,6 +114,8 @@ public:
   {
     if (num > max)
       return max;
+    else if (num < 0)
+      return 0;
     else
       return num;
   }
@@ -126,7 +140,8 @@ public:
     float angle_min = scan.angle_min;
     float angle_increment = scan.angle_increment;
     float range_max = scan.range_max;
-    float range_min = scan.range_min;
+    //float range_min = scan.range_min;
+    float range_min = range_min_;
 
     //Amount of points that need to be calculated.
     int c = int((angle_max - angle_min)/angle_increment);
@@ -157,7 +172,7 @@ public:
       int index  = clampMax(y*width + x, index_max);
       int index2 = clampMax(odom_y*width + odom_x, index_max);
 
-      if (range < range_max && range > range_min)
+      if (range < range_max)
       {
         ROS_DEBUG("RANGE: %f angle: %f", range,angle);
 
@@ -172,7 +187,7 @@ public:
         }
 
         //Iterate through range less range, and set those pixels to free pixels untill a lower limit of 0.
-        for (int j = int(range/resolution); j>0;j--){
+        for (int j = int(range/resolution); j>int(range_min/resolution);j--){
           int x = int(odom_x + float(j)*cos(angle));
           int y = int(odom_y + float(j)*sin(angle));
           int index = clampMax(y*width + x, index_max);
@@ -190,7 +205,7 @@ public:
       else{
         float clear_range = 30;
 
-        for (int j = int(clear_range/resolution); j>0;j--){
+        for (int j = int(clear_range/resolution); j>int(range_min/resolution);j--){
           int x = int(odom_x + float(j)*cos(angle));
           int y = int(odom_y + float(j)*sin(angle));
           int index = clampMax(y*width + x, index_max);

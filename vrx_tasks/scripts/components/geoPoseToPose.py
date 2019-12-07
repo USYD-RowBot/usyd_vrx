@@ -12,6 +12,7 @@ import pyproj
 
 class geoPoseToPoseConverter:
     def __init__(self):
+        rospy.loginfo("Initalizing geoPosetoPose converter")
         params = {
             "inTopic": "/vrx/station_keeping/goal",
             "outTopic": "/station",
@@ -43,9 +44,10 @@ class geoPoseToPoseConverter:
     def cb(self,data):
         #print("RECEIVED GEO PATH MESSAGE")
         #print (data)
-        if self.lastSatPos is None:
-            print("geoPoseToPose: NO SAT DATA, FAIL")
-            return
+        while self.lastSatPos is None:
+            rospy.logwarn("geoPoseToPose: NO SAT DATA, FAIL")
+            rospy.sleep(0.5)
+
         #print (lastSatPos)
         ps = PoseStamped()
         ps.header = data.header
@@ -54,4 +56,3 @@ class geoPoseToPoseConverter:
         # move into map frame
         ps.header.frame_id='map'
         self.pub.publish(ps)
-

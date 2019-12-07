@@ -41,9 +41,9 @@ allowed_strings={
     "polyform_a3":"polyform_a3",
     "polyform_a5":"polyform_a5",
     "polyform_a7":"polyform_a7",
-    "surmark_46104":"surmark_46104",
-    "surmark_950400":"surmark_950400",
-    "surmark_950410":"surmark_950410"
+    "surmark46104":"surmark46104",
+    "surmark950400":"surmark950400",
+    "surmark950410":"surmark950410"
 }
 
 

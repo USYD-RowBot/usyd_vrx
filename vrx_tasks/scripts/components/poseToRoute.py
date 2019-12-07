@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Converts pose messages to course messages on specified topic.
+# Converts pose messages to route messages on specified topic.
 # Optional whether to just copy the values or copy them with appropriate scaling
 
 import rospy
@@ -8,15 +8,17 @@ from geometry_msgs.msg import PoseStamped
 from vrx_msgs.msg import Waypoint
 from vrx_msgs.msg import WaypointRoute
 #import tf
+#rospy.init_node("poseToRoute",anonymous=True)
 
-class poseToCourseConverter:
+class poseToRouteConverter:
     def __init__(self):
+        rospy.loginfo("Initalizing pose to Route Converter")
         params = {
             "inTopic": "/station",
             "outTopic": "/waypoints_cmd",
-            "speed":1
+            "speed":5
         }
-        rospy.init_node("poseToCourse",anonymous=True)
+
         for i in params:
             params[i] = rospy.get_param('~'+i, params[i])
         self.pub = rospy.Publisher(params['outTopic'], WaypointRoute, queue_size=1)
@@ -30,12 +32,12 @@ class poseToCourseConverter:
         waypoints = []
 
         wp=Waypoint()
-        wp.pose=data.pose   
+        wp.pose=data.pose
         wp.nav_type=wp.NAV_STATION
         wp.station_duration = -1   # Stay at station until received new command
 
         waypoints.append(wp)
-        
+
         route.waypoints=waypoints
         route.speed=self.speed
         self.pub.publish(route)

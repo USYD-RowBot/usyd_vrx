@@ -11,7 +11,7 @@ class WaypointConverter:
         self.wp_cmd_pub = rospy.Publisher(
             "waypoints_cmd", WaypointRoute, queue_size=10)
         self.vis_pub    = rospy.Publisher(
-            "visualization_marker", Marker, queue_size=1)
+            "nav_marker_global_planner", Marker, queue_size=1)
 
         self.markers        = rospy.get_param("~markers", 1)
         self.speed          = rospy.get_param("~default_speed", 1)
@@ -19,7 +19,7 @@ class WaypointConverter:
 
         self.marker_id = 0
 
-        rospy.Subscriber("wamv/waypoints", Path, self.pathCallback) 
+        rospy.Subscriber("wamv/waypoints", Path, self.pathCallback)
 
     def getStationMsg(self, pose1, pose2, dest_pose, duration, set_yaw):
         # Calculate angle vessel needs to be at
@@ -45,7 +45,7 @@ class WaypointConverter:
         if self.markers:
             marker = Marker()
             marker.header.frame_id = "odom"
-            marker.header.stamp = rospy.Time.now() 
+            marker.header.stamp = rospy.Time.now()
             marker.ns = "wps"
             marker.id = self.marker_id
             marker.type = Marker.SPHERE
@@ -63,13 +63,15 @@ class WaypointConverter:
             self.marker_id += 1
 
     def pathCallback(self, path_msg):
-        
-        wp_route_msg = WaypointRoute() # WaypointRoute msg        
+        if len(path_msg.poses) == 0:
+            return
+
+        wp_route_msg = WaypointRoute() # WaypointRoute msg
         wp_route_msg.speed = self.speed
         count = 0
 
         first_wp_msg = self.getStationMsg( # Get first station
-            path_msg.poses[0].pose, path_msg.poses[10].pose, 
+            path_msg.poses[0].pose, path_msg.poses[10].pose,
             path_msg.poses[0].pose, 2.50, True)
         wp_route_msg.waypoints.append(first_wp_msg)
         self.pubMarker(first_wp_msg.pose)
@@ -91,8 +93,8 @@ class WaypointConverter:
             wp_route_msg.waypoints.pop()
 
         last_wp_msg = self.getStationMsg( # Get last station
-            path_msg.poses[-11].pose, path_msg.poses[-1].pose, 
-            path_msg.poses[-1].pose, 0.0, False)
+            path_msg.poses[-11].pose, path_msg.poses[-1].pose,
+            path_msg.poses[-1].pose, -1, False)
         wp_route_msg.waypoints.append(last_wp_msg)
         self.pubMarker(last_wp_msg.pose)
 

@@ -15,7 +15,7 @@ import pyproj
 class geoPathToPathConverter:
     def __init__(self):
         params = {
-            "inTopic": "/pointToHold",
+            "inTopic": "/vrx/wayfinding/waypoints",
             "outTopic": "/waypoints",
             "gpsTopic": "wamv/sensors/gps/gps/fix",
         }
@@ -45,9 +45,9 @@ class geoPathToPathConverter:
     def cb(self,data):
         #print("RECEIVED GEO PATH MESSAGE")
         #print (data)
-        if self.lastSatPos is None:
-            print("NO SAT DATA, FAIL")
-            return
+        while self.lastSatPos is None:
+            rospy.logwarn("NO SAT DATA, FAIL")
+            rospy.sleep(0.5)
         #print (lastSatPos)
         path = Path()
         path.header = data.header
@@ -64,5 +64,3 @@ class geoPathToPathConverter:
         path.poses=poses
         self.pub.publish(path)
         #print(path)
-
-

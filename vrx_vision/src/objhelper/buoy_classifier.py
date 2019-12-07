@@ -1,8 +1,14 @@
 import numpy as np
 import cv2
 import rospkg
+import rospy
 
-class BuoyClassifier():
+import sys
+rospack = rospkg.RosPack()
+sys.path.insert(1, rospack.get_path('vrx_vision')+"/scripts")
+from classifier import Classifier
+
+class BuoyClassifier(Classifier):
 
     def __init__(self, exclusion_list, hfov, cam_x_px):
         '''
@@ -10,6 +16,7 @@ class BuoyClassifier():
             hfov: camera horizontal field of view
             cam_x_px: x resolution of camera
         '''
+        super(BuoyClassifier, self).__init__() # Inherit methods from Classifier parent
 
         ##### CAMERA PARAMS #####
         self.focal_length = (float(cam_x_px)/2)/np.tan(float(hfov)/2)
@@ -25,7 +32,7 @@ class BuoyClassifier():
             pre+"template_sphere.png",
             pre+"template_scan.png"]
 
-        self.template_colours = [
+        self.template_colours = [ # RGB colours
             [(169, 71, 65)],                                                   # Conical
             [(255, 255, 255), (118, 203, 166)],                                # Tophat: (white, green)
             [(255, 255, 0), (1, 1, 1), (4, 4, 255), (4, 255, 4), (255, 4, 4)], # Totem:  (yellow, black, blue, green, red)
@@ -34,8 +41,8 @@ class BuoyClassifier():
         ]
 
         self.template_labels = [
-            ["surmark_950410"],                                                        # Conical
-            ["surmark_46104", "surmark_950400"],                                       # Tophat: (white, green)
+            ["surmark950410"],                                                        # Conical
+            ["surmark46104", "surmark950400"],                                       # Tophat: (white, green)
             ["yellow_totem", "black_totem", "blue_totem", "green_totem", "red_totem"], # Totems
             ["polyform"],                                                              # Sphere TODO estimate size
             ["scan_buoy"]                                                              # Scan buoy
@@ -159,7 +166,7 @@ class BuoyClassifier():
         #cv2.imshow("Keypoints", im_with_keypoints)
         #cv2.waitKey(0)
         #cv2.destroyAllWindows()
-        debug = base_mask
+        debug = combined_mask
         if len(keypoints) == 0: # No blob found, assume this is ocean
             '''lower_colour = np.array([0, 127, 0]) # hue 92 - 148 is blue
             upper_colour = np.array([92, 255, 255])
@@ -181,10 +188,12 @@ class BuoyClassifier():
 
     def getObjectMask(self, img):
         # Separate buoy cluster and make white
-        thres = 5
+        thres = 10
+
         centre_colour_low  = np.subtract(self.centre_colour, (thres, thres, thres))
         centre_colour_high = np.add(self.centre_colour,      (thres, thres, thres))
         object_mask = cv2.inRange(img, centre_colour_low, centre_colour_high)
+
         return object_mask
 
     def raw_moment(self, data, i_order, j_order):
@@ -210,7 +219,7 @@ class BuoyClassifier():
         contours = cont_return[0] if len(cont_return) is 2 else cont_return[1] # Version fix
 
         if len(contours) == 0:
-            print("Couldn't find contours for image mask. Mask might not include a buoy.")
+            #print("Couldn't find contours for image mask. Mask might not include a buoy.")
             return None, None
 
         best_cnt = max(contours, key=cv2.contourArea) # Get largest contour
@@ -249,11 +258,6 @@ class BuoyClassifier():
         mirrored_img = cv2.bitwise_or(img, flipped_img)
         return mirrored_img
 
-    def bgr2rgb(self, colour):
-        ''' Converts colour from BGR to RGB. '''
-        rgb_colour = (colour[2], colour[1], colour[0])
-        return rgb_colour
-
     def normalise(self, colour):
         ''' Normalises RGB colour. '''
         colour_sum = sum(colour)
@@ -273,89 +277,6 @@ class BuoyClassifier():
                 return (255, 255, 255)
         else:
             return normalised_colour # Forget grayscale, just return normalised
-
-    def colourConfidenceRGB(self, colour1, colour2):
-        ''' Calculates Euclidean distance between two RGB colours. Returns distance as
-            percentage of maximum possible distance.
-        '''
-        max_dist = 441.673 # Maximum possible RGB colour distance
-        colour1 = self.normalise(colour1)
-        colour2 = self.normalise(colour2)
-        #print("c1: %s, c2: %s" % (colour1, colour2))
-
-        R_dist = colour1[0] - colour2[0]
-        G_dist = colour1[1] - colour2[1]
-        B_dist = colour1[2] - colour2[2]
-
-        colour_dist = np.sqrt(R_dist**2 + G_dist**2 + B_dist**2)/max_dist
-        colour_conf = 1 - colour_dist
-        return colour_conf
-
-    def percentSimilar(self, img1, img2):
-        ''' Calculates percentage similarity between two identically shaped binary images.
-        '''
-        if (img1.shape[0] is not img2.shape[0]) and (img1.shape[1] is not img2.shape[1]):
-            print("Images are different sizes! Cannot compute similarity. img1: %s, img2: %s."
-                % (img1.shape, img2.shape))
-            return
-
-        n_pixels = img1.shape[0]*img1.shape[1]
-        n_equal_pixels = 0
-
-        for i in range (img1.shape[0]):
-            for j in range(img1.shape[1]):
-                if img1[i][j] == img2[i][j]:
-                    n_equal_pixels += 1
-
-        return float(n_equal_pixels)/float(n_pixels)
-
-    def classifyBuoy(self, img, colour):
-        ''' Compares input img with template library and returns string name
-            of highest confidence match type, along with confidence. Colour is used to
-            determine exact buoy model.
-            return (string, float, float): (label, conf_label, conf_colour), where
-                confidences are from 0 to 1.
-        '''
-
-        label_confidences  = []
-        colour_confidences = []
-
-
-        for template_filename in self.template_filename_list: # Compare img with templates
-            template_img = cv2.imread(template_filename, cv2.IMREAD_GRAYSCALE)
-            label_confidences.append(self.percentSimilar(template_img, img))
-
-            #cv2.imshow('K-Means Clustering', template_img)
-            #cv2.waitKey(0)
-        print(label_confidences)
-        """conf_shape       = max(label_confidences) # Get highest confidence label and index
-        best_shape_index = np.argmax(label_confidences)
-
-        for template_colour in self.template_colours[best_shape_index]: # Compare colour with templates
-            colour_confidences.append(self.colourConfidenceRGB(template_colour, colour))
-
-        conf_colour       = max(colour_confidences) # Get highest confidence colour and index
-        best_colour_index = np.argmax(colour_confidences)
-
-        label = self.template_labels[best_shape_index][best_colour_index] # Get best label
-        return label, conf_shape, conf_colour"""
-
-        max_conf = 0;
-        max_colour_conf = 0
-        max_label_conf = 0
-        label = ""
-        for conf_shape in label_confidences:
-            index = label_confidences.index(conf_shape)
-            for template_colour in self.template_colours[index]: # Compare colour with templates
-                total_conf = self.colourConfidenceRGB(template_colour, colour)*conf_shape
-                index2 = self.template_colours[index].index(template_colour)
-                if total_conf > max_conf:
-                    max_conf = total_conf
-                    max_colour_conf = self.colourConfidenceRGB(template_colour, colour)
-                    max_label_conf = conf_shape
-                    label = self.template_labels[index][index2]
-
-        return label,max_label_conf,max_colour_conf
 
     def getPolyformType(self, obj_width, distance):
 
@@ -384,29 +305,28 @@ class BuoyClassifier():
 
         if self.centre_colour is not None:
             object_mask            = self.getObjectMask(clustered_img)
-
             cropped_img, obj_width = self.rotateCropScale(object_mask)
 
             if cropped_img is not None:
                 mirrored_img = self.mirrorCombine(cropped_img)
 
                 # Classify the buoy
-                label, conf_shape, conf_colour = self.classifyBuoy(mirrored_img, self.bgr2rgb(self.centre_colour))
+                label, conf_shape, conf_colour = self.classifyImage(mirrored_img, self.bgr2rgb(self.centre_colour))
 
                 # If polyform, narrow down size
                 if label == "polyform":
                     label = self.getPolyformType(obj_width, distance)
 
-                if distance < 10:
+                if distance < 15:
                     dist_scale= 1
                 else:
-                    dist_scale = 1 - ((distance-10)/60)
+                    dist_scale = 1 - ((distance-15)/60)
 
-                print("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" % (label, conf_shape, conf_colour))
+                rospy.logdebug("Label: %s\nShape Confidence: %s\nColour Confidence: %s\n" , label, conf_shape, conf_colour)
                 return label, conf_shape*conf_colour*dist_scale, clustered_img
             else:
-                print("No cropped image returned")
+                rospy.logdebug("No cropped image returned")
                 return "", 0.0, clustered_img
         else:
-            print("No centre colour return:")
+            rospy.logdebug("No centre colour return:")
             return "", 0.0, clustered_img
